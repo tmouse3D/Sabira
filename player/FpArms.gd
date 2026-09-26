@@ -1,0 +1,32 @@
+# Godot 4.x ?- Sabira / HOUSE
+## First-person arms ?- Blender GLB (idle default, grab optional).
+## Visible while standing; hidden when crouching (shadow immersion).
+extends Node3D
+
+var _idle: Node3D
+var _grab: Node3D
+
+
+func _ready() -> void:
+	_idle = find_child("FP_Arms_Idle", true, false) as Node3D
+	_grab = find_child("FP_Arms_Grab", true, false) as Node3D
+	visible = true
+	set_pose_idle()
+
+
+func set_crouching(crouching: bool) -> void:
+	visible = not crouching
+
+
+func set_pose_idle() -> void:
+	if _idle:
+		_idle.visible = true
+	if _grab:
+		_grab.visible = false
+
+
+func set_pose_grab() -> void:
+	if _idle:
+		_idle.visible = false
+	if _grab:
+		_grab.visible = true

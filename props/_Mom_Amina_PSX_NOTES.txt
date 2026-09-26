@@ -1,0 +1,737 @@
+Mom_Amina + Tash PSX rebuild - 2026-09-24
+=========================================
+OVERRIDE: Amina/Mom = Character_Female_05 (gray top + denim shorts + bangs). HM 27 REPLACED.
+Tash = Character_02 (gray hoodie). Standing AI-ready mesh; NOT scene-placed.
+
+Character IDs:
+  - Mom / Amina: Character_Female_05 (Rig Female FBX + Character_Female_05.png)
+  - Tash: Character_02 (Rig Male FBX + Character_02.png)
+
+Source (read-only zip): C:\Users\hp\Documents\Assets for games\Characters_psx_1.1.zip
+Extracted only to: C:\Users\hp\Documents\sabira\art\source\characters_psx\
+  - Models\Rig\Female\Character_Female_05.fbx
+  - Models\No-Rig\Female\Character_Female_05.fbx
+  - Textures\Character_Female_05.png
+  - Models\Rig\Male\Character_02.fbx
+  - Models\No-Rig\Male\Character_02.fbx
+  - Textures\Character_02.png
+(HM 27 files may still exist in source from prior extract; unused for Mom now.)
+
+Mom outputs (overwrite):
+  - props\Mom_Amina.glb
+  - props\Mom_Amina.blend
+  - props\_Mom_Amina_preview.png
+  - props\Mom_Amina_albedo_256.png (bruised/dirtied copy of Female_05)
+  - props\Mom_Amina_metal_128.png (NeckBar/LockRect)
+
+Mom hierarchy: Mom_Amina_Root / Body, NeckBar, LockRect
+Pose: supine face-up; limbs cut elbows-down + knees-down; dark stump mat on caps
+Tris total: 725
+Bounds size (Blender): ~0.76 x 1.55 x 0.43 m
+
+LockRect pivot note:
+  Origin = NeckBar end hinge.
+  Blender local LockRect: ~(0.337, 0.348, 0.219)
+  Lift: local +Z in Blender -> +Y in Godot (gltf yup export).
+  Also works: rotate local X to flip open.
+  MomLockRect.gd finds child LockRect under Hidden_Mom_Amina
+  (path ../Hidden_Mom_Amina/LockRect, with find_child fallback).
+
+House:
+  Backup: backups\House.tscn.bak_mom_amina_f05_*
+  Node kept: Structure/HiddenRoom/Hidden_Mom_Amina @ (-0.85, 0.48, 0.1)
+  Mom_LockRectBody @ (-0.513, 0.6994, -0.2478) matching new LockRect world
+  .godot/imported Mom_Amina* cleared (reimport on next editor open)
+
+Tash outputs (new):
+  - props\Tash.glb (standing, armature kept, 33 bones, AI-ready)
+  - props\Tash.blend
+  - props\_Tash_preview.png
+  - props\Tash_albedo_256.png
+  Hierarchy: Tash_Root / Tash_Armature / Body
+  Tris: 866; height ~1.75 m
+  NOT placed in House.tscn (no NPC stub)
+
+Build scripts:
+  - props\_build_mom_amina_f05.py
+  - props\_build_tash.py
+
+ART FIX 2026-09-24 (textures/neck/anim/keys)
+============================================
+- Stump injury texture: props\Mom_Amina_stump_injury_64.png (red/dark pink/black)
+- Face: scared edit on Mom_Amina_albedo_256.png (wider/darker eyes, tense mouth)
+- Metal: aluminum/steel Mom_Amina_metal_128.png; metalness~0.95 roughness~0.22
+- NeckBar: horizontal across NECK (no torso-diagonal T). bar_center=(0.000,0.713,0.261) size_y_span=0.055
+- LockRect local pivot (hinge): (0.2016, 0.713, 0.2611)
+  Lift: local +Z Blender -> +Y Godot (gltf yup). MomLockRect.gd lift_y still valid.
+- Animation clip: idle_restless (48 frames @24fps ~= 2.0s loop; root breath+rock)
+- Key icons recolored under ui\icons\ (brass/silver/copper/iron)
+- Carry-in-blanket: HANDOFF to GODOT+SCRIPTWRITER only (not implemented here)
+
+POSTFIX caps+bar 2026-09-24 14:27
+- Stump caps retargeted: 14 tip faces only (injury tex Mom_Amina_stump_injury_64.png)
+- NeckBar raised ON TOP of neck: Blender Y~0.74 Z~0.39 (span Y 0.72-0.77 only; not torso T)
+- LockRect local pivot: (0.1824, 0.744, 0.3851)
+  Godot local after yup: ~(0.1824, 0.3851, -0.744); lift still +Y via MomLockRect.gd
+- Mom_LockRectBody world updated to match
+- Anim: idle_restless still in GLB (root + body breath)
+- Keys: ui\icons\tash_room_key.png brass, front_key.png silver, cage_key.png copper, back_key.png iron
+
+GODOT HANDOFF (do not implement here):
+1) AnimationPlayer on Hidden_Mom_Amina: autoplay idle_restless from GLB (or Library import).
+   Fallback if clip missing: Tween root position.y +/- 0.008 over 2s loop (bob).
+2) Carry-in-blanket: GODOT+SCRIPTWRITER owns gameplay (pickup blanket, carry Mom, etc). Art only.
+
+
+FINAL ART 2026-09-24 14:30 BST
+==============================
+Paths:
+  props\Mom_Amina.glb (re-exported, has idle_restless)
+  props\Mom_Amina.blend
+  props\Mom_Amina_albedo_256.png (scared face + bruise)
+  props\Mom_Amina_stump_injury_64.png (red/dark-pink/black caps)
+  props\Mom_Amina_metal_128.png (aluminum/steel; metal~0.98 rough~0.18)
+  props\_Mom_Amina_preview.png
+  props\_Mom_Amina_PSX_NOTES.txt
+
+NeckBar: horizontal across neck Blender Y=0.60 Z~0.376 (ON TOP of neck surface; Y-span ~0.04 only — not torso T)
+LockRect local pivot (Blender): (0.2784, 0.6000, 0.3762)
+  Godot after yup: ~(0.2784, 0.3762, -0.6000)
+  Mom_LockRectBody world: (-1.1284, 0.3984, -0.47)
+  Lift: MomLockRect.gd lift_y on LockRect +Y (Godot)
+
+Stumps: 14 tip-cap faces, Mom_Stump_Mat + injury tex (no white placeholder)
+
+Anim clip: idle_restless (48f @24fps ~2s; root breath/rock). Also idle_restless_body scale breath.
+  Existing interact\MomRestless.gd already on Hidden_Mom_Amina — prefer GLB clip if AnimationPlayer imports it; else keep bob fallback in that script.
+
+Key icons (hue-shifted, distinct):
+  ui\icons\tash_room_key.png  — brass (bedroom)
+  ui\icons\front_key.png      — silver
+  ui\icons\cage_key.png       — copper/dark
+  ui\icons\back_key.png       — dull iron
+
+House backup: backups\House.tscn.bak_mom_amina_art_*
+.godot/imported Mom_Amina* cleared — reopen/F5 to reimport.
+
+GODOT HANDOFF (no art implement):
+  - AnimationPlayer: play idle_restless from Mom_Amina.glb; fallback bob via MomRestless.gd
+  - Carry-in-blanket / wrap: already stubbed (MomWrap.gd / Mom_WrapBody) — SCRIPTWRITER+GODOT owns gameplay
+
+
+BANDAGE+LOCK FIX 2026-09-25
+===========================
+Paths:
+  props\Mom_Amina.glb
+  props\Mom_Amina.blend
+  props\Mom_Amina_stump_bandage_64.png  (flat warm bandage #D4CDBF; also overwrote stump_injury_64.png)
+  props\Mom_Amina_metal_128.png (brighter steel)
+  props\_Mom_Amina_preview.png
+  props\_Mom_Amina_preview_unlocked.png
+
+Stumps: tip-cap faces only, Mom_Stump_Mat -> flat bandage gray. NO eye / mosaic pattern.
+
+NeckBar: thicker metal across neck cy=0.7130 cz=0.2683 len=0.4800 sy=0.078 sz=0.07
+LockRect rest (LOCKED, Blender local / hinge): (0.2304, 0.713, 0.2683)
+  dims see log; padlock body + U-shackle sitting ON bar.
+Unlocked suggested (Blender local): loc=(0.2304, 0.713, 0.4083) rot_euler_deg=(-80.0, 0.0, 0.0)
+  Blender lift local +Z = 0.14 -> Godot +Y
+  MomLockRect.gd lift_y suggest = 0.14 (was 0.10; 0.10 still works, 0.14 clearer)
+
+Anim clips in GLB: lock_locked (rest), lock_unlocked (lift+swing), idle_restless (kept)
+
+House: Mom_LockRectBody world ~ (-1.0804, 0.5063, -0.5773)
+.godot/imported Mom_Amina* cleared.
+
+GODOT HANDOFF: Default GLB pose = LOCKED. MomLockRect.gd lift_y on LockRect still valid (raise lift_y to 0.14 optional). Optional: play lock_unlocked clip instead of/in addition to Y lift.
+
+
+BANDAGE+LOCK POSTFIX 2026-09-25
+===============================
+Stump tips both arms+legs: 35 faces -> props\Mom_Amina_stump_bandage_64.png (#D4CDBF flat)
+LockRect rest LOCKED (Blender local): (0.2664, 0.713, 0.2683)
+Unlocked suggest: loc=(0.2664, 0.713, 0.4283) rot_euler_deg=(-90.0, 0.0, 0.0)
+  lift Blender +Z / Godot +Y = 0.16 (MomLockRect.gd lift_y suggest 0.16)
+Anims: lock_locked, lock_unlocked (fake_user), idle_restless kept
+House Mom_LockRectBody: (-1.1164, 0.5063, -0.5773)
+
+
+FINAL BANDAGE+LOCK 2026-09-25 (postfix2)
+========================================
+Stump tex: props\Mom_Amina_stump_bandage_64.png solid #D4CDBF (injury_64 also overwritten)
+Tip faces: 48 (mat1 solid bandage; albedo tip UVs painted gray)
+LockRect REST locked Blender: (0.24, 0.713, 0.2756)
+Unlocked: loc=(0.24, 0.713, 0.4556) rot_euler_deg=(-90.0, 0.0, 0.0) lift_z=0.18
+  Godot: MomLockRect.gd lift_y suggest 0.18 (clip lock_unlocked also in GLB)
+House Mom_LockRectBody: (-1.09, 0.499, -0.5773)
+Anims: lock_locked, lock_unlocked (fake_user), idle_restless
+GLB/BLEND: props\Mom_Amina.glb + .blend
+
+
+READY FOR F5 — 2026-09-25 09:40 BST
+====================================
+PATHS:
+  props\Mom_Amina.glb
+  props\Mom_Amina.blend
+  props\Mom_Amina_stump_bandage_64.png   (flat #D4CDBF; injury_64 overwritten same)
+  props\Mom_Amina_metal_128.png
+  props\Mom_Amina_albedo_256.png         (tip UV islands painted bandage)
+  props\_Mom_Amina_preview.png
+  props\_Mom_Amina_preview_lock_close.png
+  props\_Mom_Amina_preview_unlocked.png
+
+STUMP: mat Mom_Stump_Mat on tip-cap faces (hist L=12 R=51 total stump=63)
+  solid bandage gray — no eye / no blue-white mosaic on tip caps.
+
+LOCK:
+  LockRect REST (LOCKED, Blender local): (0.24, 0.713, 0.2756)
+  dims ~ (0.168, 0.153, 0.200); padlock body + U-shackle flush on NeckBar end
+  NeckBar dims ~ (0.565, 0.110, 0.100) thick across neck
+  UNLOCKED suggest Blender local: loc=(0.24, 0.713, 0.4556) rot_euler_deg=(-90, 0, 0)
+  Blender lift +Z 0.18 -> Godot +Y 0.18
+  Anims in GLB: lock_locked, lock_unlocked (fake_user), idle_restless
+
+HOUSE: Mom_LockRectBody @ (-1.0900, 0.4990, -0.5773); BoxShape_momlock Vector3(0.28, 0.28, 0.22)
+  backup: backups\House.tscn.bak_mom_lock_*
+
+GODOT HANDOFF (one-liner):
+  Default GLB pose = LOCKED padlock on neck. MomLockRect.gd lift_y: set 0.18 (was 0.10) OR play AnimationPlayer clip lock_unlocked; stump albedo = props/Mom_Amina_stump_bandage_64.png.
+
+
+PLAYTEST FIX 2026-09-25 (dots/bandage/lock)
+===========================================
+PATHS:
+  props\Mom_Amina.glb
+  props\Mom_Amina.blend
+  props\Mom_Amina_albedo_256.png   (despeckled; flat tee/skin; soft bandage paint; clamp)
+  props\Mom_Amina_stump_bandage_64.png
+  props\Mom_Amina_metal_128.png    (bright brushed steel)
+  props\_Mom_Amina_preview.png
+  props\_Mom_Amina_preview_stump_close.png
+  props\_Mom_Amina_preview_lock_close.png
+  props\_Mom_Amina_preview_unlocked.png
+  props\_src_OldLock\             (copied from Assets Street Furniture.zip — READ-ONLY source)
+
+DOTS: median despeckle + flat blue-gray tee / soft skin; image nodes extension=EXTEND (clamp not repeat).
+
+STUMP: tip caps + ~3.5cm sleeve wrap -> Mom_Stump_Mat (80 faces); soft albedo blend at edge (no hard cut).
+
+LOCK:
+  Source: Assets for games\Street Furniture.zip -> OldLock\ (FBX+PNG) copied to props\_src_OldLock\
+  Child name: LockRect (kept for MomLockRect.gd)
+  Why invisible before: LockRect/NeckBar sat at Blender Z~0.28 INSIDE neck thickness (body Z top~0.36);
+    after Godot instance flip(-Y), lock buried inside mesh / not clearly above collar. Also metal dull + REPEAT.
+  REST LOCKED Blender local: (0.24, 0.7004, 0.4252)
+  UNLOCKED: loc=(0.24, 0.7004, 0.6252) rot_euler_deg=(-90.0, 0.0, 0.0) lift_z=0.2
+  Blender +Z lift -> Godot +Y lift
+
+GODOT ONE-LINER:
+  LockRect child name unchanged; MomLockRect.gd lift_y=0.20 (was 0.18); default GLB pose=LOCKED; F5 reimport Mom_Amina.glb after .godot/imported Mom_Amina* cleared.
+
+
+NECK VISIBILITY POSTFIX 2026-09-25 10:05 BST
+============================================
+WHY LOCK WAS INVISIBLE IN EDITOR BEFORE:
+  Hidden_Mom_Amina uses a Y-flip (face-down). Prior LockRect/NeckBar sat on Blender +Z
+  (chest/front of supine mesh) which maps to LOW Godot Y = underside of body. From the
+  usual top/editor views the lock was hidden under Mum.
+
+FIX: NeckBar + LockRect moved to BACK of neck (Blender low/-Z, outside back surface).
+  After glTF Yup + House Y-flip they sit ON TOP in Godot (high world Y), clearly over collar.
+
+LOCK SOURCE: props\_src_OldLock\ (copied from Assets\Street Furniture.zip / OldLock) — READ-ONLY Assets.
+CHILD NAME: LockRect (unchanged — MomLockRect.gd path still ../Hidden_Mom_Amina/Mom_Amina_Root/LockRect)
+CLIPS: lock_locked / lock_unlocked (match MomLockRect.gd)
+REST Blender local: (0.235, 0.6968, -0.0713) rot_euler_deg=(180,0,0)
+UNLOCKED: loc=(0.235, 0.6968, -0.2713) rot_euler_deg=(90.0, 0.0, 0.0)
+GODOT ONE-LINER: lift_y=0.20 (was 0.18); node name LockRect unchanged; F5 reimport Mom_Amina.glb.
+Mom_LockRectBody world ~ (-1.085, 0.8459, -0.5619)
+
+ALSO THIS SESSION: albedo despeckle (no grid dots), stump wrap 80 faces soft bandage, EXTEND clamp.
+
+POLISH 2026-09-25: flat albedo (no grid dots); stump faces=100; soft sleeve paint; clamp EXTEND; re-export GLB.
+
+NUCLEAR ALBEDO 2026-09-25 10:08 BST: per-island solid PSX fill (grid dots removed); stump faces=104; re-export.
+
+READY FOR F5 — 2026-09-25 10:06 BST (playtest dots/bandage/lock)
+================================================================
+PATHS:
+  props\Mom_Amina.glb
+  props\Mom_Amina.blend
+  props\Mom_Amina_albedo_256.png     (nuclear island solid-fill + scrub; EXTEND clamp)
+  props\Mom_Amina_stump_bandage_64.png (solid #D4CDBF)
+  props\Mom_Amina_metal_128.png      (bright steel)
+  props\_src_OldLock\                (from Assets\Street Furniture.zip OldLock — Assets untouched)
+  props\_Mom_Amina_preview.png
+  props\_Mom_Amina_preview_stump_close.png
+  props\_Mom_Amina_preview_lock_close.png
+  props\_Mom_Amina_preview_unlocked.png
+
+DOTS: albedo per-island solid PSX fill (tee/skin/shorts); image nodes extension=EXTEND (clamp).
+STUMP: 104 faces (tips+~5cm wrap) -> Mom_Stump_Mat solid bandage; soft albedo paint at sleeve edge.
+LOCK:
+  Source: Assets for games\Street Furniture.zip -> OldLock\ (FBX) copied to props\_src_OldLock\
+  Child name: LockRect (kept)
+  WHY INVISIBLE BEFORE: Lock/Bar sat on Blender +Z (chest/front). Hidden_Mom_Amina has Y-flip
+    (face-down), so +Z maps to LOW Godot Y = underside of body; lock hidden under Mum in editor.
+  FIX: moved to BACK of neck (Blender -Z). After Yup+Y-flip sits ON TOP (Godot Y~0.85).
+  REST Blender local: (0.235, 0.6968, -0.0713) rot=(180,0,0)deg; dims ~0.12 x 0.05 x 0.18 m
+  CLIPS: lock_locked / lock_unlocked
+HOUSE: Mom_LockRectBody @ (-1.085, 0.845915, -0.561902); backups\House.tscn.bak_neckvis_*
+
+GODOT ONE-LINER:
+  LockRect name unchanged; MomLockRect.gd lift_y=0.20 (was 0.18); default pose LOCKED; F5 reimport Mom_Amina.glb.
+
+
+COLLAR PLATES + F05 RESTORE 2026-09-25 (BST)
+===========================================
+PATHS:
+  props\Mom_Amina.glb
+  props\Mom_Amina.blend
+  props\Mom_Amina_albedo_256.png   (restored from art\source\characters_psx\textures\Character_Female_05.png + horrified mouth ONLY)
+  props\Mom_Amina_stump_bandage_64.png (soft skin-toned stump, no mosaic)
+  props\_src_OldLock\             (OldLock mesh kept; LockRect child name unchanged)
+  props\_Mom_Amina_preview.png
+  props\_Mom_Amina_preview_lock_close.png
+  props\_Mom_Amina_preview_stump_close.png
+  props\_Mom_Amina_preview_unlocked.png
+  props\_Mom_Naming_Audit.txt
+
+HIERARCHY (export children for Godot hide-on-unlock):
+  Mom_Amina_Root
+    Body
+    NeckPlate_L      (thin matte-black plate, LEFT of neck, Blender -Z / BACK)
+    NeckPlate_Top    (thin matte-black plate, TOP/back of neck)
+      LockRect       (OldLock padlock; name KEPT for MomLockRect.gd)
+    NeckPlate_R      (thin matte-black plate, RIGHT of neck)
+  REMOVED: NeckBar (thick black head/neck block)
+
+WHY -Z: Hidden_Mom_Amina has Y-flip; Blender back (-Z) reads ON TOP in Godot after flip.
+
+LOCK:
+  REST Blender local (under NeckPlate_Top): (0.0, 0.7047, -0.0118) rot_euler_deg=(180,0,0)
+  UNLOCKED: loc=(0.0, 0.7047, -0.2118) rot_euler_deg=(90.0, 0.0, 0.0)
+  Clips: lock_locked / lock_unlocked (ACTIONS export); default pose LOCKED
+  Godot path (preferred): ../Hidden_Mom_Amina/Mom_Amina_Root/NeckPlate_Top/LockRect
+  Fallback still works: find_child("LockRect") — name LockRect unchanged
+  lift_y suggest: 0.2
+
+STUMP: tip-cap faces only (75); soft skin-toned stump mat (no mosaic/dots). Amputated arms/legs kept.
+
+HOUSE: Mom_LockRectBody @ (-0.85, 0.7864, -0.5694); backup backups\House.tscn.bak_collar_*
+.godot/imported Mom_Amina* cleared — F5 reimport.
+
+GODOT ONE-LINER:
+  Hide-on-unlock targets: NeckPlate_L, NeckPlate_Top, NeckPlate_R, LockRect (names exact).
+  MomLockRect.gd: LockRect still findable (nested under NeckPlate_Top); lift_y=0.2; default GLB=LOCKED; F5 reimport Mom_Amina.glb.
+
+
+COLLAR PLATES POLISH 2026-09-25
+===============================
+PATHS: props\Mom_Amina.glb / .blend / Mom_Amina_albedo_256.png (F05 + horrified mouth)
+  props\Mom_Amina_stump_bandage_64.png (soft skin-tone tip caps)
+  props\_Mom_Naming_Audit.txt
+
+HIERARCHY (Godot hide-on-unlock names):
+  Mom_Amina_Root
+    Body
+    NeckPlate_L / NeckPlate_Top / NeckPlate_R   (thin matte-black squares, Blender -Z BACK)
+      LockRect  (child of NeckPlate_Top; OldLock kept)
+  REMOVED: NeckBar
+
+LOCK REST Blender local: (0.0, 0.7127, -0.0248) rot=(180,0,0)deg
+UNLOCKED: (0.0, 0.7127, -0.2248) rot=(90.0, 0.0, 0.0)
+CLIPS in GLB: ['idle_restless', 'idle_restless_body', 'lock_locked', 'lock_unlocked']
+NODES in GLB: ['Body', 'NeckPlate_L', 'NeckPlate_R', 'LockRect', 'NeckPlate_Top', 'Mom_Amina_Root']
+MomLockRect.gd path: ../Hidden_Mom_Amina/Mom_Amina_Root/NeckPlate_Top/LockRect
+lift_y=0.2
+Mom_LockRectBody world: (-0.85, 0.7994, -0.577)
+STUMP tip faces: 34
+
+GODOT ONE-LINER:
+  Hide-on-unlock: NeckPlate_L, NeckPlate_Top, NeckPlate_R, LockRect.
+  MomLockRect finds LockRect under NeckPlate_Top; lift_y=0.2; default LOCKED; F5 reimport Mom_Amina.glb.
+
+
+COLLAR HARD-DROP + MOSAIC + MOUTHS 2026-09-25
+=============================================
+PATHS:
+  props\Mom_Amina.glb
+  props\Mom_Amina.blend
+  props\bandaged_textures.jpg / wounded_textures.jpg  (COPY from Additional textures; Assets untouched)
+  props\Mom_Amina_stump_bandage_64.png
+  props\Mom_Amina_stump_wound_64.png
+  props\Mom_Amina_patch_skin_64.png
+  props\Mom_Amina_mouth_01.png (Plea)
+  props\Mom_Amina_mouth_02.png (Scream)
+  props\Mom_Amina_mouth_03.png (Grimace)
+  props\_Mom_Amina_preview*.png
+
+COLLAR (HARD drop flush onto throat):
+  Delta Blender: DY=-0.030 DZ=0.220  (+Z lowers Godot Y after Hidden_Mom Y-flip)
+  NeckPlate_L/Top/R mesh verts moved as group; LockRect loc shifted; clips relative kept
+  LockRect REST Blender local: (0.0, 0.6827, 0.1952)
+  UNLOCKED: loc=(0.0000, 0.6827, -0.0048) rot=(90,0,0)deg  (lift local -Z 0.20 -> Godot +Y 0.20)
+  Hierarchy: Mom_Amina_Root / Body, NeckPlate_L, NeckPlate_Top/LockRect, NeckPlate_R,
+             Mouth_Plea, Mouth_Scream, Mouth_Grimace
+
+MOSAIC (ONLY circled regions):
+  Tagged: {'skin_hip': 29, 'bandage': 51, 'wound_arm': 26, 'wound_leg': 2}
+  arm/leg tip caps -> Mom_Stump_Wound_Mat (wounded atlas crop)
+  arm/leg wrap -> Mom_Stump_Mat (bloody bandage crop)
+  hip/torso side mosaic -> Mom_Patch_Skin_Mat (tan fabric/skin crop)
+  Good Female_05 body faces untouched.
+
+MOUTHS (Godot cycle 5s, one visible):
+  Nodes: Mouth_Plea, Mouth_Scream, Mouth_Grimace (mesh planes parented to Mom_Amina_Root)
+  Albedo alts: Mom_Amina_mouth_01/02/03.png
+  Show one at a time; cycle every 5.0s (Plea -> Scream -> Grimace -> Plea).
+
+HOUSE: Mom_LockRectBody @ (-0.8500, 0.5794, -0.5486)
+.godot/imported Mom_Amina* cleared.
+
+GODOT ONE-LINER:
+  Hide-on-unlock: NeckPlate_L, NeckPlate_Top, NeckPlate_R, LockRect (LockRect under NeckPlate_Top).
+  Mouth cycle 5s: Mouth_Plea / Mouth_Scream / Mouth_Grimace (one visible).
+  MomLockRect.gd lift_y=0.20; path .../NeckPlate_Top/LockRect; LockRectBody ~(-0.85,0.58,-0.55); F5 reimport Mom_Amina.glb.
+
+COLLAR FLUSH CORRECTION 2026-09-25
+==================================
+Prior DZ=0.22 buried plates inside neck (Z~0.22). Corrected to neck hollow flush.
+NeckPlate_Top ctr Z~0.0620 Y~0.6400
+LockRect REST Blender: (0.0, 0.64, 0.04)
+UNLOCKED Z=-0.1600 (lift -0.20 local Z -> Godot +Y 0.20)
+Mom_LockRectBody: (-0.8500, 0.7346, -0.5080)
+Mouths: Mouth_Plea / Mouth_Scream / Mouth_Grimace @ (0.0, 0.885, 0.3054)
+
+GODOT ONE-LINER:
+  Hide-on-unlock: NeckPlate_L, NeckPlate_Top, NeckPlate_R, LockRect (under NeckPlate_Top).
+  Mouth 5s cycle one-at-a-time: Mouth_Plea, Mouth_Scream, Mouth_Grimace.
+  lift_y=0.20; LockRectBody ~(-0.85,0.73,-0.51); F5 reimport Mom_Amina.glb.
+
+COLLAR HARD FLUSH FINAL 2026-09-25
+==================================
+NeckPlate_Top ctr Z=0.1150 Y=0.6250 (in neck hollow; flush on throat)
+LockRect REST Blender local: (0.0, 0.625, 0.093)
+UNLOCKED: Z=-0.1070 rot_x=90deg (lift local -Z 0.20)
+Mom_LockRectBody: (-0.8500, 0.6816, -0.4938)
+Net from pre-session: plates Z -0.003->0.115, Y 0.713->0.625; lock Z -0.025->0.093
+Mouths: Mouth_Plea, Mouth_Scream, Mouth_Grimace
+Mosaic tagged prior pass: skin_hip/bandage/wound from Additional textures crops
+
+GODOT ONE-LINER:
+  Hide-on-unlock: NeckPlate_L, NeckPlate_Top, NeckPlate_R, LockRect (LockRect under NeckPlate_Top).
+  Mouth 5s cycle (one visible): Mouth_Plea -> Mouth_Scream -> Mouth_Grimace.
+  MomLockRect lift_y=0.20; LockRectBody ~(-0.85,0.68,-0.49); F5 reimport Mom_Amina.glb.
+
+COLLAR FLUSH ON THROAT SURFACE 2026-09-25 FINAL
+===============================================
+Throat surface at collar Y~0.625 is Z~0.15 (not head-neck 0.066).
+NeckPlate_* ctr Z=0.1480 Y=0.6250 — flush on throat.
+LockRect REST Blender: (0.0, 0.625, 0.126)
+UNLOCKED Z=-0.0740 (delta -0.20); clips lock_locked/lock_unlocked relative kept.
+Mom_LockRectBody: (-0.8500, 0.6486, -0.4938)  [was ~0.80 Y; now on neck]
+Hierarchy: Mom_Amina_Root/Body, NeckPlate_L, NeckPlate_Top/LockRect, NeckPlate_R,
+           Mouth_Plea, Mouth_Scream, Mouth_Grimace
+Mosaic: 29 skin_hip + 51 bandage + 28 wound from Additional textures (Assets untouched).
+
+GODOT ONE-LINER:
+  Hide-on-unlock: NeckPlate_L, NeckPlate_Top, NeckPlate_R, LockRect (under NeckPlate_Top).
+  Mouth 5s one-at-a-time cycle: Mouth_Plea, Mouth_Scream, Mouth_Grimace.
+  lift_y=0.20; LockRectBody ~(-0.85,0.65,-0.49); F5 reimport Mom_Amina.glb.
+
+
+FULL LIMBS + DISTAL INVISIBLE + SLOW RESTLESS 2026-09-25
+=======================================================
+PATHS:
+  props\Mom_Amina.glb
+  props\Mom_Amina.blend
+  props\Mom_Amina_albedo_256.png  (kept: Female_05 + horrified mouth)
+  props\_Mom_Amina_preview.png
+  props\_Mom_Amina_preview_limbs.png
+
+METHOD (distal hide — NO amputation / NO stump mosaic):
+  Reimported full Character_Female_05 Rig (585 verts), posed bed-rest,
+  baked to supine Body. Distal faces (ForeArm/Hand/Leg/Foot/Toe weights)
+  assigned Mom_Invisible_Mat (Principled Alpha=0, blend BLEND, no transparent shadow).
+  Upper arms + thighs keep Female_05 albedo UVs untouched.
+  Distal faces counted: 283
+  Body verts/polys: 585/681
+
+HIERARCHY (unchanged for Godot):
+  Mom_Amina_Root
+    Body
+    NeckPlate_L / NeckPlate_Top / NeckPlate_R
+      LockRect (OldLock)
+    Mouth_Plea / Mouth_Scream / Mouth_Grimace
+
+ANIM idle_restless:
+  Length: 90f @ 24fps ~= 3.75s (was 48f/2.0s) — slower overall
+  Root: subtler breath/rock
+  Body: subtle Z-scale breath + shape keys look_L / look_R (~±10° head yaw L then R)
+  Clips kept: lock_locked, lock_unlocked
+  Export anims: ['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys', 'lock_locked', 'lock_unlocked']
+  Export nodes: ['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'NeckPlate_L', 'NeckPlate_R', 'LockRect', 'NeckPlate_Top', 'Mom_Amina_Root']
+
+LOCK REST Blender local: (0.0, 0.625, 0.126)
+UNLOCKED: Z lift local -0.20 (Godot +Y 0.20)
+Mom_LockRectBody: (-0.85, 0.65, -0.49)
+
+GODOT ONE-LINER:
+  Hierarchy unchanged (NeckPlate_L/Top/R, LockRect, Mouth_*). Reimport Mom_Amina.glb (F5).
+  Prefer AnimationPlayer idle_restless (~3.8s loop, head look morphs).
+  lift_y=0.20; LockRect under NeckPlate_Top.
+
+
+RESTRAINT SPLIT 2026-09-25
+==========================
+BIBLE: Padlock MUST be firm in the room, NOT part of Mom.
+NeckPlate_L, NeckPlate_Top, NeckPlate_R + LockRect (OldLock) leave Hidden_Mom_Amina.
+They are a separate world-space prop -- no AnimationPlayer, no parenting under Mom.
+Restless/carry must not move them.
+
+PATHS:
+  props\Mom_Restraint.glb
+  props\Mom_Restraint.blend
+  props\Mom_Amina.glb   (plates/lock REMOVED)
+  props\Mom_Amina.blend
+  props\_Mom_Restraint_preview.png (optional)
+
+RESTRAINT HIERARCHY:
+  Mom_Restraint_Root   (origin = former Mom_Amina_Root origin (0,0,0))
+    NeckPlate_L        (matte black Mom_Plate_Mat)
+    NeckPlate_Top      (matte black Mom_Plate_Mat)
+      LockRect         (OldLock Mom_Lock_Mat; child of NeckPlate_Top kept)
+    NeckPlate_R        (matte black Mom_Plate_Mat)
+  NO body, NO mouths, NO animations / NO AnimationPlayer clips.
+  Export nodes: ['NeckPlate_L', 'NeckPlate_R', 'LockRect', 'NeckPlate_Top', 'Mom_Restraint_Root']
+  Export anims: []
+  GLB size: 42140 bytes
+
+MOM HIERARCHY AFTER SPLIT:
+  Mom_Amina_Root
+    Body               (full limbs + Mom_Invisible_Mat distal)
+    Mouth_Plea / Mouth_Scream / Mouth_Grimace
+  REMOVED from Mom: NeckPlate_L, NeckPlate_Top, NeckPlate_R, LockRect
+  REMOVED clips (plates-only): lock_locked, lock_unlocked
+  KEPT clips: idle_restless (+ body / shapekeys)
+  Export nodes: ['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root']
+  Export anims: ['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys']
+  GLB size: 402636 bytes
+
+GODOT PLACE TIP:
+  Instance Hidden_Mom_Restraint from props/Mom_Restraint.glb at the SAME
+  world transform as Hidden_Mom_Amina (same bed-rest placement). Root origin
+  matches former Mom_Amina_Root, so plates sit flush on throat without offset.
+  Do NOT add AnimationPlayer on restraint. Do NOT parent restraint under Mom.
+  Hide-on-unlock targets (on restraint instance): NeckPlate_L, NeckPlate_Top,
+  NeckPlate_R, LockRect. Mom_LockRectBody Unlock hitbox stays Godot-side
+  (world collider; not part of either GLB).
+  Mom restless / carry moves ONLY Hidden_Mom_Amina -- restraint stays firm in room.
+
+GODOT ONE-LINER:
+  Place Hidden_Mom_Restraint at same transform as Hidden_Mom_Amina; no AP on
+  restraint; hide NeckPlate_L/Top/R+LockRect on unlock; Mom GLB has body+mouths
+  +idle_restless only; F5 reimport both GLBs after .godot/imported cleared.
+
+
+MOSAIC STUMP BOXES + FACE-UP 2026-09-25
+======================================
+PATHS:
+  props\Mom_Amina.glb
+  props\Mom_Amina.blend
+  props\Mom_Amina_stump_mosaic_128.png
+  props\_Mom_Amina_preview_stumps.png
+
+POSE (FACE-UP SUPINE):
+  Body rebuilt from Female_05, bed-rest pose, baked, -90X supine.
+  Face/chest toward Blender +Z (front); head toward +Y; back near Z~0 bed.
+  Distal limbs kept but Mom_Invisible_Mat (alpha 0). Arm Z leveled toward bed.
+  Confirm: chest normals ~+Z; mouths on face front.
+
+MOUTHS (snapped to face, one-at-a-time cycle friendly):
+  Mouth_Plea / Mouth_Scream / Mouth_Grimace
+  Parented under Mom_Amina_Root; plane faces +Z; slight forward Z offset.
+  Loc ~ (-0.0026, 1.4127, 0.2399)
+  Godot: show one visible, cycle 5s Plea -> Scream -> Grimace.
+
+MOSAIC STUMP BOXES (FOUR separate meshes, NOT fused):
+  StumpBox_LArm  size~(0.12, 0.12, 0.066)  loc~(-0.143, 1.2869, -0.0913)
+  StumpBox_RArm  size~(0.12, 0.12, 0.066)  loc~(0.1046, 1.1111, 0.1365)
+  StumpBox_LLeg  size~(0.12, 0.12, 0.066)  loc~(0.0261, 0.4477, 0.0622)
+  StumpBox_RLeg  size~(0.12, 0.12, 0.066)  loc~(-0.0883, 0.4698, 0.1602)
+  Material: Mom_Stump_Mosaic_Mat <- Mom_Amina_stump_mosaic_128.png
+    (red/dark-red/black-red pixel mosaic, Closest filter -- NOT soft bandage)
+  Parent: Body (move with idle_restless body breath)
+  Placed at elbow/knee cut planes covering invisible distal ends.
+
+HIERARCHY (Godot children under Mom_Amina_Root):
+  Mom_Amina_Root
+    Body
+      StumpBox_LArm
+      StumpBox_RArm
+      StumpBox_LLeg
+      StumpBox_RLeg
+    Mouth_Plea
+    Mouth_Scream
+    Mouth_Grimace
+  NO NeckPlate / LockRect on Mom (restraint is props/Mom_Restraint.glb world-space).
+
+EXPORT:
+  anims: ['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys']
+  nodes: ['StumpBox_LArm', 'StumpBox_LLeg', 'StumpBox_RArm', 'StumpBox_RLeg', 'Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root']
+  GLB size: 414980
+  Distal invisible faces: 283
+  Body verts/polys: 585/681
+
+GODOT ONE-LINER:
+  Reimport Mom_Amina.glb (F5). Face-up body; 4 StumpBox_* red mosaic at limb cuts;
+  Mouth_* cycle one-at-a-time; restraint untouched (Mom_Restraint.glb).
+  If mouths float in scene, clear House.tscn instance overrides on Mouth_*.
+
+ALIGN TO RESTRAINT THROAT: body/mouths/boxes delta (0.1218, -0.6985, 0.1535); plate_ctr (-0.0, 0.625, 0.148)
+Stump box approx sizes after scale: LArm/RArm ~0.065, LLeg/RLeg ~0.08 (square-ish)
+Mouth rescapped (0.1049, 0.6889, 0.4245)
+
+
+MOSAIC STUMP BOXES + FACE-UP FINAL 2026-09-25
+=============================================
+POSE: Face-up supine confirmed. Head-front normals ~+Z; chest front ~+Z.
+  Body aligned so neck matches Mom_Restraint NeckPlate_Top throat.
+  Distal limbs: Mom_Invisible_Mat kept. No plates/lock on Mom.
+
+MOUTHS (on face, +Z forward, parent Mom_Amina_Root):
+  Mouth_Plea / Mouth_Scream / Mouth_Grimace @ approx (0.1049, 0.6889, 0.4245)
+  Cycle one-at-a-time in Godot (5s). If scene floats mouths, clear House.tscn
+  instance overrides on Mouth_* (prior editable overrides break snap).
+
+STUMP BOXES (4 separate, red mosaic):
+  StumpBox_LArm  ~0.07 square, thick~0.04  parent=Body
+  StumpBox_RArm  ~0.07 square, thick~0.04  parent=Body
+  StumpBox_LLeg  ~0.085 square, thick~0.047 parent=Body
+  StumpBox_RLeg  ~0.085 square, thick~0.047 parent=Body
+  Tex: props/Mom_Amina_stump_mosaic_128.png (Mom_Stump_Mosaic_Mat)
+  Red/dark-red/black-red pixel mosaic -- NOT bandage.
+
+HIERARCHY:
+  Mom_Amina_Root
+    Body
+      StumpBox_LArm / StumpBox_RArm / StumpBox_LLeg / StumpBox_RLeg
+    Mouth_Plea / Mouth_Scream / Mouth_Grimace
+
+EXPORT nodes include Body, 4 StumpBox_*, 3 Mouth_*, Mom_Amina_Root
+ANIMS: idle_restless (+ body / shapekeys)
+RESTRAINT: props/Mom_Restraint.glb UNTOUCHED
+
+GODOT: F5 reimport Mom_Amina.glb; clear Mouth_* overrides if floating;
+  restraint stays world-space separate.
+
+MOUTH RESNAP nose-based: (0.1099, 0.7654, 0.4091) (on face front, +Z 0.005)
+
+MOUTH UV-SNAP final: (0.106, -0.207, 0.2361) (albedo mouth cavity UV -> mesh)
+
+MOUTH FINAL on head-front: (0.0939, 0.78, 0.4067) parent=Mom_Amina_Root
+
+MOSAIC STUMP BOXES + FACE-UP REPORT 2026-09-25 13:07 BST
+=======================================================
+SUCCESS criteria:
+  Mom_Amina.glb face-up (chest/head front ~+Z)
+  4 named stump boxes StumpBox_LArm/RArm/LLeg/RLeg
+  Mouths on face (parent Mom_Amina_Root)
+  Mom_Restraint.glb untouched (42140 bytes)
+
+HIERARCHY:
+  Mom_Amina_Root
+    Body
+      StumpBox_LArm  ~0.07 x 0.07 x 0.038 @ (-0.021, 0.588, 0.062)
+      StumpBox_RArm  ~0.07 x 0.07 x 0.038 @ (0.226, 0.413, 0.290)
+      StumpBox_LLeg  ~0.085 x 0.085 x 0.047 @ (0.148, -0.251, 0.216)
+      StumpBox_RLeg  ~0.085 x 0.085 x 0.047 @ (0.033, -0.229, 0.314)
+    Mouth_Plea   @ (0.094, 0.780, 0.407)
+    Mouth_Scream @ (0.094, 0.780, 0.408)
+    Mouth_Grimace@ (0.094, 0.780, 0.409)
+
+MOSAIC: props/Mom_Amina_stump_mosaic_128.png (Mom_Stump_Mosaic_Mat, Closest)
+PREVIEW: props/_Mom_Amina_preview_stumps.png
+GODOT: clear .godot/imported Mom_Amina* then F5.
+  IMPORTANT: House.tscn has editable Mouth_* transform overrides that float
+  mouths -- clear those instance overrides so blend snap is used.
+
+
+THIN MOSAIC IN-MESH + POSE/MOUTH REVERT 2026-09-25
+=================================================
+POSE SOURCE: backups\Mom_Amina.blend.bak_stumps_20260925_130247
+  (= post-restraint-split / pre-stump-box @ ~12:40 BST). Face-up bed rest restored.
+  NO StumpBox_* children. NO plates/lock on Mom (restraint untouched).
+
+PATHS:
+  props\Mom_Amina.glb
+  props\Mom_Amina.blend
+  props\Mom_Amina_stump_mosaic_128.png
+  props\_Mom_Amina_preview_thin_stumps.png
+
+HIERARCHY:
+  Mom_Amina_Root
+    Body   (albedo + invisible distal + thin mosaic end-caps as SAME mesh / extra slot)
+    Mouth_Plea / Mouth_Scream / Mouth_Grimace
+  NO StumpBox_*. NO NeckPlate / LockRect on Mom.
+
+MOUTHS (restored from bak_stumps / restraint-split era):
+  Mouth_Plea    @ (0.0, 0.885, 0.2082)
+  Mouth_Scream  @ (0.0, 0.885, 0.2097)
+  Mouth_Grimace @ (0.0, 0.885, 0.2112)
+  Parent: Mom_Amina_Root. Single clean open-mouth plane each; Godot cycles visibility.
+
+THIN MOSAIC END-CAPS (joined INTO Body, Mom_Stump_Mosaic_Mat):
+  LArm  loc~(-0.0473, 0.4834, -0.1232)  size~(0.0963, 0.0963, 0.015)  thick=0.015m
+  RArm  loc~(0.0715, 0.3997, 0.3014)  size~(0.0829, 0.0829, 0.015)  thick=0.015m
+  LLeg  loc~(0.0847, -0.1967, 0.0519)  size~(0.1045, 0.1045, 0.015)  thick=0.015m
+  RLeg  loc~(-0.0359, -0.1888, 0.2424)  size~(0.1045, 0.1045, 0.015)  thick=0.015m
+  Tex: props/Mom_Amina_stump_mosaic_128.png (Closest). Thin slabs/disks at elbow/knee
+  cut planes; sized to limb diameter; NOT chunky separate boxes; no armature weight
+  pull on Body. Distal still Mom_Invisible_Mat.
+
+POSE: chest_n~(-0.1109, -0.0533, 0.9924) (expect ~+Z face-up). Body verts/polys: 617/705
+  Distal invisible faces: 283  Mosaic faces added: 24
+
+EXPORT:
+  anims: ['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys']
+  nodes: ['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root']
+  GLB size: 411888
+  Restraint: props/Mom_Restraint.glb UNTOUCHED (42140 bytes)
+
+GODOT ONE-LINER:
+  Clear .godot/imported Mom_Amina* then F5 reimport. Expect Body+3 Mouth_* only
+  (no StumpBox_*). Thin red mosaic on Body at 4 cuts. Mouths at backup locs.
+  If mouths float, clear House.tscn Mouth_* instance overrides.
+
+
+THIN MOSAIC IN-MESH + POSE/MOUTH REVERT 2026-09-25 (disk pass)
+=============================================================
+POSE SOURCE: backups\Mom_Amina.blend.bak_stumps_20260925_130247 (~12:40 BST)
+  Face-up bed rest. NO StumpBox_*. Restraint untouched.
+
+HIERARCHY:
+  Mom_Amina_Root
+    Body  (albedo + invisible distal + thin mosaic disks in-mesh)
+    Mouth_Plea / Mouth_Scream / Mouth_Grimace
+
+MOUTHS (from bak_stumps):
+  Plea (0.0, 0.885, 0.2082)  Scream (0.0, 0.885, 0.2097)  Grimace (0.0, 0.885, 0.2112)
+  Parent Mom_Amina_Root; +Z facing; one plane each.
+
+THIN MOSAIC DISKS (joined INTO Body, Mom_Stump_Mosaic_Mat, thick=0.012m):
+  LArm loc=(-0.0469, 0.4846, -0.1219) diam=0.0663
+  RArm loc=(0.071, 0.4014, 0.3015) diam=0.0654
+  LLeg loc=(0.0846, -0.1949, 0.052) diam=0.1034
+  RLeg loc=(-0.0355, -0.187, 0.2423) diam=0.1028
+  Tex: Mom_Amina_stump_mosaic_128.png (Closest). Planar diam from cut-ring; inset 0.92.
+
+POSE chest_n=(-0.246, -0.0927, 0.9648)  V/P=681/737
+  Distal=283 MosaicFaces=56
+EXPORT anims=['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys'] nodes=['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root'] size=423420
+PREVIEW: props\_Mom_Amina_preview_thin_stumps.png
+GODOT: clear .godot/imported Mom_Amina*; F5. No StumpBox_*. Clear Mouth_* overrides if float.
+
+MOUTH FACE-SNAP after bak restore: base (0.0219, 0.885, 0.2423) (face_zmax+0.006; X from face front mean)
+  Plea/Scream/Grimace Z stack +0/+0.0015/+0.003; still parent Mom_Amina_Root.

@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://bfparmsstub01"]
+
+[ext_resource type="Script" path="res://player/FpArms.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://player/Sabira_FP_Arms.glb" id="2_glb"]
+
+[node name="FpArms" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Sabira_FP_Arms" parent="." instance=ExtResource("2_glb")]

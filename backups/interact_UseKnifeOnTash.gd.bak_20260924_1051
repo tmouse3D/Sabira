@@ -1,0 +1,34 @@
+# Godot 4.x — Sabira / HOUSE
+class_name UseKnifeOnTash
+extends Interactable
+## Stub: use knife on Tash only when sedated and catch_count == 0 (else no prompt).
+
+@export var use_line: String = "Not yet."
+@export var use_line_duration: float = 1.5
+
+func _ready() -> void:
+	collision_layer = 5
+	collision_mask = 0
+	prompt_text = "[E] Use knife"
+
+func _eligible() -> bool:
+	if GameState == null:
+		return false
+	if not GameState.has_knife:
+		return false
+	if not GameState.tash_sedated:
+		return false
+	if GameState.catch_count != 0:
+		return false
+	return interact_enabled
+
+func can_interact(_player: Node) -> bool:
+	return _eligible()
+
+func get_prompt() -> String:
+	return prompt_text if _eligible() else ""
+
+func _on_interact(_player: Node) -> void:
+	if not _eligible():
+		return
+	get_tree().call_group("subtitle", "show_line", "SABIRA", use_line, use_line_duration)

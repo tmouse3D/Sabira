@@ -1,0 +1,499 @@
+[gd_scene format=3 uid="uid://cfceotvib7ql1"]
+
+[ext_resource type="PackedScene" uid="uid://xhefinjjqki" path="res://player/Player.tscn" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://b4c358qylnaea" path="res://interact/Door.tscn" id="2_door"]
+[ext_resource type="Script" uid="uid://bxa8ee3w6247e" path="res://world/StairCreak.gd" id="3_creak"]
+[ext_resource type="AudioStream" uid="uid://bnsdl1umlhpmu" path="res://audio/stair_creak.wav" id="4_wav"]
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 1
+background_color = Color(0.08, 0.07, 0.09, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.55, 0.52, 0.5, 1)
+ambient_light_energy = 0.35
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="mat_ground"]
+albedo_color = Color(0.35, 0.32, 0.28, 1)
+
+[sub_resource type="StandardMaterial3D" id="mat_wall"]
+albedo_color = Color(0.72, 0.7, 0.66, 1)
+
+[sub_resource type="StandardMaterial3D" id="mat_wall_dark"]
+albedo_color = Color(0.45, 0.42, 0.4, 1)
+
+[sub_resource type="StandardMaterial3D" id="mat_bookcase"]
+albedo_color = Color(0.3, 0.22, 0.15, 1)
+
+[sub_resource type="StandardMaterial3D" id="mat_hidden"]
+transparency = 1
+albedo_color = Color(0.2, 0.15, 0.18, 0.35)
+
+[sub_resource type="StandardMaterial3D" id="mat_stairs"]
+albedo_color = Color(0.55, 0.4, 0.28, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape_stairs"]
+size = Vector3(1.6, 3.2, 3.2)
+
+[sub_resource type="StandardMaterial3D" id="mat_upper"]
+albedo_color = Color(0.42, 0.38, 0.45, 1)
+
+[node name="House" type="Node3D" unique_id=891208725]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1099001298]
+environment = SubResource("Environment_main")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=996412758]
+transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 4, 10, 6)
+light_energy = 0.85
+shadow_enabled = true
+
+[node name="Structure" type="Node3D" parent="." unique_id=2074941408]
+
+[node name="Hall_Floor" type="CSGBox3D" parent="Structure" unique_id=827856171]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+use_collision = true
+size = Vector3(4, 0.2, 6)
+material = SubResource("mat_ground")
+
+[node name="Dining_Floor" type="CSGBox3D" parent="Structure" unique_id=527443152]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.25, -0.1, 3.25)
+use_collision = true
+size = Vector3(4.5, 0.2, 4.5)
+material = SubResource("mat_ground")
+
+[node name="Living_Floor" type="CSGBox3D" parent="Structure" unique_id=994432271]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, -0.1, 3)
+use_collision = true
+size = Vector3(5, 0.2, 5)
+material = SubResource("mat_ground")
+
+[node name="Kitchen_Floor" type="CSGBox3D" parent="Structure" unique_id=1864844398]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.25, -0.1, -3)
+use_collision = true
+size = Vector3(4.5, 0.2, 4)
+material = SubResource("mat_ground")
+
+[node name="KitchenHall_Floor" type="CSGBox3D" parent="Structure" unique_id=1879031400]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, -0.1, -4)
+use_collision = true
+size = Vector3(2.5, 0.2, 2)
+material = SubResource("mat_ground")
+
+[node name="BookcaseArea_Floor" type="CSGBox3D" parent="Structure" unique_id=1434437807]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, -0.1, -2.75)
+use_collision = true
+size = Vector3(3, 0.2, 3.5)
+material = SubResource("mat_ground")
+
+[node name="HiddenRoom_Floor" type="CSGBox3D" parent="Structure" unique_id=908836290]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.25, -0.1, -2.5)
+use_collision = true
+size = Vector3(2.5, 0.2, 3)
+material = SubResource("mat_ground")
+
+[node name="Wall_South" type="CSGBox3D" parent="Structure" unique_id=118781036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1.3, 5.6)
+use_collision = true
+size = Vector3(14, 2.6, 0.2)
+material = SubResource("mat_wall")
+
+[node name="Wall_North" type="CSGBox3D" parent="Structure" unique_id=1915630189]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1.3, -5.1)
+use_collision = true
+size = Vector3(14, 2.6, 0.2)
+material = SubResource("mat_wall")
+
+[node name="Wall_West" type="CSGBox3D" parent="Structure" unique_id=2133255437]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.6, 1.3, 0.25)
+use_collision = true
+size = Vector3(0.2, 2.6, 10.9)
+material = SubResource("mat_wall")
+
+[node name="Wall_East" type="CSGBox3D" parent="Structure" unique_id=1339569389]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.6, 1.3, 0.25)
+use_collision = true
+size = Vector3(0.2, 2.6, 10.9)
+material = SubResource("mat_wall")
+
+[node name="Wall_HallDining_N" type="CSGBox3D" parent="Structure" unique_id=2135518364]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.3, 1)
+use_collision = true
+size = Vector3(0.2, 2.6, 2)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_HallDining_S" type="CSGBox3D" parent="Structure" unique_id=1248137409]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.3, 4.75)
+use_collision = true
+size = Vector3(0.2, 2.6, 1.5)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_HallLiving_N" type="CSGBox3D" parent="Structure" unique_id=74277065]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.3, 1)
+use_collision = true
+size = Vector3(0.2, 2.6, 2)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_HallLiving_S" type="CSGBox3D" parent="Structure" unique_id=1185184181]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.3, 4.75)
+use_collision = true
+size = Vector3(0.2, 2.6, 1.5)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_HallKitchen_W" type="CSGBox3D" parent="Structure" unique_id=1195004831]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.3, -1.75)
+use_collision = true
+size = Vector3(0.2, 2.6, 1.5)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_HallKitchen_E" type="CSGBox3D" parent="Structure" unique_id=4981249]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.3, -4.4)
+use_collision = true
+size = Vector3(0.2, 2.6, 1.2)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_DiningKitchen" type="CSGBox3D" parent="Structure" unique_id=1539680941]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.3, 1.3, 0.9)
+use_collision = true
+size = Vector3(4.4, 2.6, 0.2)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_LivingRear" type="CSGBox3D" parent="Structure" unique_id=1507385950]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.4, 1.3, 0.4)
+use_collision = true
+size = Vector3(4.8, 2.6, 0.2)
+material = SubResource("mat_wall_dark")
+
+[node name="BookcaseWall" type="CSGBox3D" parent="Structure" unique_id=129993531]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9, 1.2, -2.5)
+use_collision = true
+size = Vector3(0.35, 2.4, 2.8)
+material = SubResource("mat_bookcase")
+
+[node name="HiddenRoom_WallN" type="CSGBox3D" parent="Structure" unique_id=134454587]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.25, 1.3, -4.1)
+use_collision = true
+size = Vector3(2.7, 2.6, 0.2)
+material = SubResource("mat_wall_dark")
+
+[node name="HiddenRoom_WallE" type="CSGBox3D" parent="Structure" unique_id=1478555924]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 1.3, -2.5)
+use_collision = true
+size = Vector3(0.2, 2.6, 3.2)
+material = SubResource("mat_wall_dark")
+
+[node name="HiddenRoom_WallS" type="CSGBox3D" parent="Structure" unique_id=1495344711]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.15, 1.3, -0.9)
+use_collision = true
+size = Vector3(2.5, 2.6, 0.2)
+material = SubResource("mat_wall_dark")
+
+[node name="Dining" type="Node3D" parent="Structure" unique_id=1686749193]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.25, 0.05, 3.25)
+
+[node name="Kitchen" type="Node3D" parent="Structure" unique_id=2086574201]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.25, 0.05, -3)
+
+[node name="Living" type="Node3D" parent="Structure" unique_id=159485694]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.05, 3)
+
+[node name="Hall" type="Node3D" parent="Structure" unique_id=1119921]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="BookcaseWallMarker" type="Node3D" parent="Structure" unique_id=1896295867]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9, 0.05, -2.5)
+
+[node name="HiddenRoom" type="Node3D" parent="Structure" unique_id=1419498500]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.25, 0.05, -2.5)
+
+[node name="HiddenRoomVolume" type="CSGBox3D" parent="Structure/HiddenRoom" unique_id=20445225]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, 0)
+size = Vector3(2.2, 2.4, 2.6)
+material = SubResource("mat_hidden")
+
+[node name="KitchenHall" type="Node3D" parent="Structure" unique_id=2065330899]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, 0.05, -4)
+
+[node name="Stairs" type="Node3D" parent="Structure" unique_id=1628205137]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
+
+[node name="Step_1" type="CSGBox3D" parent="Structure/Stairs" unique_id=251946036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.125, 0)
+use_collision = true
+size = Vector3(1.4, 0.25, 0.28)
+material = SubResource("mat_stairs")
+
+[node name="Step_2" type="CSGBox3D" parent="Structure/Stairs" unique_id=5431441]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.375, -0.28)
+use_collision = true
+size = Vector3(1.4, 0.25, 0.28)
+material = SubResource("mat_stairs")
+
+[node name="Step_3" type="CSGBox3D" parent="Structure/Stairs" unique_id=1452912391]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.625, -0.56)
+use_collision = true
+size = Vector3(1.4, 0.25, 0.28)
+material = SubResource("mat_stairs")
+
+[node name="Step_4" type="CSGBox3D" parent="Structure/Stairs" unique_id=1807056022]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, -0.84)
+use_collision = true
+size = Vector3(1.4, 0.25, 0.28)
+material = SubResource("mat_stairs")
+
+[node name="Step_5" type="CSGBox3D" parent="Structure/Stairs" unique_id=1508310176]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.125, -1.12)
+use_collision = true
+size = Vector3(1.4, 0.25, 0.28)
+material = SubResource("mat_stairs")
+
+[node name="Step_6" type="CSGBox3D" parent="Structure/Stairs" unique_id=276233598]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.375, -1.4)
+use_collision = true
+size = Vector3(1.4, 0.25, 0.28)
+material = SubResource("mat_stairs")
+
+[node name="Step_7" type="CSGBox3D" parent="Structure/Stairs" unique_id=88225387]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.625, -1.68)
+use_collision = true
+size = Vector3(1.4, 0.25, 0.28)
+material = SubResource("mat_stairs")
+
+[node name="Step_8" type="CSGBox3D" parent="Structure/Stairs" unique_id=2023465707]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.875, -1.96)
+use_collision = true
+size = Vector3(1.4, 0.25, 0.28)
+material = SubResource("mat_stairs")
+
+[node name="Step_9" type="CSGBox3D" parent="Structure/Stairs" unique_id=81543764]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.125, -2.24)
+use_collision = true
+size = Vector3(1.4, 0.25, 0.28)
+material = SubResource("mat_stairs")
+
+[node name="Step_10" type="CSGBox3D" parent="Structure/Stairs" unique_id=1127630043]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.375, -2.52)
+use_collision = true
+size = Vector3(1.4, 0.25, 0.28)
+material = SubResource("mat_stairs")
+
+[node name="Step_11" type="CSGBox3D" parent="Structure/Stairs" unique_id=605304165]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.625, -2.8)
+use_collision = true
+size = Vector3(1.4, 0.25, 0.28)
+material = SubResource("mat_stairs")
+
+[node name="Step_12" type="CSGBox3D" parent="Structure/Stairs" unique_id=715113315]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.875, -3.08)
+use_collision = true
+size = Vector3(1.4, 0.25, 0.28)
+material = SubResource("mat_stairs")
+
+[node name="Rail_L" type="CSGBox3D" parent="Structure/Stairs" unique_id=462323544]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.75, 1.5, -1.54)
+use_collision = true
+size = Vector3(0.1, 3, 3.36)
+material = SubResource("mat_wall_dark")
+
+[node name="Rail_R" type="CSGBox3D" parent="Structure/Stairs" unique_id=1819012114]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.75, 1.5, -1.54)
+use_collision = true
+size = Vector3(0.1, 3, 3.36)
+material = SubResource("mat_wall_dark")
+
+[node name="StairCreak" type="Area3D" parent="Structure/Stairs" unique_id=1950515047]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -1.5)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("3_creak")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/Stairs/StairCreak" unique_id=1739714520]
+shape = SubResource("BoxShape_stairs")
+
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="Structure/Stairs/StairCreak" unique_id=1221232960]
+stream = ExtResource("4_wav")
+max_distance = 18.0
+
+[node name="Landing_Floor" type="CSGBox3D" parent="Structure" unique_id=884062064]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9, -4.2)
+use_collision = true
+size = Vector3(4, 0.2, 3)
+material = SubResource("mat_upper")
+
+[node name="UpperHall_Floor" type="CSGBox3D" parent="Structure" unique_id=222193626]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9, -6.5)
+use_collision = true
+size = Vector3(8, 0.2, 2.2)
+material = SubResource("mat_upper")
+
+[node name="SabiraRoom_Floor" type="CSGBox3D" parent="Structure" unique_id=701450212]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 2.9, -6)
+use_collision = true
+size = Vector3(4, 0.2, 4)
+material = SubResource("mat_upper")
+
+[node name="TashRoom_Floor" type="CSGBox3D" parent="Structure" unique_id=2024518742]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 2.9, -6)
+use_collision = true
+size = Vector3(4, 0.2, 4)
+material = SubResource("mat_upper")
+
+[node name="Bathroom_Floor" type="CSGBox3D" parent="Structure" unique_id=1753349273]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9, -8.5)
+use_collision = true
+size = Vector3(3, 0.2, 3)
+material = SubResource("mat_upper")
+
+[node name="Upper_Wall_S" type="CSGBox3D" parent="Structure" unique_id=1688235065]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.3, -2.6)
+use_collision = true
+size = Vector3(12.5, 2.6, 0.2)
+material = SubResource("mat_wall")
+
+[node name="Upper_Wall_N" type="CSGBox3D" parent="Structure" unique_id=204567958]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.3, -10.1)
+use_collision = true
+size = Vector3(12.5, 2.6, 0.2)
+material = SubResource("mat_wall")
+
+[node name="Upper_Wall_W" type="CSGBox3D" parent="Structure" unique_id=1191180216]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 4.3, -6.35)
+use_collision = true
+size = Vector3(0.2, 2.6, 7.7)
+material = SubResource("mat_wall")
+
+[node name="Upper_Wall_E" type="CSGBox3D" parent="Structure" unique_id=442032567]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 4.3, -6.35)
+use_collision = true
+size = Vector3(0.2, 2.6, 7.7)
+material = SubResource("mat_wall")
+
+[node name="Wall_LandingSabira_A" type="CSGBox3D" parent="Structure" unique_id=1656893922]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 4.3, -4.5)
+use_collision = true
+size = Vector3(0.2, 2.6, 1.2)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_LandingSabira_B" type="CSGBox3D" parent="Structure" unique_id=207069002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 4.3, -7.5)
+use_collision = true
+size = Vector3(0.2, 2.6, 1.5)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_LandingTash_A" type="CSGBox3D" parent="Structure" unique_id=807432858]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 4.3, -4.5)
+use_collision = true
+size = Vector3(0.2, 2.6, 1.2)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_LandingTash_B" type="CSGBox3D" parent="Structure" unique_id=2094096933]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 4.3, -7.5)
+use_collision = true
+size = Vector3(0.2, 2.6, 1.5)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_HallBath_L" type="CSGBox3D" parent="Structure" unique_id=1223608587]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 4.3, -7.7)
+use_collision = true
+size = Vector3(1, 2.6, 0.2)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_HallBath_R" type="CSGBox3D" parent="Structure" unique_id=2098017205]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 4.3, -7.7)
+use_collision = true
+size = Vector3(1, 2.6, 0.2)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_SabiraHall" type="CSGBox3D" parent="Structure" unique_id=1968090461]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.1, 4.3, -4)
+use_collision = true
+size = Vector3(1.8, 2.6, 0.2)
+material = SubResource("mat_wall_dark")
+
+[node name="Wall_TashHall" type="CSGBox3D" parent="Structure" unique_id=221161503]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.1, 4.3, -4)
+use_collision = true
+size = Vector3(1.8, 2.6, 0.2)
+material = SubResource("mat_wall_dark")
+
+[node name="Landing" type="Node3D" parent="Structure" unique_id=2081865793]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.05, -4.2)
+
+[node name="UpperHall" type="Node3D" parent="Structure" unique_id=662813576]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.05, -6.5)
+
+[node name="SabiraRoom" type="Node3D" parent="Structure" unique_id=104914555]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3.05, -6)
+
+[node name="TashRoom" type="Node3D" parent="Structure" unique_id=839590574]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 3.05, -6)
+
+[node name="Bathroom" type="Node3D" parent="Structure" unique_id=1186926540]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.05, -8.5)
+
+[node name="Ceiling_Dining" type="CSGBox3D" parent="Structure" unique_id=742624203]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.25, 2.95, 3.25)
+use_collision = true
+size = Vector3(4.5, 0.15, 4.5)
+material = SubResource("mat_wall_dark")
+
+[node name="Ceiling_Living" type="CSGBox3D" parent="Structure" unique_id=1166978446]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 2.95, 3)
+use_collision = true
+size = Vector3(5, 0.15, 5)
+material = SubResource("mat_wall_dark")
+
+[node name="Ceiling_Kitchen" type="CSGBox3D" parent="Structure" unique_id=751991641]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.25, 2.95, -3)
+use_collision = true
+size = Vector3(4.5, 0.15, 4)
+material = SubResource("mat_wall_dark")
+
+[node name="Ceiling_HallFront" type="CSGBox3D" parent="Structure" unique_id=1882192948]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.95, 1.5)
+use_collision = true
+size = Vector3(4, 0.15, 3)
+material = SubResource("mat_wall_dark")
+
+[node name="Ceiling_Bookcase" type="CSGBox3D" parent="Structure" unique_id=1323762674]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.75, 2.95, -2.75)
+use_collision = true
+size = Vector3(5.5, 0.15, 3.5)
+material = SubResource("mat_wall_dark")
+
+[node name="Ceiling_Upper" type="CSGBox3D" parent="Structure" unique_id=459240821]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.6, -6.35)
+use_collision = true
+size = Vector3(12.5, 0.15, 7.7)
+material = SubResource("mat_wall_dark")
+
+[node name="Doors" type="Node3D" parent="." unique_id=561699121]
+
+[node name="Door_HallDining" parent="Doors" unique_id=736436491 instance=ExtResource("2_door")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 2.55)
+open_angle_deg = 85
+
+[node name="Door_HallLiving" parent="Doors" unique_id=527019366 instance=ExtResource("2_door")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 2, 0, 2.55)
+open_angle_deg = -85
+
+[node name="Door_HallKitchen" parent="Doors" unique_id=2088166379 instance=ExtResource("2_door")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2.85)
+open_angle_deg = -85
+
+[node name="Door_Back" parent="Doors" unique_id=1659646298 instance=ExtResource("2_door")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.25, 0, -5)
+
+[node name="Door_Sabira" parent="Doors" unique_id=1192722468 instance=ExtResource("2_door")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -5.7)
+open_angle_deg = 85
+
+[node name="Door_Tash" parent="Doors" unique_id=1126545533 instance=ExtResource("2_door")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 2, 3, -5.7)
+open_angle_deg = -85
+
+[node name="Door_Bathroom" parent="Doors" unique_id=2075225069 instance=ExtResource("2_door")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 3, -7.7)
+
+[node name="Player" parent="." unique_id=865965049 instance=ExtResource("1_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 2.5)

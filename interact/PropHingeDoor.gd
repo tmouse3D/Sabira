@@ -1,0 +1,227 @@
+# Godot 4.x - Sabira / HOUSE
+class_name PropHingeDoor
+extends Interactable
+## Open/close a child hinge mesh (e.g. FridgeDoor) via local Y rotation.
+## Resolves door_path; if missing, searches under sibling mesh roots for FridgeDoor (nested OK).
+## Optional interior OmniLight3D toggled with open/close (fridge).
+## When OPEN: large volume collide off (layer 0 / shape disabled) so interior pickups
+## (e.g. PillsJar) can receive the ray; thin CupboardCloseHit on door LEAF only (no frame).
+
+@export var door_path: NodePath
+@export var door_node_name: String = "FridgeDoor"
+@export var open_angle_deg: float = -90.0
+@export var open_speed: float = 3.5
+@export var open_prompt: String = "[E] Open fridge"
+@export var close_prompt: String = "[E] Close fridge"
+@export var peek_line: String = ""
+@export var peek_lines: PackedStringArray = []
+@export var peek_once: bool = true
+@export var peek_duration: float = 2.5
+@export var creak_stream: AudioStream
+@export var creak_volume_db: float = -16.0
+@export var interior_light_path: NodePath
+@export var interior_light_energy: float = 0.55
+
+var _door: Node3D
+var _is_open: bool = false
+var _closed_yaw: float = 0.0
+var _target_yaw: float = 0.0
+var _peeked: bool = false
+var _creak: AudioStreamPlayer3D
+var _interior_light: OmniLight3D
+var _close_hits: Array[CupboardCloseHit] = []
+var _volume_shape: CollisionShape3D
+
+
+func _ready() -> void:
+	collision_layer = 5
+	collision_mask = 0
+	interact_enabled = true
+	_door = _resolve_door()
+	if _door == null:
+		push_warning("PropHingeDoor '%s': door missing (path=%s name=%s)" % [name, door_path, door_node_name])
+		interact_enabled = false
+		return
+	_closed_yaw = _door.rotation.y
+	_target_yaw = _closed_yaw
+	_ensure_creak_player()
+	_resolve_interior_light()
+	_set_interior_light(false)
+	_ensure_close_hits()
+	_apply_open_collision()
+	_update_prompt()
+
+
+func _resolve_door() -> Node3D:
+	if door_path != NodePath(""):
+		var via_path := get_node_or_null(door_path) as Node3D
+		if via_path:
+			return via_path
+	var parent_n := get_parent()
+	if parent_n:
+		var found := parent_n.find_child(door_node_name, true, false) as Node3D
+		if found:
+			return found
+	return find_child(door_node_name, true, false) as Node3D
+
+
+func _resolve_interior_light() -> void:
+	if interior_light_path != NodePath(""):
+		_interior_light = get_node_or_null(interior_light_path) as OmniLight3D
+	if _interior_light == null:
+		_interior_light = get_node_or_null("FridgeInteriorLight") as OmniLight3D
+	if _interior_light == null:
+		_interior_light = find_child("FridgeInteriorLight", true, false) as OmniLight3D
+
+
+func _set_interior_light(on: bool) -> void:
+	if _interior_light == null:
+		return
+	_interior_light.visible = on
+	_interior_light.light_energy = interior_light_energy if on else 0.0
+
+
+func _ensure_close_hits() -> void:
+	_close_hits.clear()
+	_volume_shape = get_node_or_null("CollisionShape3D") as CollisionShape3D
+	# Disable any legacy frame slab that filled the cavity and stole jar Take/Put-back.
+	var legacy := get_node_or_null("CloseHitFrame") as CupboardCloseHit
+	if legacy:
+		legacy.set_active(false)
+		legacy.collision_layer = 0
+		legacy.interact_enabled = false
+	if _door:
+		# CloseHit ONLY on door leaf (thin) - never a cavity-filling frame.
+		_close_hits.append(_make_close_hit(_door, "CloseHitDoor", Vector3(0.0, 0.0, 0.015), Vector3(0.42, 1.35, 0.045)))
+
+
+func _ensure_frame_close_hit() -> CupboardCloseHit:
+	var existing := get_node_or_null("CloseHitFrame") as CupboardCloseHit
+	if existing:
+		existing.setup(self, close_prompt)
+		return existing
+	if _volume_shape == null:
+		return null
+	var hit := CupboardCloseHit.new()
+	hit.name = "CloseHitFrame"
+	add_child(hit)
+	hit.transform = _volume_shape.transform
+	var shape := CollisionShape3D.new()
+	shape.name = "CollisionShape3D"
+	var box := BoxShape3D.new()
+	var src := _volume_shape.shape as BoxShape3D
+	var sx := 0.7
+	var sy := 1.8
+	var sz := 0.7
+	if src:
+		sx = src.size.x
+		sy = src.size.y
+		sz = src.size.z
+	# Thin slab on the room-facing face (local +Z of the volume shape).
+	box.size = Vector3(sx * 0.95, sy * 0.92, 0.1)
+	shape.shape = box
+	shape.position = Vector3(0.0, 0.0, sz * 0.45)
+	hit.add_child(shape)
+	hit.setup(self, close_prompt)
+	return hit
+
+
+func _make_close_hit(parent_n: Node3D, hit_name: String, local_offset: Vector3, box_size: Vector3) -> CupboardCloseHit:
+	var existing := parent_n.get_node_or_null(hit_name) as CupboardCloseHit
+	if existing:
+		existing.setup(self, close_prompt)
+		existing.position = local_offset
+		var es := existing.get_node_or_null("CollisionShape3D") as CollisionShape3D
+		if es and es.shape is BoxShape3D:
+			(es.shape as BoxShape3D).size = box_size
+		return existing
+	var hit := CupboardCloseHit.new()
+	hit.name = hit_name
+	parent_n.add_child(hit)
+	hit.position = local_offset
+	var shape := CollisionShape3D.new()
+	shape.name = "CollisionShape3D"
+	var box := BoxShape3D.new()
+	box.size = box_size
+	shape.shape = box
+	hit.add_child(shape)
+	hit.setup(self, close_prompt)
+	return hit
+
+
+func _apply_open_collision() -> void:
+	# Open: volume shape off + layer 0 so ray hits pills jar; door-leaf close-hit on (no cavity frame).
+	if _volume_shape:
+		_volume_shape.disabled = _is_open
+	collision_layer = 0 if _is_open else 5
+	for hit in _close_hits:
+		if hit:
+			hit.set_active(_is_open)
+			hit.prompt_text = close_prompt
+
+
+func _physics_process(delta: float) -> void:
+	if _door == null:
+		return
+	var current := _door.rotation.y
+	if absf(wrapf(current - _target_yaw, -PI, PI)) < 0.01:
+		_door.rotation.y = _target_yaw
+		return
+	_door.rotation.y = lerp_angle(current, _target_yaw, clampf(open_speed * delta, 0.0, 1.0))
+
+
+func _on_interact(_player: Node) -> void:
+	if _door == null:
+		return
+	_is_open = not _is_open
+	_target_yaw = _closed_yaw + deg_to_rad(open_angle_deg) if _is_open else _closed_yaw
+	_play_creak()
+	_set_interior_light(_is_open)
+	_apply_open_collision()
+	_update_prompt()
+	if _is_open:
+		var line := _pick_peek_line()
+		if line.is_empty():
+			return
+		if peek_once and _peeked:
+			return
+		_peeked = true
+		get_tree().call_group("subtitle", "show_line", "SABIRA", line, peek_duration)
+
+
+func _pick_peek_line() -> String:
+	if peek_lines.size() > 0:
+		return peek_lines[randi() % peek_lines.size()]
+	return peek_line
+
+
+func _ensure_creak_player() -> void:
+	_creak = get_node_or_null("CreakPlayer") as AudioStreamPlayer3D
+	if _creak == null:
+		_creak = AudioStreamPlayer3D.new()
+		_creak.name = "CreakPlayer"
+		_creak.max_distance = 12.0
+		add_child(_creak)
+	# Hinge props: very short open clip (not long OldDoorCreak / room squeak).
+	if creak_stream == null:
+		creak_stream = load("res://audio/sfx/fridge_open_short.wav") as AudioStream
+	if creak_stream == null:
+		creak_stream = load("res://audio/darkworld/OldDoorClose.wav") as AudioStream
+	if creak_stream == null:
+		creak_stream = load("res://audio/sfx/door_creak.wav") as AudioStream
+	_creak.stream = creak_stream
+	_creak.volume_db = creak_volume_db
+	_creak.bus = &"Master"
+
+
+func _play_creak() -> void:
+	if _creak == null:
+		_ensure_creak_player()
+	if _creak and _creak.stream:
+		_creak.pitch_scale = randf_range(0.85, 1.05)
+		_creak.volume_db = creak_volume_db + randf_range(-1.5, 0.5)
+		_creak.play()
+
+
+func _update_prompt() -> void:
+	prompt_text = close_prompt if _is_open else open_prompt

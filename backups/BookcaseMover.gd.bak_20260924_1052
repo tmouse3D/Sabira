@@ -1,0 +1,252 @@
+# Godot 4.x â€” Sabira / HOUSE
+extends Node3D
+## Slides bookcase mesh + collision aside to expose HiddenRoom passage.
+## Supports open AND close (scrape both directions).
+##
+## Slide axis: BookcaseMover is unrotated at (-4.7, 0, -2.6). The secret wall face
+## is in the YZ plane (wall normal = world X into/out of HiddenRoom at more-negative X).
+## Books face +X (living side); solid back faces -X (hidden room).
+## slide_offset must move ALONG the wall (world/local Z), NOT along the normal (X).
+## Final: Vector3(0, 0, -1.6) â€” ~1.6 m north along the wall, clearing a walkable gap.
+## PHOTO BOX: child Living_PhotoBox on top. On first OPENING, play GLB tip_spill* clips
+## (Box tips, Photos spill), subtitle "Photosâ€¦?", GameState.discovered_photos.
+## After spill settles: arm PhotosPickup on Living_PhotoBoxBody (floor hit).
+## Mum...? is NOT fired here â€” reserved for hidden-room clear.
+
+signal state_changed(state: int)
+
+enum State { CLOSED, OPENING, OPEN, CLOSING }
+
+@export var slide_offset: Vector3 = Vector3(0, 0, -1.6)
+@export var open_duration: float = 3.0
+@export var noise_amount: float = 0.8
+@export var photo_spill_settle_sec: float = 0.85
+@export var photos_floor_local: Vector3 = Vector3(0.55, 0.08, 0.15)
+@export var tip_spill_speed_scale: float = 1.8
+
+@onready var _body: StaticBody3D = $BookcaseBody
+@onready var _audio: AudioStreamPlayer3D = $AudioStreamPlayer3D
+
+var _state: int = State.CLOSED
+var _home_pos: Vector3
+var _open_pos: Vector3
+var _from_pos: Vector3
+var _to_pos: Vector3
+var _elapsed: float = 0.0
+var _segment_duration: float = 3.0
+var _photo_spill_started: bool = false
+var _photos_pickup: PhotosPickup
+var _spill_players: Array[AnimationPlayer] = []
+
+
+func _ready() -> void:
+	_home_pos = position
+	_open_pos = _home_pos + slide_offset
+	set_physics_process(false)
+	_apply_collision_for_state()
+	_setup_photos_pickup()
+
+
+func _setup_photos_pickup() -> void:
+	var box_body := get_node_or_null("Living_PhotoBoxBody") as StaticBody3D
+	if box_body == null:
+		push_warning("BookcaseMover: Living_PhotoBoxBody missing")
+		return
+	# Until spill: do not steal interact ray (non-Interactable body on layer 5).
+	box_body.collision_layer = 0
+	box_body.collision_mask = 0
+	_photos_pickup = box_body as PhotosPickup
+	if _photos_pickup == null:
+		# Script may be assigned in scene; if not, attach at runtime.
+		if box_body.get_script() == null:
+			box_body.set_script(load("res://interact/PhotosPickup.gd"))
+		_photos_pickup = box_body as PhotosPickup
+	if _photos_pickup:
+		_photos_pickup.arm_photos_pickup(false)
+
+
+func get_state() -> int:
+	return _state
+
+
+func is_fully_open() -> bool:
+	return _state == State.OPEN
+
+
+func is_fully_closed() -> bool:
+	return _state == State.CLOSED and position.distance_to(_home_pos) < 0.04
+
+
+func is_moving() -> bool:
+	return _state == State.OPENING or _state == State.CLOSING
+
+
+func toggle_or_stop() -> void:
+	match _state:
+		State.CLOSED:
+			_start_toward(_open_pos, State.OPENING)
+		State.OPENING, State.CLOSING:
+			_stop_in_place()
+		State.OPEN:
+			_start_toward(_home_pos, State.CLOSING)
+
+
+func _start_toward(target: Vector3, next_state: int) -> void:
+	_from_pos = position
+	_to_pos = target
+	var full := _home_pos.distance_to(_open_pos)
+	var remaining := _from_pos.distance_to(_to_pos)
+	if full > 0.001:
+		_segment_duration = open_duration * (remaining / full)
+	else:
+		_segment_duration = open_duration
+	_segment_duration = maxf(_segment_duration, 0.05)
+	_elapsed = 0.0
+	_state = next_state
+	set_physics_process(true)
+	_play_scrape(true)
+	_apply_collision_for_state()
+	state_changed.emit(_state)
+	if next_state == State.OPENING and not _photo_spill_started:
+		_start_photo_spill()
+
+
+func _stop_in_place() -> void:
+	set_physics_process(false)
+	_play_scrape(false)
+	if position.distance_to(_open_pos) < 0.04:
+		position = _open_pos
+		_state = State.OPEN
+		if GameState:
+			GameState.bookcase_unlocked = true
+	elif position.distance_to(_home_pos) < 0.04:
+		position = _home_pos
+		_state = State.CLOSED
+	else:
+		# Mid-travel pause: treat as closed-ish so next press resumes OPENING.
+		_state = State.CLOSED
+	_apply_collision_for_state()
+	state_changed.emit(_state)
+
+
+func _physics_process(delta: float) -> void:
+	_elapsed += delta
+	var u := clampf(_elapsed / _segment_duration, 0.0, 1.0)
+	var s := u * u * (3.0 - 2.0 * u)
+	position = _from_pos.lerp(_to_pos, s)
+	if GameState:
+		GameState.report_noise(noise_amount)
+	if u >= 1.0:
+		position = _to_pos
+		set_physics_process(false)
+		_play_scrape(false)
+		if _state == State.OPENING:
+			_state = State.OPEN
+			if GameState:
+				GameState.bookcase_unlocked = true
+		elif _state == State.CLOSING:
+			_state = State.CLOSED
+		_apply_collision_for_state()
+		state_changed.emit(_state)
+
+
+func _apply_collision_for_state() -> void:
+	if _body == null:
+		return
+	# Solid while closed/moving; clear collision when fully open so passage is walkable.
+	var solid := _state != State.OPEN
+	_body.collision_layer = 1 if solid else 0
+	_body.collision_mask = 0
+
+
+func _play_scrape(on: bool) -> void:
+	if _audio == null or _audio.stream == null:
+		return
+	if on:
+		if not _audio.playing:
+			_audio.play()
+		if not _audio.finished.is_connected(_on_scrape_finished):
+			_audio.finished.connect(_on_scrape_finished)
+	else:
+		if _audio.finished.is_connected(_on_scrape_finished):
+			_audio.finished.disconnect(_on_scrape_finished)
+		_audio.stop()
+
+
+func _on_scrape_finished() -> void:
+	if is_moving() and _audio and _audio.stream:
+		_audio.play()
+
+
+func _start_photo_spill() -> void:
+	_photo_spill_started = true
+	if GameState:
+		GameState.discovered_photos = true
+	get_tree().call_group("subtitle", "show_line", "SABIRA", "Photosâ€¦?", 2.2)
+	var max_len := _play_tip_spill_anims()
+	var wait := maxf(photo_spill_settle_sec, max_len + 0.15)
+	get_tree().create_timer(wait).timeout.connect(_arm_photos_after_spill)
+
+
+func _play_tip_spill_anims() -> float:
+	var box := get_node_or_null("Living_PhotoBox") as Node
+	if box == null:
+		push_warning("BookcaseMover: Living_PhotoBox missing")
+		return photo_spill_settle_sec
+	var ap := box.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if ap == null:
+		push_warning("BookcaseMover: PhotoBox AnimationPlayer missing")
+		return photo_spill_settle_sec
+	var clips: Array[String] = []
+	var max_len := 0.0
+	for n in ap.get_animation_list():
+		var s := String(n)
+		if s.begins_with("tip_spill"):
+			clips.append(s)
+			var anim := ap.get_animation(n)
+			if anim:
+				max_len = maxf(max_len, anim.length)
+	if clips.is_empty():
+		# Fallback: play whatever is first.
+		var all := ap.get_animation_list()
+		if all.size() > 0:
+			ap.speed_scale = tip_spill_speed_scale
+			ap.play(all[0])
+			var a0 := ap.get_animation(all[0])
+			return (a0.length / tip_spill_speed_scale) if a0 else photo_spill_settle_sec
+		return photo_spill_settle_sec
+	# GLB exports one clip per object â€” play in parallel via duplicate players.
+	_spill_players.clear()
+	for i in clips.size():
+		var clip := clips[i]
+		var player := ap
+		if i > 0:
+			player = ap.duplicate() as AnimationPlayer
+			ap.get_parent().add_child(player)
+			_spill_players.append(player)
+		player.speed_scale = tip_spill_speed_scale
+		player.play(clip)
+	var scaled := (max_len / tip_spill_speed_scale) if tip_spill_speed_scale > 0.01 else max_len
+	return scaled if scaled > 0.0 else photo_spill_settle_sec
+
+
+func _arm_photos_after_spill() -> void:
+	if _photos_pickup == null:
+		_setup_photos_pickup()
+	if _photos_pickup == null:
+		return
+	# Detach spilled box+photos from BookcaseMover so they stay on the living-room
+	# floor while the bookcase keeps sliding (keep global transform).
+	var structure := get_parent() as Node3D
+	var photo_box := get_node_or_null("Living_PhotoBox") as Node3D
+	if photo_box and structure and photo_box.get_parent() == self:
+		photo_box.reparent(structure, true)
+	# Move hitbox to floor near spilled photos (living side of bookcase), then
+	# reparent so the interact volume does not ride the remaining slide either.
+	_photos_pickup.position = photos_floor_local
+	if structure and is_instance_valid(_photos_pickup) and _photos_pickup.get_parent() == self:
+		_photos_pickup.reparent(structure, true)
+	var shape := _photos_pickup.get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if shape and shape.shape is BoxShape3D:
+		(shape.shape as BoxShape3D).size = Vector3(0.55, 0.12, 0.45)
+	_photos_pickup.arm_photos_pickup(true)

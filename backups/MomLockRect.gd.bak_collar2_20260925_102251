@@ -1,0 +1,341 @@
+# Godot 4.x - Sabira / HOUSE
+class_name MomLockRect
+extends Interactable
+## LockRect on Mom_Amina: cage_key unlock hides restraint (plates + lock).
+## Unlock caption: Unlocked. then Mum...?; proximity once: Oh god.
+## Consumes cage_key on unlock (no Spent flash).
+## Hide targets found by name pattern under Mom_Amina_Root so art can drop
+## without hard paths. LockRect node stays in tree (visible=false) for resolve.
+
+@export var lock_mesh_path: NodePath = NodePath("../Hidden_Mom_Amina/Mom_Amina_Root/LockRect")
+@export var lift_y: float = 0.20
+@export var unlocked_rotation_deg: Vector3 = Vector3(-90.0, 0.0, 0.0)
+@export var prefer_unlock_clip: bool = true
+@export var locked_clip: String = "lock_locked"
+@export var unlocked_clip: String = "lock_unlocked"
+@export var line_duration: float = 2.5
+@export var unlock_line: String = "Unlocked."
+@export var mum_line: String = "Mum...?"
+@export var locked_line: String = "Locked."
+@export var wrong_key_line: String = "Wrong key."
+@export var proximity_line: String = "Oh god."
+@export var proximity_radius: float = 1.6
+
+## Exact node names to hide on unlock (plates may arrive later from Blender).
+const RESTRAINT_EXACT: PackedStringArray = [
+	"LockRect",
+	"OldLock",
+	"NeckBar",
+	"NeckPlate_L",
+	"NeckPlate_Top",
+	"NeckPlate_R",
+	"Plate_L",
+	"Plate_Top",
+	"Plate_R",
+]
+
+## Prefix stubs: match LockPlate*, NeckPlate*, Plate_*, NeckBar* when art renames.
+const RESTRAINT_PREFIXES: PackedStringArray = [
+	"LockPlate",
+	"NeckPlate",
+	"Plate_",
+	"NeckBar",
+	"OldLock",
+]
+
+var _unlocked: bool = false
+var _proximity_said: bool = false
+var _lock_mesh: Node3D
+var _lock_home_y: float = 0.0
+var _lock_home_pos: Vector3 = Vector3.ZERO
+var _lock_home_rot: Vector3 = Vector3.ZERO
+var _prox_area: Area3D
+var _anim: AnimationPlayer = null
+var _hidden_restraint: Array[Node] = []
+
+
+func _ready() -> void:
+	collision_layer = 5
+	collision_mask = 0
+	interact_enabled = true
+	prompt_text = "[E] Unlock"
+	_resolve_lock_mesh()
+	_resolve_anim()
+	_play_locked_pose()
+	_setup_proximity()
+	# Catch-1 / mid-session: keep unlocked hide if GameState already says so.
+	if GameState != null and GameState.mom_unlocked:
+		_unlocked = true
+		_apply_unlocked_visuals()
+		prompt_text = ""
+		interact_enabled = false
+
+
+func _resolve_lock_mesh() -> void:
+	_lock_mesh = get_node_or_null(lock_mesh_path) as Node3D
+	# If path hits the Mom instance (or any parent), drill to LockRect.
+	if _lock_mesh != null and String(_lock_mesh.name) != "LockRect":
+		var nested := _lock_mesh.find_child("LockRect", true, false) as Node3D
+		if nested:
+			_lock_mesh = nested
+	if _lock_mesh == null:
+		var parent_n := get_parent()
+		if parent_n:
+			_lock_mesh = parent_n.find_child("LockRect", true, false) as Node3D
+	if _lock_mesh == null:
+		var mom := _find_mom_root()
+		if mom:
+			_lock_mesh = mom.find_child("LockRect", true, false) as Node3D
+	if _lock_mesh:
+		_lock_home_y = _lock_mesh.position.y
+		_lock_home_pos = _lock_mesh.position
+		_lock_home_rot = _lock_mesh.rotation
+
+
+func _find_mom_root() -> Node3D:
+	# Prefer Mom_Amina_Root under Hidden_Mom_Amina; fall back to instance root.
+	var mom_inst := get_node_or_null("../Hidden_Mom_Amina") as Node3D
+	if mom_inst == null:
+		var p := get_parent()
+		if p:
+			mom_inst = p.get_node_or_null("Hidden_Mom_Amina") as Node3D
+	if mom_inst == null:
+		return null
+	var root := mom_inst.find_child("Mom_Amina_Root", true, false) as Node3D
+	if root:
+		return root
+	return mom_inst
+
+
+func _resolve_anim() -> void:
+	_anim = null
+	if _lock_mesh == null:
+		_resolve_lock_mesh()
+	if _lock_mesh == null:
+		return
+	_anim = _lock_mesh.get_node_or_null("AnimationPlayer") as AnimationPlayer
+	if _anim == null and _lock_mesh.get_parent():
+		_anim = _lock_mesh.get_parent().get_node_or_null("AnimationPlayer") as AnimationPlayer
+	if _anim == null:
+		var mom_root := get_node_or_null("../Hidden_Mom_Amina") as Node
+		if mom_root:
+			_anim = mom_root.find_child("AnimationPlayer", true, false) as AnimationPlayer
+
+
+func _resolve_clip_path(clip_name: String) -> String:
+	if _anim == null or clip_name == "":
+		return ""
+	if _anim.has_animation(clip_name):
+		return clip_name
+	var libs: Array = _anim.get_animation_library_list()
+	for lib_name_any in libs:
+		var lib_name := String(lib_name_any)
+		var full := lib_name + "/" + clip_name
+		if _anim.has_animation(full):
+			return full
+		var lib := _anim.get_animation_library(lib_name)
+		if lib != null and lib.has_animation(clip_name):
+			return full
+	return ""
+
+
+func _play_clip(clip_name: String) -> bool:
+	if _anim == null:
+		_resolve_anim()
+	if _anim == null:
+		return false
+	var path := _resolve_clip_path(clip_name)
+	if path == "":
+		return false
+	_anim.play(path)
+	return true
+
+
+func _play_locked_pose() -> void:
+	# Default GLB rest is already LOCKED. Do not play lock_locked on ready:
+	# shares AnimationPlayer with MomRestless idle_restless.
+	# Keep transform at imported rest; lock_locked remains available if called later.
+	if _lock_mesh:
+		_lock_mesh.position = _lock_home_pos
+		_lock_mesh.rotation = _lock_home_rot
+
+
+func _setup_proximity() -> void:
+	_prox_area = Area3D.new()
+	_prox_area.name = "Proximity"
+	_prox_area.monitoring = true
+	_prox_area.monitorable = false
+	_prox_area.collision_layer = 0
+	_prox_area.collision_mask = 1
+	var shape := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = proximity_radius
+	shape.shape = sphere
+	_prox_area.add_child(shape)
+	add_child(_prox_area)
+	_prox_area.body_entered.connect(_on_prox_body_entered)
+
+
+func _on_prox_body_entered(body: Node) -> void:
+	if _proximity_said or not _unlocked:
+		return
+	if body == null:
+		return
+	var n := String(body.name).to_lower()
+	if not (body.is_in_group("player") or n.contains("player") or n.contains("sabira")):
+		if not (body is CharacterBody3D):
+			return
+	_proximity_said = true
+	get_tree().call_group("subtitle", "show_line", "SABIRA", proximity_line, line_duration)
+
+
+func is_unlocked() -> bool:
+	return _unlocked
+
+
+func can_interact(_player: Node) -> bool:
+	return interact_enabled and not _unlocked
+
+
+func _player_has_any_other_key() -> bool:
+	if GameState == null:
+		return false
+	for flag in ["front_key", "back_key", "tash_room_key", "key"]:
+		if GameState.has_inventory_flag(flag):
+			return true
+	return false
+
+
+func _fire_mum_line() -> void:
+	get_tree().call_group("subtitle", "show_line", "SABIRA", mum_line, line_duration)
+
+
+func _on_interact(_player: Node) -> void:
+	if _unlocked or GameState == null:
+		return
+	if GameState.has_inventory_flag("cage_key"):
+		_unlocked = true
+		# Consume cage_key silently (no Spent flash). Caption: Unlocked. then Mum...?
+		GameState.remove_inventory_flag("cage_key")
+		GameState.amina_revealed = true
+		GameState.mom_unlocked = true
+		_apply_unlocked_visuals()
+		get_tree().call_group("subtitle", "show_line", "SABIRA", unlock_line, line_duration)
+		# Mum...? after Unlocked. (subtitle has no queue - delay past unlock duration).
+		get_tree().create_timer(line_duration).timeout.connect(_fire_mum_line)
+		prompt_text = ""
+		interact_enabled = false
+		return
+	var line := wrong_key_line if _player_has_any_other_key() else locked_line
+	get_tree().call_group("subtitle", "show_line", "SABIRA", line, line_duration)
+
+
+## Hide all restraint meshes + disable LockRect interact collider.
+## LockRect stays findable (visible=false, still in tree).
+func _apply_unlocked_visuals() -> void:
+	# Optional clip first (may be invisible once we hide); then full hide.
+	if prefer_unlock_clip:
+		play_unlocked_pose()
+	_hide_restraint_fully()
+	# Disable this interact body's collider so Unlock cannot be ray-hit again.
+	collision_layer = 0
+	for child in get_children():
+		if child is CollisionShape3D:
+			(child as CollisionShape3D).disabled = true
+
+
+func _restraint_name_match(node_name: String) -> bool:
+	for exact in RESTRAINT_EXACT:
+		if node_name == exact:
+			return true
+	for prefix in RESTRAINT_PREFIXES:
+		if node_name.begins_with(prefix):
+			return true
+	return false
+
+
+func _hide_node_tree(n: Node) -> void:
+	if n == null:
+		return
+	if n is Node3D:
+		(n as Node3D).visible = false
+	if n is CollisionObject3D:
+		(n as CollisionObject3D).collision_layer = 0
+	if n is CollisionShape3D:
+		(n as CollisionShape3D).disabled = true
+	if n not in _hidden_restraint:
+		_hidden_restraint.append(n)
+
+
+## Walk Mom_Amina_Root descendants; hide LockRect / plates / NeckBar / OldLock by name.
+## Stub list includes Plate_L/Top/R and NeckPlate_* so 3-plate GLB hides on drop.
+func _hide_restraint_fully() -> void:
+	if _lock_mesh == null:
+		_resolve_lock_mesh()
+	var root := _find_mom_root()
+	var search_roots: Array[Node] = []
+	if root:
+		search_roots.append(root)
+	# Also scan Mom instance in case plates sit outside Mom_Amina_Root.
+	var mom_inst := get_node_or_null("../Hidden_Mom_Amina") as Node
+	if mom_inst and mom_inst != root:
+		search_roots.append(mom_inst)
+	# Fallback: parent of LockRect / LockRect itself.
+	if _lock_mesh:
+		if _lock_mesh not in search_roots:
+			search_roots.append(_lock_mesh)
+		var lp := _lock_mesh.get_parent()
+		if lp and lp not in search_roots:
+			search_roots.append(lp)
+
+	var seen: Dictionary = {}
+	for sr in search_roots:
+		_hide_restraint_under(sr, seen)
+
+	# Always hide resolved LockRect even if name walk missed it.
+	if _lock_mesh:
+		_hide_node_tree(_lock_mesh)
+
+	if _hidden_restraint.is_empty():
+		push_warning("MomLockRect: no restraint nodes matched hide patterns")
+
+
+func _hide_restraint_under(node: Node, seen: Dictionary) -> void:
+	if node == null:
+		return
+	var id := node.get_instance_id()
+	if seen.has(id):
+		return
+	seen[id] = true
+	var nm := String(node.name)
+	if _restraint_name_match(nm):
+		_hide_node_tree(node)
+	for child in node.get_children():
+		_hide_restraint_under(child, seen)
+
+
+## Legacy lift path kept for callers; unlock now prefers full hide.
+func _lift_lock() -> void:
+	_apply_unlocked_visuals()
+
+
+## Play lock_unlocked when present. Returns true if a clip started.
+## Safe no-op until art lands - does NOT invent lock geometry.
+func play_unlocked_pose() -> bool:
+	if _lock_mesh == null:
+		_resolve_lock_mesh()
+	if _lock_mesh == null:
+		return false
+	if _lock_mesh.has_method("play_unlocked_pose"):
+		_lock_mesh.call("play_unlocked_pose")
+		return true
+	if _play_clip(unlocked_clip):
+		return true
+	# Legacy name fallbacks.
+	for track_name in ["unlocked", "Unlock", "lock_open", "LockOpen"]:
+		if _play_clip(track_name):
+			return true
+	# Optional open rotation when Blender uses transform pose.
+	if unlocked_rotation_deg != Vector3.ZERO:
+		_lock_mesh.rotation_degrees = unlocked_rotation_deg
+	return false

@@ -1,0 +1,325 @@
+# Godot 4.x - Sabira / HOUSE
+class_name MomWrap
+extends Interactable
+## Wrap Mum in blanket / lay Mum down. Carry is NOT a HUD slot.
+## After unlock: once "Mom's so weak..."; no blanket Look: She needs a blanket.
+## Wrap attaches Hidden_Mom_Amina under player Camera3D (visible, moves with look).
+
+@export var mom_mesh_path: NodePath = NodePath("../Hidden_Mom_Amina")
+@export var lock_body_path: NodePath = NodePath("../Mom_LockRectBody")
+@export var line_duration: float = 2.0
+@export var wrap_prompt: String = "[E] Wrap Mum in the blanket."
+@export var lay_prompt: String = "[E] Lay Mum down."
+@export var look_prompt: String = "[E] Look"
+@export var wrap_line: String = "I've got you."
+@export var lay_line: String = "Easy."
+@export var locked_line: String = "Can't move her."
+## After unlock, before wrap (ONCE).
+@export var needs_blanket_once_line: String = "Mom's so weak... I need something soft. A blanket."
+## Later Look with no blanket.
+@export var needs_blanket_look_line: String = "She needs a blanket."
+@export var take_stream: AudioStream
+@export var take_volume_db: float = -18.0
+## Camera-local carry (FIRM sketch):
+## Body horizontal across BOTTOM FOV; HEAD toward SCREEN-LEFT (cam -X); cradled face-up.
+## GLB axes (current Mom_Amina drop): length+head along -Z, face +Y.
+## Yaw -90 maps head -Z -> cam -X, face stays +Y (not face-on floor-dump).
+## Pre-faceup (8,0,90) assumed length along +Y; wrong for this GLB -- do not restore.
+## Face-up retune (8,-90,0) at (0.22,-0.62,-0.88) scale 0.52 was still high / dump-looking
+## when Mom_Amina_Root had a bed Z+90 override. Root is neutralized while carried.
+## BEFORE: pos (0.22, -0.62, -0.88) rot (8, -90, 0) scale 0.52
+## AFTER:  pos (0.16, -0.76, -0.78) rot (18, -90, 0) scale 0.48
+@export var carry_local_offset: Vector3 = Vector3(0.0, -0.50, -0.6)
+@export var carry_local_rotation_deg: Vector3 = Vector3(15.0, -90.0, 180.0)
+@export var carry_scale: float = 0.99
+
+var _mom: Node3D
+var _take_sfx: AudioStreamPlayer3D
+var _mom_home_parent: Node = null
+var _mom_home_transform: Transform3D = Transform3D.IDENTITY
+var _mom_home_saved: bool = false
+var _carry_attached: bool = false
+var _saved_colliders: Array = []
+## Scene may override Mom_Amina_Root for bed; restore after lay-down / catch.
+var _root_home_transform: Transform3D = Transform3D.IDENTITY
+var _root_home_saved: bool = false
+
+
+func _ready() -> void:
+	collision_layer = 5
+	collision_mask = 0
+	interact_enabled = true
+	add_to_group("mom_amina")
+	_mom = get_node_or_null(mom_mesh_path) as Node3D
+	_ensure_take_player()
+	_sync_from_state()
+	_sync_collision_layer()
+	_refresh_prompt()
+	set_process(true)
+
+
+func _process(_delta: float) -> void:
+	_sync_collision_layer()
+	_refresh_prompt()
+
+
+## While LockRect is still locked, leave the interact ray so Unlock is not occluded.
+func _sync_collision_layer() -> void:
+	if GameState != null and not GameState.carrying_amina and not _mom_unlocked():
+		collision_layer = 0
+	else:
+		collision_layer = 5
+
+
+func _mom_unlocked() -> bool:
+	if GameState != null and (GameState.amina_revealed or GameState.mom_unlocked):
+		return true
+	var lock_n := get_node_or_null(lock_body_path)
+	if lock_n != null and lock_n.has_method("is_unlocked"):
+		return bool(lock_n.call("is_unlocked"))
+	return false
+
+
+func _has_blanket() -> bool:
+	if GameState == null:
+		return false
+	return GameState.has_blanket or ("blanket" in GameState.carried_flags)
+
+
+func can_interact(_player: Node) -> bool:
+	if not interact_enabled or GameState == null:
+		return false
+	# Locked: LockRect owns the ray; wrap body stays silent.
+	if not GameState.carrying_amina and not _mom_unlocked():
+		return false
+	return true
+
+
+func get_prompt() -> String:
+	if GameState == null:
+		return ""
+	if GameState.carrying_amina:
+		return lay_prompt
+	if not _mom_unlocked():
+		# LockRect owns Unlock at the lock; body stays quiet until unlocked.
+		return ""
+	if _has_blanket():
+		return wrap_prompt
+	# No blanket: Wrap prompt HIDDEN; Look only.
+	return look_prompt
+
+
+func _refresh_prompt() -> void:
+	prompt_text = get_prompt()
+
+
+func _ensure_take_player() -> void:
+	_take_sfx = get_node_or_null("TakePlayer") as AudioStreamPlayer3D
+	if _take_sfx == null:
+		_take_sfx = AudioStreamPlayer3D.new()
+		_take_sfx.name = "TakePlayer"
+		_take_sfx.max_distance = 10.0
+		add_child(_take_sfx)
+	if take_stream == null:
+		take_stream = load("res://audio/sfx/ui_soft_click.wav") as AudioStream
+	_take_sfx.stream = take_stream
+	_take_sfx.volume_db = take_volume_db
+	_take_sfx.bus = &"Master"
+
+
+func _play_take_sfx() -> void:
+	if _take_sfx == null:
+		_ensure_take_player()
+	if _take_sfx and _take_sfx.stream:
+		_take_sfx.pitch_scale = randf_range(0.96, 1.04)
+		_take_sfx.volume_db = take_volume_db + randf_range(-1.0, 0.5)
+		_take_sfx.play()
+
+
+func _resolve_mom() -> Node3D:
+	if _mom == null:
+		_mom = get_node_or_null(mom_mesh_path) as Node3D
+	return _mom
+
+
+func _resolve_mom_root(mom: Node3D) -> Node3D:
+	if mom == null:
+		return null
+	return mom.get_node_or_null("Mom_Amina_Root") as Node3D
+
+
+func _on_interact(player: Node) -> void:
+	if GameState == null:
+		return
+	if GameState.carrying_amina:
+		_lay_down()
+		return
+	if not _mom_unlocked():
+		get_tree().call_group("subtitle", "show_line", "SABIRA", locked_line, line_duration)
+		return
+	if _has_blanket():
+		_wrap(player)
+		return
+	# No blanket: once soft VO, then Look line.
+	if not GameState.mom_needs_blanket_said:
+		GameState.mom_needs_blanket_said = true
+		get_tree().call_group("subtitle", "show_line", "SABIRA", needs_blanket_once_line, line_duration + 0.8)
+	else:
+		get_tree().call_group("subtitle", "show_line", "SABIRA", needs_blanket_look_line, line_duration)
+
+
+func _find_player_camera(player: Node) -> Node3D:
+	if player == null:
+		return null
+	var cam := player.get_node_or_null("CameraPivot/Camera3D") as Node3D
+	if cam:
+		return cam
+	return player.find_child("Camera3D", true, false) as Node3D
+
+
+func _remember_mom_home(mom: Node3D) -> void:
+	if _mom_home_saved or mom == null:
+		return
+	_mom_home_parent = mom.get_parent()
+	_mom_home_transform = mom.transform
+	_mom_home_saved = true
+	var root := _resolve_mom_root(mom)
+	if root != null and not _root_home_saved:
+		_root_home_transform = root.transform
+		_root_home_saved = true
+
+
+func _set_mom_collide_enabled(mom: Node3D, enabled: bool) -> void:
+	if mom == null:
+		return
+	if not enabled:
+		_saved_colliders.clear()
+		_disable_collide_under(mom)
+	else:
+		for entry in _saved_colliders:
+			var n: Node = entry.get("node")
+			if n == null or not is_instance_valid(n):
+				continue
+			if n is CollisionObject3D:
+				(n as CollisionObject3D).collision_layer = int(entry.get("layer", 1))
+				(n as CollisionObject3D).collision_mask = int(entry.get("mask", 1))
+			elif n is CollisionShape3D:
+				(n as CollisionShape3D).disabled = bool(entry.get("disabled", false))
+		_saved_colliders.clear()
+
+
+func _disable_collide_under(n: Node) -> void:
+	if n == null:
+		return
+	if n is CollisionObject3D:
+		var co := n as CollisionObject3D
+		_saved_colliders.append({"node": co, "layer": co.collision_layer, "mask": co.collision_mask})
+		co.collision_layer = 0
+		co.collision_mask = 0
+	elif n is CollisionShape3D:
+		var cs := n as CollisionShape3D
+		_saved_colliders.append({"node": cs, "disabled": cs.disabled})
+		cs.disabled = true
+	for child in n.get_children():
+		_disable_collide_under(child)
+
+
+func _attach_carry(player: Node) -> void:
+	var mom := _resolve_mom()
+	if mom == null:
+		return
+	var cam := _find_player_camera(player)
+	if cam == null:
+		push_warning("MomWrap: no Camera3D for carry attach; hiding world Mom")
+		mom.visible = false
+		return
+	_remember_mom_home(mom)
+	_set_mom_collide_enabled(mom, false)
+	if mom.get_parent() != cam:
+		mom.reparent(cam, false)
+	mom.visible = true
+	# Bed/scene Root override fights camera yaw; carry uses GLB axes (head -Z, face +Y).
+	var root := _resolve_mom_root(mom)
+	if root != null:
+		if not _root_home_saved:
+			_root_home_transform = root.transform
+			_root_home_saved = true
+		root.transform = Transform3D.IDENTITY
+	mom.position = carry_local_offset
+	mom.rotation_degrees = carry_local_rotation_deg
+	mom.scale = Vector3.ONE * carry_scale
+	_carry_attached = true
+
+
+func _detach_carry() -> void:
+	var mom := _resolve_mom()
+	if mom == null:
+		_carry_attached = false
+		return
+	var root := _resolve_mom_root(mom)
+	if root != null and _root_home_saved:
+		root.transform = _root_home_transform
+	if _mom_home_saved and _mom_home_parent != null and is_instance_valid(_mom_home_parent):
+		if mom.get_parent() != _mom_home_parent:
+			mom.reparent(_mom_home_parent, false)
+		mom.transform = _mom_home_transform
+	_set_mom_collide_enabled(mom, true)
+	mom.visible = true
+	if mom.has_method("snap_home"):
+		mom.call("snap_home")
+	_carry_attached = false
+
+
+func _wrap(player: Node) -> void:
+	if GameState.carrying_amina:
+		return
+	if not _has_blanket():
+		return
+	# Blanket consumed on wrap; Lay Mum down does not restore it.
+	GameState.remove_inventory_flag("blanket")
+	GameState.carrying_amina = true
+	_play_take_sfx()
+	get_tree().call_group("subtitle", "show_line", "SABIRA", wrap_line, line_duration)
+	var mom := _resolve_mom()
+	if mom and mom.has_method("snap_home"):
+		mom.call("snap_home")
+	_attach_carry(player)
+	_refresh_prompt()
+
+
+func _lay_down() -> void:
+	if not GameState.carrying_amina:
+		return
+	GameState.carrying_amina = false
+	_play_take_sfx()
+	get_tree().call_group("subtitle", "show_line", "SABIRA", lay_line, line_duration)
+	_detach_carry()
+	_refresh_prompt()
+
+
+func _sync_from_state() -> void:
+	var mom := _resolve_mom()
+	if mom == null or GameState == null:
+		return
+	if GameState.carrying_amina:
+		# Mid-session / Catch restore clears carry; if somehow set without attach, hide.
+		if not _carry_attached:
+			mom.visible = false
+	else:
+		if _carry_attached:
+			_detach_carry()
+		else:
+			mom.visible = true
+
+
+func restore_to_bed_after_catch() -> void:
+	if _carry_attached or (GameState != null and GameState.carrying_amina):
+		# register_catch already cleared carrying_amina; detach mesh home.
+		pass
+	_detach_carry()
+	var mom := _resolve_mom()
+	if mom:
+		mom.visible = true
+		if mom.has_method("snap_home"):
+			mom.call("snap_home")
+	_refresh_prompt()

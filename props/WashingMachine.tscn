@@ -1,0 +1,15 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" uid="uid://wajg5k7s36je" path="res://props/WashingMachine.glb" id="1_glb"]
+[ext_resource type="Script" path="res://props/WasherMats.gd" id="2_script"]
+[ext_resource type="Material" path="res://materials/mat_washer_body.tres" id="3_body"]
+[ext_resource type="Material" path="res://materials/mat_washer_door.tres" id="4_door"]
+[ext_resource type="Material" path="res://materials/mat_washer_panel.tres" id="5_panel"]
+
+[node name="WashingMachine" type="Node3D"]
+script = ExtResource("2_script")
+mat_body = ExtResource("3_body")
+mat_door = ExtResource("4_door")
+mat_panel = ExtResource("5_panel")
+
+[node name="Model" parent="." instance=ExtResource("1_glb")]

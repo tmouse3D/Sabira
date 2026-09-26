@@ -1,0 +1,57 @@
+# Godot 4.x ?- Sabira / HOUSE
+class_name BookcaseButton
+extends Interactable
+## Wall button: open / stop / close the bookcase (scrape both ways).
+
+@export var mover_path: NodePath = NodePath("../BookcaseMover")
+
+var _mover: Node3D
+
+
+func _ready() -> void:
+	collision_layer = 5  # world (1) + interactable (4)
+	collision_mask = 0
+	_resolve_mover()
+	_update_prompt()
+	if _mover and _mover.has_signal("state_changed"):
+		_mover.state_changed.connect(_on_mover_state_changed)
+
+
+func _resolve_mover() -> void:
+	if mover_path != NodePath(""):
+		_mover = get_node_or_null(mover_path)
+	if _mover == null and get_parent() != null:
+		_mover = get_parent().get_node_or_null("BookcaseMover")
+
+
+func can_interact(_player: Node) -> bool:
+	if not interact_enabled:
+		return false
+	if _mover == null:
+		return false
+	return true
+
+
+func _on_interact(_player: Node) -> void:
+	if _mover == null:
+		_resolve_mover()
+	if _mover and _mover.has_method("toggle_or_stop"):
+		_mover.toggle_or_stop()
+	_update_prompt()
+
+
+func _on_mover_state_changed(_state: int) -> void:
+	_update_prompt()
+
+
+func _update_prompt() -> void:
+	interact_enabled = true
+	if _mover == null:
+		prompt_text = "[E] Move bookcase"
+		return
+	if _mover.has_method("is_moving") and _mover.is_moving():
+		prompt_text = "[E] Stop"
+	elif _mover.has_method("is_fully_open") and _mover.is_fully_open():
+		prompt_text = "[E] Close bookcase"
+	else:
+		prompt_text = "[E] Move bookcase"

@@ -1,0 +1,37 @@
+BAK C:\Users\hp\Documents\sabira\backups\Mom_Amina.blend.bak_stumps_20260925_130247
+BAK C:\Users\hp\Documents\sabira\backups\Mom_Amina.glb.bak_stumps_20260925_130247
+IMPORTED arm=Armature mesh=Character_Female_05 verts=585
+DISTAL_FACES 283 / 681
+BED_Z target -0.1377 (torso back -0.1577)
+LEVEL mixamorig:LeftArm meanZ -0.424 -> -0.288 (bed -0.138)
+LEVEL mixamorig:RightArm meanZ -0.010 -> -0.065 (bed -0.138)
+LEVEL mixamorig:LeftUpLeg meanZ -0.080 -> -0.105 (bed -0.138)
+LEVEL mixamorig:RightUpLeg meanZ 0.108 -> -0.006 (bed -0.138)
+CENTER delta (-0.0222, 0.0, 0.1732)
+HEAD_SHAPEKEYS pivot=(-0.0474, 1.2435, 0.099) head_verts~240
+MOUTH_CENTER (-0.0026, 1.4127, 0.2399) (face_z=0.2339)
+MOUTH_SNAP Mouth_Plea loc=(-0.0026, 1.4127, 0.2399)
+MOUTH_SNAP Mouth_Scream loc=(-0.0026, 1.4127, 0.2414)
+MOUTH_SNAP Mouth_Grimace loc=(-0.0026, 1.4127, 0.2429)
+MOSAIC_PNG C:\Users\hp\Documents\sabira\props\Mom_Amina_stump_mosaic_128.png
+BOX StumpBox_LArm loc=(-0.143, 1.2869, -0.0913) size=0.120x0.120x0.066 diam=0.120
+BOX StumpBox_RArm loc=(0.1046, 1.1111, 0.1365) size=0.120x0.120x0.066 diam=0.120
+BOX StumpBox_LLeg loc=(0.0261, 0.4477, 0.0622) size=0.120x0.120x0.066 diam=0.120
+BOX StumpBox_RLeg loc=(-0.0883, 0.4698, 0.1602) size=0.120x0.120x0.066 diam=0.120
+idle_restless frames=1..90
+idle_restless_shapekeys keyed
+CHEST_NORMAL (0.87, -0.49, -0.055) (want ~+Z)
+EXPORT mode=ACTIONS anims=['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys'] nodes=['StumpBox_LArm', 'StumpBox_LLeg', 'StumpBox_RArm', 'StumpBox_RLeg', 'Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root'] size=414980
+PREVIEW C:\Users\hp\Documents\sabira\props\_Mom_Amina_preview_stumps.png size=612781
+CLEARED_IMPORTS 60
+NOTES appended
+HIERARCHY:
+  Body parent=Mom_Amina_Root loc=(0.0, 0.0, 0.0)
+  Mom_Amina_Root parent=None loc=(0.0, 0.0, 0.0)
+  Mouth_Grimace parent=Mom_Amina_Root loc=(-0.0026, 1.4127, 0.2429)
+  Mouth_Plea parent=Mom_Amina_Root loc=(-0.0026, 1.4127, 0.2399)
+  Mouth_Scream parent=Mom_Amina_Root loc=(-0.0026, 1.4127, 0.2414)
+  StumpBox_LArm parent=Body loc=(-0.143, 1.2869, -0.0913)
+  StumpBox_LLeg parent=Body loc=(0.0261, 0.4477, 0.0622)
+  StumpBox_RArm parent=Body loc=(0.1046, 1.1111, 0.1365)
+  StumpBox_RLeg parent=Body loc=(-0.0883, 0.4698, 0.1602)

@@ -1,0 +1,18 @@
+=== THIN DISK MOSAIC REBUILD ===
+RESTORED C:\Users\hp\Documents\sabira\backups\Mom_Amina.blend.bak_stumps_20260925_130247
+DISK LArm loc=(-0.0469, 0.4846, -0.1219) diam=0.066 thick=0.012
+DISK RArm loc=(0.071, 0.4014, 0.3015) diam=0.065 thick=0.012
+DISK LLeg loc=(0.0846, -0.1949, 0.052) diam=0.103 thick=0.012
+DISK RLeg loc=(-0.0355, -0.187, 0.2423) diam=0.103 thick=0.012
+JOINED new_faces=56 mosaic_idx=2 V/P=681/737 mats=['Mom_Body_Mat', 'Mom_Invisible_Mat', 'Mom_Stump_Mosaic_Mat']
+MOUTH Mouth_Plea (0.0, 0.885, 0.2082)
+MOUTH Mouth_Scream (0.0, 0.885, 0.2097)
+MOUTH Mouth_Grimace (0.0, 0.885, 0.2112)
+CHEST (-0.246, -0.0927, 0.9648) DISTAL 283 MOS 56 V/P 681/737
+ROOT_KIDS ['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream']
+STUMPBOX []
+EXPORT mode=ACTIONS anims=['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys'] nodes=['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root'] size=423420
+CLEARED_IMPORTS 0
+PREVIEW C:\Users\hp\Documents\sabira\props\_Mom_Amina_preview_thin_stumps.png
+FACE_PREVIEW
+SUCCESS=True

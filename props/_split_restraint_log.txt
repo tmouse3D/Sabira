@@ -1,0 +1,30 @@
+=== RESTRAINT SPLIT START ===
+parented NeckPlate_L -> Mom_Restraint_Root loc=(0.0, 0.0, 0.0)
+parented NeckPlate_Top -> Mom_Restraint_Root loc=(0.0, 0.0, 0.0)
+parented NeckPlate_R -> Mom_Restraint_Root loc=(0.0, 0.0, 0.0)
+LockRect parent=NeckPlate_Top loc=(0.0, 0.625, 0.126) rot=(3.14159, 0.0, 0.0)
+removed action lock_locked
+removed action lock_unlocked
+SAVED C:\Users\hp\Documents\sabira\props\Mom_Restraint.blend
+EXPORT mode=None anims=[] nodes=['NeckPlate_L', 'NeckPlate_R', 'LockRect', 'NeckPlate_Top', 'Mom_Restraint_Root'] size=42140
+removed from Mom: NeckPlate_L
+removed from Mom: NeckPlate_Top
+removed from Mom: NeckPlate_R
+removed from Mom: LockRect
+removed action lock_locked
+removed action lock_unlocked
+Mom children after strip: ['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream']
+SAVED C:\Users\hp\Documents\sabira\props\Mom_Amina.blend
+EXPORT mode=ACTIONS anims=['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys'] nodes=['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root'] size=402636
+PREVIEW C:\Users\hp\Documents\sabira\props\_Mom_Restraint_preview.png size=156725
+cleared imported count=60 names=['Mom_Amina.glb-7f6b5852dfa3cd3b6a823fe48d317d94.md5', 'Mom_Amina.glb-7f6b5852dfa3cd3b6a823fe48d317d94.scn', 'Mom_Amina_albedo_256.png-451502a05a27cbfe5cfa6c7726fc784a.ctex', 'Mom_Amina_albedo_256.png-451502a05a27cbfe5cfa6c7726fc784a.md5', 'Mom_Amina_metal_128.png-2eb87759db87fd0fc7dc4afa2bf7c521.ctex', 'Mom_Amina_metal_128.png-2eb87759db87fd0fc7dc4afa2bf7c521.md5', 'Mom_Amina_Mom_Amina_albedo_256(OLD).png-96afc96703895cdbf3ee88c48970438b.ctex', 'Mom_Amina_Mom_Amina_albedo_256(OLD).png-96afc96703895cdbf3ee88c48970438b.md5', 'Mom_Amina_Mom_Amina_albedo_256.png-194a6fd0c9b0533634e11bd7f42e7636.md5', 'Mom_Amina_Mom_Amina_albedo_256.png-194a6fd0c9b0533634e11bd7f42e7636.s3tc.ctex', 'Mom_Amina_Mom_Amina_metal_128.png-5f448abba2e8948166ba1dcb145949a8.md5', 'Mom_Amina_Mom_Amina_metal_128.png-5f448abba2e8948166ba1dcb145949a8.s3tc.ctex', 'Mom_Amina_Mom_Amina_mouth_01.png-a82bc9f4cb883ed7c930d296c18f4a80.md5', 'Mom_Amina_Mom_Amina_mouth_01.png-a82bc9f4cb883ed7c930d296c18f4a80.s3tc.ctex', 'Mom_Amina_Mom_Amina_mouth_02.png-171d1b7966e4cf72a3b29e54d17e7e28.md5', 'Mom_Amina_Mom_Amina_mouth_02.png-171d1b7966e4cf72a3b29e54d17e7e28.s3tc.ctex', 'Mom_Amina_Mom_Amina_mouth_03.png-5112316371761d7e1c05fe837948ebe4.md5', 'Mom_Amina_Mom_Amina_mouth_03.png-5112316371761d7e1c05fe837948ebe4.s3tc.ctex', 'Mom_Amina_Mom_Amina_patch_skin_64.png-ec9ff9747870ce4755ef2ce5744894d6.md5', 'Mom_Amina_Mom_Amina_patch_skin_64.png-ec9ff9747870ce4755ef2ce5744894d6.s3tc.ctex']
+NOTES appended RESTRAINT SPLIT 2026-09-25
+FILE C:\Users\hp\Documents\sabira\props\Mom_Restraint.glb size=42140 mtime=1790336408.4605222
+FILE C:\Users\hp\Documents\sabira\props\Mom_Restraint.blend size=126359 mtime=1790336408.4745264
+FILE C:\Users\hp\Documents\sabira\props\Mom_Amina.glb size=402636 mtime=1790336408.5390563
+FILE C:\Users\hp\Documents\sabira\props\Mom_Amina.blend size=162596 mtime=1790336408.5546403
+FILE C:\Users\hp\Documents\sabira\props\_Mom_Restraint_preview.png size=156725 mtime=1790336409.3065448
+FILE C:\Users\hp\Documents\sabira\props\_Mom_Amina_PSX_NOTES.txt size=25886 mtime=1790336409.3315508
+VERIFY restraint nodes=['NeckPlate_L', 'NeckPlate_R', 'LockRect', 'NeckPlate_Top', 'Mom_Restraint_Root'] anims=[]
+VERIFY mom nodes=['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root'] anims=['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys']
+SUCCESS=True ok_rest=True ok_mom=True

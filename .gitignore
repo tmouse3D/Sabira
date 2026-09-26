@@ -1,0 +1,26 @@
+# Godot 4+
+.godot/
+/android/
+
+# Godot translations
+*.translation
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*~
+
+# Editor / crash / debug noise
+*.dmp
+mat-debug-*.log
+cv_debug.log
+*.ses
+
+# Local OS / installer debris (kept on disk under archive/)
+archive/os_junk/
+
+# Large local-only scratch (kept on disk under backups/)
+backups/root_scratch/_github_backup.zip
+backups/root_scratch/*.tmp

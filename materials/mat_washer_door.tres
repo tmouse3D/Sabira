@@ -1,0 +1,10 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://textures/albedo_washer_door_64.png" id="1"]
+
+[resource]
+resource_name = "Washer_Door"
+albedo_texture = ExtResource("1")
+metallic = 0.2
+roughness = 0.72
+texture_filter = 0

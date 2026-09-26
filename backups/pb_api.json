@@ -1,0 +1,221 @@
+{
+  "attrs": [
+    "animation_data_clear",
+    "animation_data_create",
+    "asset_clear",
+    "asset_data",
+    "asset_generate_preview",
+    "asset_mark",
+    "bl_rna",
+    "bl_system_properties_get",
+    "copy",
+    "curve_frame_range",
+    "deselect_keys",
+    "evaluated_get",
+    "fcurve_ensure_for_datablock",
+    "flip_with_pose",
+    "frame_end",
+    "frame_range",
+    "frame_start",
+    "id_type",
+    "is_action_layered",
+    "is_action_legacy",
+    "is_editable",
+    "is_embedded_data",
+    "is_empty",
+    "is_evaluated",
+    "is_library_indirect",
+    "is_linked_packed",
+    "is_missing",
+    "is_runtime_data",
+    "layers",
+    "library",
+    "library_weak_reference",
+    "make_local",
+    "name",
+    "name_full",
+    "original",
+    "override_create",
+    "override_hierarchy_create",
+    "override_library",
+    "pose_markers",
+    "preview",
+    "preview_ensure",
+    "rename",
+    "rna_type",
+    "session_uid",
+    "slots",
+    "tag",
+    "update_tag",
+    "use_cyclic",
+    "use_extra_user",
+    "use_fake_user",
+    "use_frame_range",
+    "user_clear",
+    "user_of_id",
+    "user_remap",
+    "users"
+  ],
+  "rows": [
+    {
+      "name": "tip_spill",
+      "frame_range": [
+        0.0,
+        12.0
+      ],
+      "layers": 1,
+      "slots": [
+        "OBBox"
+      ]
+    },
+    {
+      "name": "tip_spill.001",
+      "frame_range": [
+        0.0,
+        19.0
+      ],
+      "layers": 1,
+      "slots": [
+        "OBPhotos"
+      ]
+    },
+    {
+      "name": "tip_spill.002",
+      "frame_range": [
+        4.0,
+        18.0
+      ],
+      "layers": 1,
+      "slots": [
+        "OBPhoto_0"
+      ]
+    },
+    {
+      "name": "tip_spill.003",
+      "frame_range": [
+        4.0,
+        18.0
+      ],
+      "layers": 1,
+      "slots": [
+        "OBPhoto_1"
+      ]
+    },
+    {
+      "name": "tip_spill.004",
+      "frame_range": [
+        4.0,
+        18.0
+      ],
+      "layers": 1,
+      "slots": [
+        "OBPhoto_2"
+      ]
+    },
+    {
+      "name": "tip_spill.005",
+      "frame_range": [
+        4.0,
+        18.0
+      ],
+      "layers": 1,
+      "slots": [
+        "OBPhoto_3"
+      ]
+    },
+    {
+      "name": "tip_spill.006",
+      "frame_range": [
+        4.0,
+        18.0
+      ],
+      "layers": 1,
+      "slots": [
+        "OBPhoto_4"
+      ]
+    },
+    {
+      "name": "tip_spill.007",
+      "frame_range": [
+        4.0,
+        18.0
+      ],
+      "layers": 1,
+      "slots": [
+        "OBPhoto_5"
+      ]
+    },
+    {
+      "obj": "Box",
+      "action": "tip_spill",
+      "loc": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "obj": "Photo_0",
+      "action": null,
+      "loc": [
+        0.0,
+        0.14000000059604645,
+        0.019999999552965164
+      ]
+    },
+    {
+      "obj": "Photo_1",
+      "action": null,
+      "loc": [
+        -0.03999999910593033,
+        0.14499999582767487,
+        -0.019999999552965164
+      ]
+    },
+    {
+      "obj": "Photo_2",
+      "action": null,
+      "loc": [
+        0.05000000074505806,
+        0.15000000596046448,
+        0.0
+      ]
+    },
+    {
+      "obj": "Photo_3",
+      "action": null,
+      "loc": [
+        0.019999999552965164,
+        0.1599999964237213,
+        0.03999999910593033
+      ]
+    },
+    {
+      "obj": "Photo_4",
+      "action": null,
+      "loc": [
+        -0.019999999552965164,
+        0.1550000011920929,
+        0.029999999329447746
+      ]
+    },
+    {
+      "obj": "Photo_5",
+      "action": null,
+      "loc": [
+        0.029999999329447746,
+        0.18000000715255737,
+        -0.009999999776482582
+      ]
+    },
+    {
+      "obj": "Photos",
+      "action": null,
+      "loc": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ]
+}

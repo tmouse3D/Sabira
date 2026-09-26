@@ -1,0 +1,48 @@
+# Godot 4.x ?- Sabira / HOUSE
+extends Area3D
+## Plays a creak when the player enters the stair volume.
+
+@export var cooldown_sec: float = 1.2
+@export var noise_amount: float = 0.6
+
+@onready var _audio: AudioStreamPlayer3D = $AudioStreamPlayer3D
+
+var _cooldown_left: float = 0.0
+var _players_inside: int = 0
+
+
+func _ready() -> void:
+	body_entered.connect(_on_body_entered)
+	body_exited.connect(_on_body_exited)
+	monitoring = true
+	monitorable = false
+	collision_layer = 0
+	collision_mask = 2  # player
+
+
+func _process(delta: float) -> void:
+	if _cooldown_left > 0.0:
+		_cooldown_left -= delta
+
+
+func _on_body_entered(body: Node3D) -> void:
+	if not body.is_in_group("player"):
+		return
+	_players_inside += 1
+	if GameState:
+		GameState.is_on_stairs = true
+	if _cooldown_left > 0.0:
+		return
+	_cooldown_left = cooldown_sec
+	if _audio and _audio.stream:
+		_audio.play()
+	if GameState:
+		GameState.report_noise(noise_amount)
+
+
+func _on_body_exited(body: Node3D) -> void:
+	if not body.is_in_group("player"):
+		return
+	_players_inside = maxi(0, _players_inside - 1)
+	if GameState and _players_inside == 0:
+		GameState.is_on_stairs = false

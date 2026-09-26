@@ -1,0 +1,285 @@
+# Godot 4.x - Sabira / HOUSE
+extends CharacterBody3D
+## First-person walk / crouch / jump / mouse look / interact raycast.
+## Soft footstep SFX via distance accumulator (walk / sprint / crouch).
+
+@export var walk_speed: float = 3.5
+@export var sprint_speed: float = 5.5
+@export var crouch_speed: float = 1.8
+@export var jump_velocity: float = 5.5
+@export var mouse_sensitivity: float = 0.0025
+@export var gravity: float = 20.0
+@export var stand_height: float = 1.7
+@export var crouch_height: float = 1.0
+@export var interact_distance: float = 2.5
+@export var footstep_interval_walk: float = 1.8
+@export var footstep_interval_sprint: float = 1.28
+@export var footstep_interval_crouch: float = 2.48
+@export var footstep_volume_db: float = -10.0
+@export var footstep_crouch_volume_db: float = -18.0
+## Multiplier while GameState.carrying_amina (slow walk; sprint also scaled).
+@export var carry_speed_mult: float = 0.45
+## Invisible BoxShape in front of capsule while carrying (world collide; doorway-safe).
+@export var carry_bumper_size: Vector3 = Vector3(0.4, 0.65, 0.32)
+@export var carry_bumper_offset: Vector3 = Vector3(0.0, 0.85, -0.52)
+## world (1) + interactable (4). First hit must be Interactable or the ray is occluded.
+const INTERACT_RAY_MASK: int = 1 | 4
+
+@onready var _pivot: Node3D = $CameraPivot
+@onready var _camera: Camera3D = $CameraPivot/Camera3D
+@onready var _collision: CollisionShape3D = $CollisionShape3D
+@onready var _ray: RayCast3D = $CameraPivot/Camera3D/InteractRay
+@onready var _prompt: Control = $PromptLayer/Prompt
+
+var _crouching: bool = false
+var _current_target: Interactable = null
+var _foot_dist: float = 0.0
+var _foot_player: AudioStreamPlayer
+var _foot_streams_wood: Array[AudioStream] = []
+var _foot_streams_stairs: Array[AudioStream] = []
+var _foot_idx: int = 0
+var _last_pos: Vector3
+var _input_locked: bool = false
+var _carry_bumper: CollisionShape3D
+
+
+func _ready() -> void:
+	add_to_group("player")
+	collision_layer = 2
+	collision_mask = 1 | 8  # world + blocker (couch solids; not in interact ray)
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_ray.target_position = Vector3(0, 0, -interact_distance)
+	_ray.enabled = true
+	_ray.collide_with_areas = false
+	_ray.collide_with_bodies = true
+	_ray.collision_mask = INTERACT_RAY_MASK
+	_apply_stance(false)
+	if _prompt and _prompt.has_method("set_prompt"):
+		_prompt.set_prompt("")
+	_setup_footsteps()
+	_last_pos = global_position
+	_ensure_carry_bumper()
+
+
+func set_input_locked(locked: bool) -> void:
+	_input_locked = locked
+	if locked:
+		velocity = Vector3.ZERO
+		_current_target = null
+		if _prompt and _prompt.has_method("set_prompt"):
+			_prompt.set_prompt("")
+
+
+func _setup_footsteps() -> void:
+	_foot_player = get_node_or_null("FootstepPlayer") as AudioStreamPlayer
+	if _foot_player == null:
+		_foot_player = AudioStreamPlayer.new()
+		_foot_player.name = "FootstepPlayer"
+		add_child(_foot_player)
+	_foot_player.bus = &"Master"
+	_foot_player.volume_db = footstep_volume_db
+	_foot_streams_wood.clear()
+	_foot_streams_stairs.clear()
+	for i in range(1, 6):
+		var w := load("res://audio/psx_footsteps/wood/Footstep Wood %d.ogg" % i) as AudioStream
+		if w:
+			_foot_streams_wood.append(w)
+		var st := load("res://audio/psx_footsteps/stairs/Footstep Stairs %d.ogg" % i) as AudioStream
+		if st:
+			_foot_streams_stairs.append(st)
+	if _foot_streams_wood.is_empty():
+		for i in range(1, 6):
+			var f := load("res://audio/sfx/Footstep Wood %d.ogg" % i) as AudioStream
+			if f:
+				_foot_streams_wood.append(f)
+
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _input_locked:
+		return
+	if event is InputEventMouseButton and event.pressed:
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		rotate_y(-event.relative.x * mouse_sensitivity)
+		_pivot.rotate_x(-event.relative.y * mouse_sensitivity)
+		_pivot.rotation.x = clampf(_pivot.rotation.x, deg_to_rad(-85.0), deg_to_rad(85.0))
+	if event.is_action_pressed("interact"):
+		_try_interact()
+
+
+func _physics_process(delta: float) -> void:
+	if _input_locked:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if not is_on_floor():
+			velocity.y -= gravity * delta
+		else:
+			velocity.y = 0.0
+		move_and_slide()
+		return
+	if not is_on_floor():
+		velocity.y -= gravity * delta
+	elif Input.is_action_just_pressed("jump") and not _crouching:
+		velocity.y = jump_velocity
+
+	var carrying := GameState != null and GameState.carrying_amina
+	_sync_carry_bumper(carrying)
+	# Unable to crouch while carrying Mum.
+	var want_crouch := Input.is_action_pressed("crouch") and not carrying
+	if carrying and _crouching:
+		want_crouch = false
+	if want_crouch != _crouching:
+		_crouching = want_crouch
+		_apply_stance(_crouching)
+		if GameState:
+			GameState.set_crouching(_crouching)
+
+	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var direction := (transform.basis * Vector3(input_dir.x, 0.0, input_dir.y)).normalized()
+	var speed := walk_speed
+	var sprinting := false
+	if _crouching:
+		speed = crouch_speed
+	elif Input.is_action_pressed("sprint"):
+		speed = sprint_speed
+		sprinting = true
+	if carrying:
+		speed *= carry_speed_mult
+		sprinting = false
+
+	if direction != Vector3.ZERO:
+		velocity.x = direction.x * speed
+		velocity.z = direction.z * speed
+	else:
+		velocity.x = move_toward(velocity.x, 0.0, speed)
+		velocity.z = move_toward(velocity.z, 0.0, speed)
+
+	move_and_slide()
+	_update_footsteps(sprinting)
+	_update_interact_target()
+
+
+func _update_footsteps(sprinting: bool) -> void:
+	var flat := Vector3(global_position.x, 0.0, global_position.z)
+	var prev := Vector3(_last_pos.x, 0.0, _last_pos.z)
+	var step_len := flat.distance_to(prev)
+	_last_pos = global_position
+	if not is_on_floor():
+		_foot_dist = 0.0
+		return
+	var horiz_speed := Vector2(velocity.x, velocity.z).length()
+	if horiz_speed < 0.15 or step_len < 0.0001:
+		return
+	_foot_dist += step_len
+	var interval := footstep_interval_walk
+	if _crouching:
+		interval = footstep_interval_crouch
+	elif sprinting:
+		interval = footstep_interval_sprint
+	if _foot_dist >= interval:
+		_foot_dist = 0.0
+		_play_footstep(sprinting)
+
+
+func _play_footstep(sprinting: bool) -> void:
+	var streams := _foot_streams_wood
+	if GameState and GameState.is_on_stairs and not _foot_streams_stairs.is_empty():
+		streams = _foot_streams_stairs
+	if _foot_player == null or streams.is_empty():
+		return
+	_foot_idx = (_foot_idx + 1 + randi() % maxi(1, streams.size() - 1)) % streams.size()
+	_foot_player.stream = streams[_foot_idx]
+	if _crouching:
+		_foot_player.volume_db = footstep_crouch_volume_db
+		_foot_player.pitch_scale = randf_range(0.85, 0.95)
+	elif sprinting:
+		_foot_player.volume_db = footstep_volume_db + 1.5
+		_foot_player.pitch_scale = randf_range(1.05, 1.18)
+	else:
+		_foot_player.volume_db = footstep_volume_db
+		_foot_player.pitch_scale = randf_range(0.95, 1.05)
+	_foot_player.play()
+
+
+
+func _ensure_carry_bumper() -> void:
+	_carry_bumper = get_node_or_null("CarryBumper") as CollisionShape3D
+	if _carry_bumper == null:
+		_carry_bumper = CollisionShape3D.new()
+		_carry_bumper.name = "CarryBumper"
+		add_child(_carry_bumper)
+	var box := _carry_bumper.shape as BoxShape3D
+	if box == null:
+		box = BoxShape3D.new()
+		_carry_bumper.shape = box
+	box.size = carry_bumper_size
+	_carry_bumper.position = carry_bumper_offset
+	_carry_bumper.disabled = true
+
+
+func _sync_carry_bumper(carrying: bool) -> void:
+	if _carry_bumper == null:
+		return
+	_carry_bumper.disabled = not carrying
+
+func _apply_stance(crouch: bool) -> void:
+	var height := crouch_height if crouch else stand_height
+	var shape := _collision.shape as CapsuleShape3D
+	if shape:
+		shape.height = height
+		_collision.position.y = height * 0.5
+	_pivot.position.y = height - 0.15
+
+
+func _resolve_interactable(collider: Object) -> Interactable:
+	var n := collider as Node
+	while n:
+		if n is Interactable:
+			return n as Interactable
+		n = n.get_parent()
+	return null
+
+
+func _update_interact_target() -> void:
+	_current_target = null
+	if _ray.is_colliding():
+		# Occlusion: mask includes world geometry; only accept if the first hit is an Interactable
+		# (or has an Interactable ancestor). Walls/furniture on layer 1 block through-wall opens.
+		var collider := _ray.get_collider()
+		var interactable := _resolve_interactable(collider)
+		# Peek past door-leaf CloseHit so fridge jar / cupboard piles win when aimed through the opening.
+		if interactable is CupboardCloseHit:
+			_ray.add_exception(collider)
+			_ray.force_raycast_update()
+			if _ray.is_colliding():
+				var behind := _resolve_interactable(_ray.get_collider())
+				if behind and not (behind is CupboardCloseHit) and behind.can_interact(self):
+					interactable = behind
+			_ray.remove_exception(collider)
+			_ray.force_raycast_update()
+		# Peek past couch Search front-slab so F2 Landing book Read wins when aimed at the book.
+		elif interactable is CouchSearch:
+			_ray.add_exception(collider)
+			_ray.force_raycast_update()
+			if _ray.is_colliding():
+				var behind2 := _resolve_interactable(_ray.get_collider())
+				if behind2 is BookRead and behind2.can_interact(self):
+					interactable = behind2
+			_ray.remove_exception(collider)
+			_ray.force_raycast_update()
+		if interactable and interactable.can_interact(self):
+			_current_target = interactable
+	if _prompt and _prompt.has_method("set_prompt"):
+		if _current_target:
+			_prompt.set_prompt(_current_target.get_prompt())
+		else:
+			_prompt.set_prompt("")
+
+
+func _try_interact() -> void:
+	if _current_target and _current_target.can_interact(self):
+		_current_target.interact(self)

@@ -1,0 +1,145 @@
+Godot Engine v4.8.dev4.official.b56a91878 - https://godotengine.org
+
+[   0% ] [90m[1mfirst_scan_filesystem[22m | Started Инициализация проекта (5 steps)[39m[0m
+[   0% ] [90m[1mfirst_scan_filesystem[22m | Сканирование структуры файлов…[39m[0m
+[  16% ] [90m[1mfirst_scan_filesystem[22m | Загрузка глобальных имен классов…[39m[0m
+[  33% ] [90m[1mfirst_scan_filesystem[22m | Проверка GDExtensions…[39m[0m
+[  50% ] [90m[1mfirst_scan_filesystem[22m | Создание скриптов автозагрузки…[39m[0m
+[  66% ] [90m[1mfirst_scan_filesystem[22m | Инициализация плагинов…[39m[0m
+[  83% ] [90m[1mfirst_scan_filesystem[22m | Начало сканирование файлов…[39m[0m
+[92m[ DONE ][39m [1mfirst_scan_filesystem[22m
+[0m
+[   0% ] [90m[1m_update_scan_actions[22m | Started Сканирование действий… (32 steps)[39m[0m
+[   0% ] [90m[1m_update_scan_actions[22m | _Mom_Amina_preview.png[39m[0m
+[   3% ] [90m[1m_update_scan_actions[22m | _Mom_Amina_preview_check.png[39m[0m
+[   6% ] [90m[1m_update_scan_actions[22m | _Mom_Amina_preview_collar_back.png[39m[0m
+[   9% ] [90m[1m_update_scan_actions[22m | _Mom_Amina_preview_face_close.png[39m[0m
+[  12% ] [90m[1m_update_scan_actions[22m | _Mom_Amina_preview_limbs.png[39m[0m
+[  15% ] [90m[1m_update_scan_actions[22m | _Mom_Amina_preview_lock_close.png[39m[0m
+[  18% ] [90m[1m_update_scan_actions[22m | _Mom_Amina_preview_mouth.png[39m[0m
+[  21% ] [90m[1m_update_scan_actions[22m | _Mom_Amina_preview_stump_close.png[39m[0m
+[  24% ] [90m[1m_update_scan_actions[22m | _Mom_Amina_preview_unlocked.png[39m[0m
+[  27% ] [90m[1m_update_scan_actions[22m | _Mom_Amina_preview_v2.png[39m[0m
+[  30% ] [90m[1m_update_scan_actions[22m | _Mom_Restraint_preview.png[39m[0m
+[  33% ] [90m[1m_update_scan_actions[22m | Mom_Amina.glb[39m[0m
+[  36% ] [90m[1m_update_scan_actions[22m | Mom_Amina_albedo_256.png[39m[0m
+[  39% ] [90m[1m_update_scan_actions[22m | Mom_Amina_metal_128.png[39m[0m
+[  42% ] [90m[1m_update_scan_actions[22m | Mom_Amina_Mom_Amina_albedo_256(OLD).png[39m[0m
+[  45% ] [90m[1m_update_scan_actions[22m | Mom_Amina_Mom_Amina_albedo_256.png[39m[0m
+[  48% ] [90m[1m_update_scan_actions[22m | Mom_Amina_Mom_Amina_metal_128.png[39m[0m
+[  51% ] [90m[1m_update_scan_actions[22m | Mom_Amina_Mom_Amina_mouth_01.png[39m[0m
+[  54% ] [90m[1m_update_scan_actions[22m | Mom_Amina_Mom_Amina_mouth_02.png[39m[0m
+[  57% ] [90m[1m_update_scan_actions[22m | Mom_Amina_Mom_Amina_mouth_03.png[39m[0m
+[  60% ] [90m[1m_update_scan_actions[22m | Mom_Amina_Mom_Amina_patch_skin_64.png[39m[0m
+[  63% ] [90m[1m_update_scan_actions[22m | Mom_Amina_Mom_Amina_stump_bandage_64.png[39m[0m
+[  66% ] [90m[1m_update_scan_actions[22m | Mom_Amina_Mom_Amina_stump_wound_64.png[39m[0m
+[  69% ] [90m[1m_update_scan_actions[22m | Mom_Amina_mouth_01.png[39m[0m
+[  72% ] [90m[1m_update_scan_actions[22m | Mom_Amina_mouth_02.png[39m[0m
+[  75% ] [90m[1m_update_scan_actions[22m | Mom_Amina_mouth_03.png[39m[0m
+[  78% ] [90m[1m_update_scan_actions[22m | Mom_Amina_OldLock.png[39m[0m
+[  81% ] [90m[1m_update_scan_actions[22m | Mom_Amina_patch_skin_64.png[39m[0m
+[  84% ] [90m[1m_update_scan_actions[22m | Mom_Amina_stump_bandage_64.png[39m[0m
+[  87% ] [90m[1m_update_scan_actions[22m | Mom_Amina_stump_injury_64.png[39m[0m
+[  90% ] [90m[1m_update_scan_actions[22m | Mom_Amina_stump_wound_64.png[39m[0m
+[  93% ] [90m[1m_update_scan_actions[22m | Mom_Restraint.glb[39m[0m
+[92m[ DONE ][39m [1m_update_scan_actions[22m
+[0m
+[   0% ] [90m[1mreimport[22m | Started Импорт или повторный импорт ассетов (32 steps)[39m[0m
+[   0% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[   3% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[   6% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[   9% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  12% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  15% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  18% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  21% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  24% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  27% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  30% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  33% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  36% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  39% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  42% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  45% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  48% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  51% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  54% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  57% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  60% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  63% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  66% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  69% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  72% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  75% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  78% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  81% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  84% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  87% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  90% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[  93% ] [90m[1mreimport[22m | Подготовка файлов к повторному импорту…[39m[0m
+[   0% ] [90m[1mreimport[22m | Выполнение предимпортных операций…[39m[0m
+[   0% ] [90m[1mpreload_reimporting_scene[22m | Started Подготовка сцен к перезагрузке (1 steps)[39m[0m
+[   0% ] [90m[1mpreload_reimporting_scene[22m | Анализ сцены [пусто][39m[0m
+[  50% ] [90m[1mpreload_reimporting_scene[22m | Подготовка завершена.[39m[0m
+[92m[ DONE ][39m [1mpreload_reimporting_scene[22m
+[0m
+[   0% ] [90m[1mreimport[22m | Mom_Amina_stump_wound_64.png[39m[0m
+[   3% ] [90m[1mreimport[22m | Mom_Amina_stump_injury_64.png[39m[0m
+[   6% ] [90m[1mreimport[22m | Mom_Amina_stump_bandage_64.png[39m[0m
+[   9% ] [90m[1mreimport[22m | Mom_Amina_patch_skin_64.png[39m[0m
+[  12% ] [90m[1mreimport[22m | Mom_Amina_OldLock.png[39m[0m
+[  15% ] [90m[1mreimport[22m | Mom_Amina_mouth_03.png[39m[0m
+[  18% ] [90m[1mreimport[22m | Mom_Amina_mouth_02.png[39m[0m
+[  21% ] [90m[1mreimport[22m | Mom_Amina_mouth_01.png[39m[0m
+[  24% ] [90m[1mreimport[22m | Mom_Amina_Mom_Amina_stump_wound_64.png[39m[0m
+[  27% ] [90m[1mreimport[22m | Mom_Amina_Mom_Amina_stump_bandage_64.png[39m[0m
+[  30% ] [90m[1mreimport[22m | Mom_Amina_Mom_Amina_patch_skin_64.png[39m[0m
+[  33% ] [90m[1mreimport[22m | Mom_Amina_Mom_Amina_mouth_03.png[39m[0m
+[  36% ] [90m[1mreimport[22m | Mom_Amina_Mom_Amina_mouth_02.png[39m[0m
+[  39% ] [90m[1mreimport[22m | Mom_Amina_Mom_Amina_mouth_01.png[39m[0m
+[  42% ] [90m[1mreimport[22m | Mom_Amina_Mom_Amina_metal_128.png[39m[0m
+[  45% ] [90m[1mreimport[22m | _Mom_Amina_preview.png[39m[0m
+[  48% ] [90m[1mreimport[22m | _Mom_Amina_preview_check.png[39m[0m
+[  51% ] [90m[1mreimport[22m | _Mom_Amina_preview_collar_back.png[39m[0m
+[  54% ] [90m[1mreimport[22m | _Mom_Amina_preview_face_close.png[39m[0m
+[  57% ] [90m[1mreimport[22m | _Mom_Amina_preview_limbs.png[39m[0m
+[  60% ] [90m[1mreimport[22m | _Mom_Amina_preview_lock_close.png[39m[0m
+[  63% ] [90m[1mreimport[22m | _Mom_Amina_preview_mouth.png[39m[0m
+[  66% ] [90m[1mreimport[22m | _Mom_Amina_preview_stump_close.png[39m[0m
+[  69% ] [90m[1mreimport[22m | _Mom_Amina_preview_unlocked.png[39m[0m
+[  72% ] [90m[1mreimport[22m | _Mom_Amina_preview_v2.png[39m[0m
+[  75% ] [90m[1mreimport[22m | _Mom_Restraint_preview.png[39m[0m
+[  78% ] [90m[1mreimport[22m | Mom_Amina_albedo_256.png[39m[0m
+[  81% ] [90m[1mreimport[22m | Mom_Amina_metal_128.png[39m[0m
+[  84% ] [90m[1mreimport[22m | Mom_Amina_Mom_Amina_albedo_256(OLD).png[39m[0m
+[  87% ] [90m[1mreimport[22m | Mom_Amina_Mom_Amina_albedo_256.png[39m[0m
+[  90% ] [90m[1mreimport[22m | Mom_Amina.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Импортировать сцену (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Импорт сцены…[39m[0m
+[   1% ] [90m[1mimport[22m | Запуск пользовательского скрипта…[39m[0m
+[  99% ] [90m[1mimport[22m | Сохранение…[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  93% ] [90m[1mreimport[22m | Mom_Restraint.glb[39m[0m
+[   0% ] [90m[1mimport[22m | Started Импортировать сцену (104 steps)[39m[0m
+[   0% ] [90m[1mimport[22m | Импорт сцены…[39m[0m
+[   1% ] [90m[1mimport[22m | Запуск пользовательского скрипта…[39m[0m
+[  99% ] [90m[1mimport[22m | Сохранение…[39m[0m
+[92m[ DONE ][39m [1mimport[22m
+[0m
+[  96% ] [90m[1mreimport[22m | Завершение импорта активов…[39m[0m
+[92m[ DONE ][39m [1mreimport[22m
+[0m
+[   0% ] [90m[1mreimport[22m | Started Импорт или повторный импорт ассетов (32 steps)[39m[0m
+[   0% ] [90m[1mreimport[22m | Выполнение операций после реимпорта…[39m[0m
+[92m[ DONE ][39m [1mreimport[22m
+[0m
+[   0% ] [90m[1mloading_editor_layout[22m | Started Загрузка редактора (5 steps)[39m[0m
+[   0% ] [90m[1mloading_editor_layout[22m | Загрузка макета редактора…[39m[0m
+[  16% ] [90m[1mloading_editor_layout[22m | Загрузка док-панели…[39m[0m
+[  33% ] [90m[1mloading_editor_layout[22m | Повторное открытие сцен…[39m[0m
+[  50% ] [90m[1mloading_editor_layout[22m | Загрузка макета центрального редактора…[39m[0m
+[  66% ] [90m[1mloading_editor_layout[22m | Загрузка макета окна плагина…[39m[0m
+[  83% ] [90m[1mloading_editor_layout[22m | Макет редактора готов.[39m[0m
+[92m[ DONE ][39m [1mloading_editor_layout[22m
+[0m

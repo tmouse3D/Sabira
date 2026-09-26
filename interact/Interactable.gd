@@ -1,0 +1,28 @@
+# Godot 4.x ?- Sabira / HOUSE
+class_name Interactable
+extends StaticBody3D
+## Base interactable. Override interact() in subclasses (e.g. Door).
+
+@export var prompt_text: String = "[E] Interact"
+@export var interact_enabled: bool = true
+
+signal interacted(player: Node)
+
+
+func get_prompt() -> String:
+	return prompt_text if interact_enabled else ""
+
+
+func can_interact(_player: Node) -> bool:
+	return interact_enabled
+
+
+func interact(player: Node) -> void:
+	if not can_interact(player):
+		return
+	interacted.emit(player)
+	_on_interact(player)
+
+
+func _on_interact(_player: Node) -> void:
+	pass

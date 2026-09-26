@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://c8doorway01scn"]
+
+[ext_resource type="Script" uid="uid://dq8doorway01gd" path="res://interact/Doorway.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://b4c358qylnaea" path="res://interact/Door.tscn" id="2_door"]
+[ext_resource type="Material" path="res://materials/mat_wall_dark.tres" id="3_wall"]
+[ext_resource type="Material" path="res://materials/mat_door_wood.tres" id="4_wood"]
+[ext_resource type="Material" path="res://materials/mat_door_jamb.tres" id="5_jamb"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_jamb"]
+size = Vector3(0.14, 2.12, 0.08)
+
+[sub_resource type="BoxShape3D" id="BoxShape_header"]
+size = Vector3(0.14, 0.1, 1.06)
+
+[node name="Doorway" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="WallSegment" type="CSGCombiner3D" parent="."]
+use_collision = true
+
+[node name="Wall" type="CSGBox3D" parent="WallSegment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0.475)
+size = Vector3(0.2, 2.8, 1.4)
+material = ExtResource("3_wall")
+
+[node name="Hole" type="CSGBox3D" parent="WallSegment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.075, 0.475)
+operation = 2
+size = Vector3(0.35, 2.15, 0.95)
+
+[node name="Frame" type="Node3D" parent="."]
+
+[node name="JambL" type="CSGBox3D" parent="Frame"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, -0.04)
+size = Vector3(0.14, 2.12, 0.08)
+material = ExtResource("5_jamb")
+
+[node name="JambR" type="CSGBox3D" parent="Frame"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0.94)
+size = Vector3(0.14, 2.12, 0.08)
+material = ExtResource("5_jamb")
+
+[node name="Header" type="CSGBox3D" parent="Frame"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.14, 0.45)
+size = Vector3(0.14, 0.1, 1.06)
+material = ExtResource("5_jamb")
+
+[node name="FrameBody" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="ColJambL" type="CollisionShape3D" parent="FrameBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, -0.04)
+shape = SubResource("BoxShape_jamb")
+
+[node name="ColJambR" type="CollisionShape3D" parent="FrameBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0.94)
+shape = SubResource("BoxShape_jamb")
+
+[node name="ColHeader" type="CollisionShape3D" parent="FrameBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.14, 0.45)
+shape = SubResource("BoxShape_header")
+
+[node name="Door" parent="." instance=ExtResource("2_door")]

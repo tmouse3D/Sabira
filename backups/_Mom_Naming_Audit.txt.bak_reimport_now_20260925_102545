@@ -1,0 +1,29 @@
+﻿Mom naming audit — 2026-09-25 collar plates (FINAL)
+===================================================
+RENAMED / REPLACED:
+  NeckBar (REMOVED thick block)
+    -> NeckPlate_L, NeckPlate_Top, NeckPlate_R (thin matte-black squares)
+  LockRect KEPT (now child of NeckPlate_Top; OldLock mesh kept)
+
+EXPORT / GODOT HIDE-ON-UNLOCK SET (PascalCase ASCII):
+  Mom_Amina_Root
+    Body
+    NeckPlate_L
+    NeckPlate_Top
+      LockRect
+    NeckPlate_R
+
+HOUSE nodes (names unchanged; Mom_LockRectBody transform updated):
+  Structure/HiddenRoom/Hidden_Mom_Amina
+  Structure/HiddenRoom/Mom_LockRectBody   @ (-0.85, 0.7994, -0.5770)
+  Structure/HiddenRoom/Mom_WrapBody
+
+SCRIPT:
+  interact/MomLockRect.gd
+    lock_mesh_path -> ../Hidden_Mom_Amina/Mom_Amina_Root/NeckPlate_Top/LockRect
+    hide set includes NeckPlate_L / NeckPlate_Top / NeckPlate_R / LockRect
+  interact/MomRestless.gd / MomWrap.gd — House node names unchanged
+
+FLAGGED (not renamed; out of Mom/lock scope):
+  DOUBLE_PREFIX Godot reimport copies: props\Mom_Amina_Mom_Amina_*.png (+.import)
+  QA/TMP: props\qa_lock.png, props\_qa_*, props\_tmp_*lock*

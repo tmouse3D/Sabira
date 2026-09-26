@@ -1,0 +1,98 @@
+{
+  "ends": [
+    {
+      "action": "tip_spill",
+      "node": "Box",
+      "duration_s": 0.5,
+      "end_xyz": [
+        0.0,
+        0.0787,
+        0.0492
+      ],
+      "approx_scene_y": null
+    },
+    {
+      "action": "tip_spill.001",
+      "node": "Photos",
+      "duration_s": 0.667,
+      "end_xyz": [
+        0.0779,
+        -2.0,
+        0.65
+      ],
+      "approx_scene_y": 0.05
+    },
+    {
+      "action": "tip_spill.002",
+      "node": "Photo_0",
+      "duration_s": 0.583,
+      "end_xyz": [
+        -0.18,
+        0.04,
+        0.12
+      ],
+      "approx_scene_y": null,
+      "approx_combined_scene_y": 0.09
+    },
+    {
+      "action": "tip_spill.003",
+      "node": "Photo_1",
+      "duration_s": 0.583,
+      "end_xyz": [
+        -0.05,
+        0.03,
+        0.2
+      ],
+      "approx_scene_y": null,
+      "approx_combined_scene_y": 0.08
+    },
+    {
+      "action": "tip_spill.004",
+      "node": "Photo_2",
+      "duration_s": 0.583,
+      "end_xyz": [
+        0.12,
+        0.05,
+        0.26
+      ],
+      "approx_scene_y": null,
+      "approx_combined_scene_y": 0.1
+    },
+    {
+      "action": "tip_spill.005",
+      "node": "Photo_3",
+      "duration_s": 0.583,
+      "end_xyz": [
+        0.08,
+        0.035,
+        0.1
+      ],
+      "approx_scene_y": null,
+      "approx_combined_scene_y": 0.085
+    },
+    {
+      "action": "tip_spill.006",
+      "node": "Photo_4",
+      "duration_s": 0.583,
+      "end_xyz": [
+        -0.12,
+        0.045,
+        0.22
+      ],
+      "approx_scene_y": null,
+      "approx_combined_scene_y": 0.095
+    },
+    {
+      "action": "tip_spill.007",
+      "node": "Photo_5",
+      "duration_s": 0.583,
+      "end_xyz": [
+        0.18,
+        0.055,
+        0.16
+      ],
+      "approx_scene_y": null,
+      "approx_combined_scene_y": 0.105
+    }
+  ]
+}

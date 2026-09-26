@@ -1,0 +1,66 @@
+﻿PhotoBox / PhotoLook art handoff (2026-09-24 ~10:20 BST)
+=======================================================
+
+TASK A — tip_spill sped up ~2.22× (Blender 5.2.2, keyframe time scale 0.45)
+  PhotoBox.glb overwritten:
+    C:\Users\hp\Documents\sabira\props\PhotoBox.glb
+  Backup:
+    C:\Users\hp\Documents\sabira\backups\PhotoBox.glb.bak_20260924_101722
+  External textures unchanged (still beside GLB):
+    PhotoBox_cardboard.png, PhotoBox_moms_photos.png
+  Old clip lengths (sec @24fps frame span):
+    tip_spill (Box)           1.133
+    tip_spill.001 (Photos)    1.800  ← Godot wait used this max
+    tip_spill.002–007 (Photo_*) ~1.267
+  New clip lengths (glTF verify max_t sec):
+    tip_spill                 0.500
+    tip_spill.001             0.792  ← new longest
+    tip_spill.002–007         ~0.750
+  BookcaseMover.gd:
+    photo_spill_settle_sec  2.0 → 0.85
+    Backup: C:\Users\hp\Documents\sabira\backups\BookcaseMover.gd.bak_20260924_101739
+  Cleared .godot/imported/PhotoBox.glb* so next Godot open reimports short anims.
+
+TASK B — TEMP look-through photos (640×480, Polaroid/TEMP watermark)
+  C:\Users\hp\Documents\sabira\ui\photos\photo_01.png  empty hallway
+  C:\Users\hp\Documents\sabira\ui\photos\photo_02.png  doorway slit of light
+  C:\Users\hp\Documents\sabira\ui\photos\photo_03.png  bed corner
+  C:\Users\hp\Documents\sabira\ui\photos\photo_04.png  coat on hanger silhouette
+  C:\Users\hp\Documents\sabira\ui\photos\photo_05.png  fridge glow
+  C:\Users\hp\Documents\sabira\ui\photos\photo_06.png  bookcase gap
+  ContactSheet.png (2×3), README.txt
+  Replace in-place later; keep filenames for PhotoLook.
+
+TASK C — PhotoLook stub ONLY (Take path NOT wired — playtest first)
+  C:\Users\hp\Documents\sabira\ui\PhotoLook.gd
+  C:\Users\hp\Documents\sabira\ui\PhotoLook.tscn
+  API: open_look() → browse photo_01..06 (auto ~0.9s / E / click) → signal finished
+  Group: "photo_look". Layer 30. Esc skips.
+  PhotosPickup.gd: handoff comment only (logic unchanged).
+  Backup: C:\Users\hp\Documents\sabira\backups\PhotosPickup.gd.bak_20260924_101739
+  No GameState.photos_viewed added (existing: discovered_photos, has_photos).
+
+--- HANDOFF @Godot Dev ---
+1. Reopen project so PhotoBox.glb reimports; confirm AnimationPlayer tip_spill* lengths ~0.5–0.8s.
+2. First bookcase OPEN should tip+spill faster; settle wait ≈ max(0.85, anim+0.15).
+3. Wire first Take on PhotosPickup:
+     var look := get_tree().get_first_node_in_group("photo_look") as PhotoLook
+     # or instance res://ui/PhotoLook.tscn under HUD once in House
+     if look and not <photos_viewed>:
+       look.open_look(); await look.finished
+     then GameState.add_inventory_flag("photos") as today
+4. Flag choice: add GameState.photos_viewed (mirror discovered_photos + reset_for_new_game)
+   OR local one-shot on PhotosPickup. Do not invent other GameState fields.
+5. Instance PhotoLook in House HUD (or autoload) and add_to_group is already in _ready.
+
+--- HANDOFF @Scriptwriter (optional flip lines) ---
+Suggested short beats while PhotoLook advances (subtitle SABIRA, ~0.8–1.2s each):
+  01 hallway — "Empty. Too empty."
+  02 slit    — "Someone left the door ajar."
+  03 bed     — "Not my room."
+  04 coat    — "That coat isn't ours."
+  05 fridge  — "Cold light. Wrong kitchen."
+  06 gap     — "Behind the shelves…"
+Or keep silent and let look_lines on PhotosPickup cover after close.
+
+Blockers: none for art delivery. Cutscene wiring left to Godot Dev on purpose.

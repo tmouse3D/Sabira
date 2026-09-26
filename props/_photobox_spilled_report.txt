@@ -1,0 +1,184 @@
+{
+  "out_glb": "C:\\Users\\hp\\Documents\\sabira\\props\\PhotoBox_Spilled.glb",
+  "out_blend": "C:\\Users\\hp\\Documents\\sabira\\props\\PhotoBox_Spilled.blend",
+  "aabb_min": [
+    -0.2302,
+    -0.1035,
+    -0.0
+  ],
+  "aabb_max": [
+    0.2302,
+    0.1035,
+    0.2032
+  ],
+  "size": [
+    0.4603,
+    0.2069,
+    0.2032
+  ],
+  "tris": 132,
+  "glb_bytes": 124780,
+  "glb_animation_count": 0,
+  "glb_nodes": [
+    "Back",
+    "Bottom",
+    "Front",
+    "Left",
+    "Right",
+    "Box",
+    "Photo_0",
+    "Photo_1",
+    "Photo_2",
+    "Photo_3",
+    "Photo_4",
+    "Photo_5",
+    "Photos",
+    "PhotoBox_Spilled_Root"
+  ],
+  "final_poses": {
+    "PhotoBox_Spilled_Root": {
+      "local": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "parent": null
+    },
+    "Box": {
+      "local": [
+        0.09017,
+        0.00363,
+        0.07733
+      ],
+      "quat": [
+        0.68536,
+        0.7282,
+        0.0,
+        0.0
+      ],
+      "parent": "PhotoBox_Spilled_Root"
+    },
+    "Photos": {
+      "local": [
+        0.08804,
+        0.00363,
+        0.07733
+      ],
+      "quat": [
+        0.17946,
+        0.95643,
+        -0.0512,
+        -0.22452
+      ],
+      "parent": "PhotoBox_Spilled_Root"
+    },
+    "Photo_0": {
+      "local": [
+        -0.23052,
+        0.00447,
+        0.11549
+      ],
+      "quat": [
+        0.221,
+        -0.94769,
+        0.06094,
+        0.22208
+      ],
+      "parent": "Photos"
+    },
+    "Photo_1": {
+      "local": [
+        -0.11431,
+        0.00222,
+        0.05727
+      ],
+      "quat": [
+        0.31672,
+        -0.94777,
+        -0.00916,
+        0.0366
+      ],
+      "parent": "Photos"
+    },
+    "Photo_2": {
+      "local": [
+        0.03766,
+        -0.00073,
+        -0.01887
+      ],
+      "quat": [
+        0.42874,
+        -0.88821,
+        -0.09049,
+        -0.13812
+      ],
+      "parent": "Photos"
+    },
+    "Photo_3": {
+      "local": [
+        0.0019,
+        -4e-05,
+        -0.00095
+      ],
+      "quat": [
+        0.54123,
+        -0.76949,
+        -0.17236,
+        -0.29197
+      ],
+      "parent": "Photos"
+    },
+    "Photo_4": {
+      "local": [
+        -0.17688,
+        0.00343,
+        0.08862
+      ],
+      "quat": [
+        0.63845,
+        -0.59855,
+        -0.24337,
+        -0.4182
+      ],
+      "parent": "Photos"
+    },
+    "Photo_5": {
+      "local": [
+        0.0913,
+        -0.00177,
+        -0.04574
+      ],
+      "quat": [
+        0.70677,
+        -0.38816,
+        -0.29278,
+        -0.51389
+      ],
+      "parent": "Photos"
+    }
+  },
+  "suggested_godot": {
+    "parent": "Structure",
+    "sibling_of": "BookcaseMover",
+    "node_name": "Living_PhotoBox_Spilled",
+    "visible": false,
+    "bookcase_mover_origin": [
+      -4.7,
+      0.0,
+      -2.6
+    ],
+    "suggested_structure_local": [
+      -4.15,
+      0.0,
+      -2.45
+    ],
+    "notes": "Approx BookcaseMover + (0.55, 0.0, 0.15). Prop origin is spill-cluster center on floor (Z-up Blender / Y-up Godot height 0). Tipped box + photo plates already posed; no tip_spill AnimationPlayer. Hide Living_PhotoBox (shelf) when bookcase first opens; show this node."
+  },
+  "source_photobox_glb_untouched": "C:\\Users\\hp\\Documents\\sabira\\props\\PhotoBox.glb"
+}

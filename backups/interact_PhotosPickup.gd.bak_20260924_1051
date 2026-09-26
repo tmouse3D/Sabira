@@ -1,0 +1,164 @@
+# Godot 4.x - Sabira / HOUSE
+class_name PhotosPickup
+extends Interactable
+## Floor photos after PhotoBox tip_spill (one site under BookcaseMover).
+## Armed after spill settles. First [E] Take -> PhotosLookthrough (once) then
+## inventory "photos" + Found the photos. Subsequent: empty cardboard lines.
+## tip_spill already fired Photos...? — keep that on spill, not here.
+
+@export var take_prompt: String = "[E] Take the photos."
+@export var look_prompt: String = "[E] Look"
+@export var find_line: String = "Found the photos."
+@export var line_duration: float = 2.5
+@export var look_lines: PackedStringArray = [
+	"Wrong place for these.",
+	"Not family pictures.",
+	"Someone was watching.",
+]
+## Look never blocks Take; flavor lines used on empty checks / look_once().
+@export var offer_look_first: bool = false
+@export var take_stream: AudioStream
+@export var take_volume_db: float = -18.0
+
+const EMPTY_LINES: PackedStringArray = [
+	"Just empty cardboard.",
+	"Already looked.",
+	"Nothing left.",
+]
+
+var _armed: bool = false
+var _taken: bool = false
+var _look_i: int = 0
+var _glanced: bool = false
+var _take_sfx: AudioStreamPlayer3D
+var _lookthrough_open: bool = false
+
+
+func _ready() -> void:
+	collision_layer = 0
+	collision_mask = 0
+	interact_enabled = false
+	_ensure_take_player()
+	if GameState != null and GameState.has_photos:
+		_taken = true
+	_refresh_prompt()
+
+
+func arm_photos_pickup(on: bool) -> void:
+	_armed = on
+	if GameState != null and GameState.has_photos:
+		_taken = true
+	collision_layer = 5 if on else 0
+	interact_enabled = on
+	_refresh_prompt()
+
+
+func look_once() -> void:
+	if look_lines.is_empty() or not _armed:
+		return
+	var line := look_lines[_look_i % look_lines.size()]
+	_look_i += 1
+	_glanced = true
+	get_tree().call_group("subtitle", "show_line", "SABIRA", line, line_duration)
+
+
+func can_interact(_player: Node) -> bool:
+	if _lookthrough_open:
+		return false
+	return interact_enabled and _armed and GameState != null
+
+
+func get_prompt() -> String:
+	if not can_interact(null):
+		return ""
+	if _taken or GameState.has_photos:
+		return "[E] Check box"
+	if offer_look_first and not _glanced and look_lines.size() > 0:
+		return look_prompt
+	return take_prompt
+
+
+func _ensure_take_player() -> void:
+	_take_sfx = get_node_or_null("TakePlayer") as AudioStreamPlayer3D
+	if _take_sfx == null:
+		_take_sfx = AudioStreamPlayer3D.new()
+		_take_sfx.name = "TakePlayer"
+		_take_sfx.max_distance = 10.0
+		add_child(_take_sfx)
+	if take_stream == null:
+		take_stream = load("res://audio/sfx/ui_soft_click.wav") as AudioStream
+	_take_sfx.stream = take_stream
+	_take_sfx.volume_db = take_volume_db
+	_take_sfx.bus = &"Master"
+
+
+func _play_take_sfx() -> void:
+	if _take_sfx == null:
+		_ensure_take_player()
+	if _take_sfx and _take_sfx.stream:
+		_take_sfx.pitch_scale = randf_range(0.96, 1.04)
+		_take_sfx.volume_db = take_volume_db + randf_range(-1.0, 0.5)
+		_take_sfx.play()
+
+
+func _on_interact(_player: Node) -> void:
+	if GameState == null or not _armed or _lookthrough_open:
+		return
+	var dur := line_duration
+	if _taken or GameState.has_photos:
+		_play_take_sfx()
+		if look_lines.size() > 0 and randf() < 0.35:
+			var line := look_lines[_look_i % look_lines.size()]
+			_look_i += 1
+			get_tree().call_group("subtitle", "show_line", "SABIRA", line, dur)
+		else:
+			get_tree().call_group("subtitle", "show_line", "SABIRA", EMPTY_LINES[randi() % EMPTY_LINES.size()], dur)
+		_refresh_prompt()
+		return
+	if offer_look_first and not _glanced and look_lines.size() > 0:
+		_glanced = true
+		var look := look_lines[_look_i % look_lines.size()]
+		_look_i += 1
+		get_tree().call_group("subtitle", "show_line", "SABIRA", look, dur)
+		_refresh_prompt()
+		return
+	# Carry-full check before look-through / inventory.
+	if not GameState.can_carry("photos"):
+		GameState.add_inventory_flag("photos")  # shows Can't carry more.
+		return
+	_play_take_sfx()
+	_start_lookthrough()
+
+
+func _start_lookthrough() -> void:
+	var ui := get_tree().get_first_node_in_group("photos_lookthrough")
+	if ui == null or not ui.has_method("open_look"):
+		_finish_take_after_lookthrough()
+		return
+	_lookthrough_open = true
+	_refresh_prompt()
+	if ui.has_signal("finished") and not ui.finished.is_connected(_on_lookthrough_finished):
+		ui.finished.connect(_on_lookthrough_finished, CONNECT_ONE_SHOT)
+	ui.open_look()
+
+
+func _on_lookthrough_finished() -> void:
+	_lookthrough_open = false
+	_finish_take_after_lookthrough()
+
+
+func _finish_take_after_lookthrough() -> void:
+	if GameState == null:
+		return
+	if not GameState.add_inventory_flag("photos"):
+		_refresh_prompt()
+		return
+	_taken = true
+	# discovered_photos already set on tip_spill; ensure flag present.
+	GameState.discovered_photos = true
+	get_tree().call_group("subtitle", "show_line", "SABIRA", find_line, line_duration)
+	_refresh_prompt()
+
+
+func _refresh_prompt() -> void:
+	prompt_text = get_prompt()

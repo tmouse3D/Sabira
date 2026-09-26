@@ -1,0 +1,37 @@
+# Godot 4.x ?- Sabira / HOUSE
+extends Node3D
+## Re-bind Washer_Body / Washer_Door / Washer_Panel to standalone textures.
+
+@export var mat_body: Material
+@export var mat_door: Material
+@export var mat_panel: Material
+
+
+func _ready() -> void:
+	if mat_body == null:
+		mat_body = load("res://materials/mat_washer_body.tres") as Material
+	if mat_door == null:
+		mat_door = load("res://materials/mat_washer_door.tres") as Material
+	if mat_panel == null:
+		mat_panel = load("res://materials/mat_washer_panel.tres") as Material
+	_apply(self)
+
+
+func _apply(n: Node) -> void:
+	if n is MeshInstance3D:
+		var mi := n as MeshInstance3D
+		if mi.mesh:
+			for i in mi.mesh.get_surface_count():
+				var existing := mi.get_active_material(i)
+				var key := ""
+				if existing:
+					key = existing.resource_name
+				match key:
+					"Washer_Body":
+						mi.set_surface_override_material(i, mat_body)
+					"Washer_Door":
+						mi.set_surface_override_material(i, mat_door)
+					"Washer_Panel":
+						mi.set_surface_override_material(i, mat_panel)
+	for c in n.get_children():
+		_apply(c)

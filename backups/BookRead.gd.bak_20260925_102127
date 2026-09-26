@@ -1,0 +1,87 @@
+# Godot 4.x - Sabira / HOUSE
+class_name BookRead
+extends Interactable
+## F2 Landing book: Read opens BookPage caption; Sabira reacts once after close.
+## Knowledge flags survive Catch-1 (mirror discovered_photos).
+
+@export var read_prompt: String = "[E] Read the book."
+@export var look_prompt: String = "[E] Look"
+@export var look_line: String = "A thick book. Someone underlined the page."
+@export var page_text: String = 'In some regions, a lively custom called ala kachuu once meant a groom "stealing" a bride for marriage. The literature insists it is tradition, romance, even a compliment. Neighbors clap. Mothers cry. The bride is told she will grow to love him. The paperwork catches up later, if it catches up at all.'
+@export var sabira_react_line: String = "I wonder if I'll be married the same way."
+@export var reread_soft_line: String = "Still that page."
+@export var line_duration: float = 3.0
+@export var offer_look_first: bool = true
+
+var _page_open: bool = false
+var _looked: bool = false
+
+
+func _ready() -> void:
+	collision_layer = 5
+	collision_mask = 0
+	interact_enabled = true
+	_refresh_prompt()
+
+
+func can_interact(_player: Node) -> bool:
+	return interact_enabled and not _page_open
+
+
+func get_prompt() -> String:
+	if not can_interact(null):
+		return ""
+	# Optional Look once before first Read (Scriptwriter Look without Read).
+	if offer_look_first and not _looked and GameState != null and not GameState.read_ala_kachuu_book:
+		return look_prompt
+	return read_prompt
+
+
+func _refresh_prompt() -> void:
+	prompt_text = get_prompt()
+
+
+func _on_interact(_player: Node) -> void:
+	if _page_open or GameState == null:
+		return
+	# First beat: Look only (no page yet).
+	if offer_look_first and not _looked and not GameState.read_ala_kachuu_book:
+		_looked = true
+		get_tree().call_group("subtitle", "show_line", "SABIRA", look_line, line_duration)
+		_refresh_prompt()
+		return
+	_open_page()
+
+
+func _open_page() -> void:
+	var ui := get_tree().get_first_node_in_group("book_page")
+	if ui == null or not ui.has_method("open_page"):
+		# Fallback: subtitle caption if BookPage missing.
+		get_tree().call_group("subtitle", "show_line", "", page_text, 8.0)
+		_after_page_closed()
+		return
+	_page_open = true
+	_refresh_prompt()
+	if ui.has_signal("finished") and not ui.finished.is_connected(_on_page_finished):
+		ui.finished.connect(_on_page_finished, CONNECT_ONE_SHOT)
+	ui.call("open_page", page_text)
+
+
+func _on_page_finished() -> void:
+	_page_open = false
+	_after_page_closed()
+	_refresh_prompt()
+
+
+func _after_page_closed() -> void:
+	if GameState == null:
+		return
+	var first_read := not GameState.read_ala_kachuu_book
+	GameState.read_ala_kachuu_book = true
+	if not GameState.sabira_book_reacted:
+		GameState.sabira_book_reacted = true
+		get_tree().call_group("subtitle", "show_line", "SABIRA", sabira_react_line, line_duration)
+		return
+	# Re-Read: same page already shown; soft line only (no second wonder).
+	if not first_read:
+		get_tree().call_group("subtitle", "show_line", "SABIRA", reread_soft_line, line_duration)

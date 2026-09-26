@@ -1,0 +1,218 @@
+# Godot 4.x - Sabira / HOUSE
+class_name MomLockRect
+extends Interactable
+## LockRect on Mom_Amina: cage_key unlock plays lock_unlocked (or lifts mesh).
+## Unlock caption: Unlocked. then Mum...?; proximity once: Oh god.
+## Consumes cage_key on unlock (no Spent flash).
+
+@export var lock_mesh_path: NodePath = NodePath("../Hidden_Mom_Amina/Mom_Amina_Root/LockRect")
+@export var lift_y: float = 0.20
+@export var unlocked_rotation_deg: Vector3 = Vector3(-90.0, 0.0, 0.0)
+@export var prefer_unlock_clip: bool = true
+@export var locked_clip: String = "lock_locked"
+@export var unlocked_clip: String = "lock_unlocked"
+@export var line_duration: float = 2.5
+@export var unlock_line: String = "Unlocked."
+@export var mum_line: String = "Mum...?"
+@export var locked_line: String = "Locked."
+@export var wrong_key_line: String = "Wrong key."
+@export var proximity_line: String = "Oh god."
+@export var proximity_radius: float = 1.6
+
+var _unlocked: bool = false
+var _proximity_said: bool = false
+var _lock_mesh: Node3D
+var _lock_home_y: float = 0.0
+var _lock_home_pos: Vector3 = Vector3.ZERO
+var _lock_home_rot: Vector3 = Vector3.ZERO
+var _prox_area: Area3D
+var _anim: AnimationPlayer = null
+
+
+func _ready() -> void:
+	collision_layer = 5
+	collision_mask = 0
+	interact_enabled = true
+	prompt_text = "[E] Unlock"
+	_resolve_lock_mesh()
+	_resolve_anim()
+	_play_locked_pose()
+	_setup_proximity()
+
+
+func _resolve_lock_mesh() -> void:
+	_lock_mesh = get_node_or_null(lock_mesh_path) as Node3D
+	# If path hits the Mom instance (or any parent), drill to LockRect.
+	if _lock_mesh != null and String(_lock_mesh.name) != "LockRect":
+		var nested := _lock_mesh.find_child("LockRect", true, false) as Node3D
+		if nested:
+			_lock_mesh = nested
+	if _lock_mesh == null:
+		var parent_n := get_parent()
+		if parent_n:
+			_lock_mesh = parent_n.find_child("LockRect", true, false) as Node3D
+	if _lock_mesh:
+		_lock_home_y = _lock_mesh.position.y
+		_lock_home_pos = _lock_mesh.position
+		_lock_home_rot = _lock_mesh.rotation
+
+
+func _resolve_anim() -> void:
+	_anim = null
+	if _lock_mesh == null:
+		_resolve_lock_mesh()
+	if _lock_mesh == null:
+		return
+	_anim = _lock_mesh.get_node_or_null("AnimationPlayer") as AnimationPlayer
+	if _anim == null and _lock_mesh.get_parent():
+		_anim = _lock_mesh.get_parent().get_node_or_null("AnimationPlayer") as AnimationPlayer
+	if _anim == null:
+		var mom_root := get_node_or_null("../Hidden_Mom_Amina") as Node
+		if mom_root:
+			_anim = mom_root.find_child("AnimationPlayer", true, false) as AnimationPlayer
+
+
+func _resolve_clip_path(clip_name: String) -> String:
+	if _anim == null or clip_name == "":
+		return ""
+	if _anim.has_animation(clip_name):
+		return clip_name
+	var libs: Array = _anim.get_animation_library_list()
+	for lib_name_any in libs:
+		var lib_name := String(lib_name_any)
+		var full := lib_name + "/" + clip_name
+		if _anim.has_animation(full):
+			return full
+		var lib := _anim.get_animation_library(lib_name)
+		if lib != null and lib.has_animation(clip_name):
+			return full
+	return ""
+
+
+func _play_clip(clip_name: String) -> bool:
+	if _anim == null:
+		_resolve_anim()
+	if _anim == null:
+		return false
+	var path := _resolve_clip_path(clip_name)
+	if path == "":
+		return false
+	_anim.play(path)
+	return true
+
+
+func _play_locked_pose() -> void:
+	# Default GLB rest is already LOCKED. Do not play lock_locked on ready:
+	# shares AnimationPlayer with MomRestless idle_restless.
+	# Keep transform at imported rest; lock_locked remains available if called later.
+	if _lock_mesh:
+		_lock_mesh.position = _lock_home_pos
+		_lock_mesh.rotation = _lock_home_rot
+
+
+func _setup_proximity() -> void:
+	_prox_area = Area3D.new()
+	_prox_area.name = "Proximity"
+	_prox_area.monitoring = true
+	_prox_area.monitorable = false
+	_prox_area.collision_layer = 0
+	_prox_area.collision_mask = 1
+	var shape := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = proximity_radius
+	shape.shape = sphere
+	_prox_area.add_child(shape)
+	add_child(_prox_area)
+	_prox_area.body_entered.connect(_on_prox_body_entered)
+
+
+func _on_prox_body_entered(body: Node) -> void:
+	if _proximity_said or not _unlocked:
+		return
+	if body == null:
+		return
+	var n := String(body.name).to_lower()
+	if not (body.is_in_group("player") or n.contains("player") or n.contains("sabira")):
+		if not (body is CharacterBody3D):
+			return
+	_proximity_said = true
+	get_tree().call_group("subtitle", "show_line", "SABIRA", proximity_line, line_duration)
+
+
+func is_unlocked() -> bool:
+	return _unlocked
+
+
+func can_interact(_player: Node) -> bool:
+	return interact_enabled and not _unlocked
+
+
+func _player_has_any_other_key() -> bool:
+	if GameState == null:
+		return false
+	for flag in ["front_key", "back_key", "tash_room_key", "key"]:
+		if GameState.has_inventory_flag(flag):
+			return true
+	return false
+
+
+func _fire_mum_line() -> void:
+	get_tree().call_group("subtitle", "show_line", "SABIRA", mum_line, line_duration)
+
+
+func _on_interact(_player: Node) -> void:
+	if _unlocked or GameState == null:
+		return
+	if GameState.has_inventory_flag("cage_key"):
+		_unlocked = true
+		_lift_lock()
+		# Consume cage_key silently (no Spent flash). Caption: Unlocked. then Mum...?
+		GameState.remove_inventory_flag("cage_key")
+		GameState.amina_revealed = true
+		GameState.mom_unlocked = true
+		get_tree().call_group("subtitle", "show_line", "SABIRA", unlock_line, line_duration)
+		# Mum...? after Unlocked. (subtitle has no queue - delay past unlock duration).
+		get_tree().create_timer(line_duration).timeout.connect(_fire_mum_line)
+		prompt_text = ""
+		interact_enabled = false
+		return
+	var line := wrong_key_line if _player_has_any_other_key() else locked_line
+	get_tree().call_group("subtitle", "show_line", "SABIRA", line, line_duration)
+
+
+func _lift_lock() -> void:
+	if _lock_mesh == null:
+		_resolve_lock_mesh()
+	if _lock_mesh == null:
+		push_warning("MomLockRect: LockRect mesh not found")
+		play_unlocked_pose()
+		return
+	# Prefer AnimationPlayer lock_unlocked; transform lift is fallback.
+	if prefer_unlock_clip and play_unlocked_pose():
+		return
+	_lock_mesh.position.y = _lock_home_y + lift_y
+	if unlocked_rotation_deg != Vector3.ZERO:
+		_lock_mesh.rotation_degrees = unlocked_rotation_deg
+	play_unlocked_pose()
+
+
+## Play lock_unlocked when present. Returns true if a clip started.
+## Safe no-op until art lands - does NOT invent lock geometry.
+func play_unlocked_pose() -> bool:
+	if _lock_mesh == null:
+		_resolve_lock_mesh()
+	if _lock_mesh == null:
+		return false
+	if _lock_mesh.has_method("play_unlocked_pose"):
+		_lock_mesh.call("play_unlocked_pose")
+		return true
+	if _play_clip(unlocked_clip):
+		return true
+	# Legacy name fallbacks.
+	for track_name in ["unlocked", "Unlock", "lock_open", "LockOpen"]:
+		if _play_clip(track_name):
+			return true
+	# Optional open rotation when Blender uses transform pose.
+	if unlocked_rotation_deg != Vector3.ZERO:
+		_lock_mesh.rotation_degrees = unlocked_rotation_deg
+	return false

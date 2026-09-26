@@ -1,0 +1,20 @@
+Mom_Amina / OfficeKey notes (Blender & Textures)
+================================================
+Mom_Amina.glb
+- Root: Mom_Amina_Root
+- Children: Body, NeckBar, LockRect
+- Tris: ~540 total
+- Origin: hips/back on mattress plane (Blender Z=0 -> Godot Y=0)
+- Head toward Blender +Y (-> Godot -Z after yup). Rotate 180 Y in-scene if pillow end is opposite.
+- LockRect: local name LockRect. Origin = bar-end hinge.
+  Godot lift: translate LockRect.position.y upward (local +Y), or rotate_x to flip open.
+- Placed: Structure/HiddenRoom/Hidden_Mom_Amina at (-0.85, 0.48, 0.1) same XZ as Hidden_Bed.
+- No prior mom sprite/bar/lock nodes existed in saved House.tscn (ref was editor-only); added instance.
+- Backup: backups/House.tscn.bak_mom_amina_20260924_130440
+
+OfficeKey.glb
+- Root: OfficeKey_Root / mesh OfficeKey
+- ~0.17m long, diamond bow + long shank + double-step bit (distinct from cage_key round bow)
+- Icon: ui/icons/office_key.png (64px chalky white)
+- NOT placed in House (hideable art for laundry pile or F1 FloorDrawers ? wire via interact later)
+- PhotoBox.glb untouched
