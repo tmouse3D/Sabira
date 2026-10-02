@@ -1,8 +1,7 @@
-[gd_scene format=3 uid="uid://xhefinjjqki"]
+﻿[gd_scene format=3 uid="uid://xhefinjjqki"]
 
 [ext_resource type="Script" uid="uid://dcfa7jc275jlc" path="res://player/Player.gd" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://bu85px0sj57au" path="res://ui/Prompt.tscn" id="2_prompt"]
-[ext_resource type="Script" path="res://player/HeldKnife.gd" id="3_heldknife"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_stand"]
 radius = 0.35
@@ -27,9 +26,6 @@ current = true
 [node name="InteractRay" type="RayCast3D" parent="CameraPivot/Camera3D"]
 target_position = Vector3(0, 0, -2.5)
 collision_mask = 5
-
-[node name="HeldKnife" type="Node3D" parent="CameraPivot/Camera3D"]
-script = ExtResource("3_heldknife")
 
 [node name="PromptLayer" type="CanvasLayer" parent="."]
 layer = 10

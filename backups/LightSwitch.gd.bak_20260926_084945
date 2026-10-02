@@ -42,11 +42,6 @@ func _capture_energies() -> void:
 			continue
 		if not _saved_energy.has(light):
 			var e: float = light.light_energy
-			# Prefer flicker script nominal energy so a dim frame is not saved as ON.
-			if light.has_method("get_base_energy"):
-				e = float(light.call("get_base_energy"))
-			elif light.get("base_energy") != null:
-				e = float(light.get("base_energy"))
 			# Store the intended ON brightness (never the residual off value).
 			if e > ON_THRESHOLD:
 				_saved_energy[light] = e
@@ -80,10 +75,8 @@ func _apply_lights() -> void:
 			light.light_energy = restore
 			light.visible = true
 		else:
-			# Keep intended ON energy, then drop to residual.
-			if light.has_method("get_base_energy"):
-				_saved_energy[light] = float(light.call("get_base_energy"))
-			elif light.light_energy > ON_THRESHOLD:
+			# Keep current ON energy if somehow still bright, then drop to residual.
+			if light.light_energy > ON_THRESHOLD:
 				_saved_energy[light] = light.light_energy
 			light.light_energy = OFF_ENERGY
 			light.visible = true  # residual must stay visible

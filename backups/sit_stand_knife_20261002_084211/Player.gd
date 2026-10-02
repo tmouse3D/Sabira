@@ -14,9 +14,9 @@ extends CharacterBody3D
 @export var sit_height: float = 1.15
 @export var interact_distance: float = 2.5
 @export_group("Held Knife")
-@export var knife_hold_offset: Vector3 = Vector3(0.22, -0.22, -0.42)
-@export var knife_hold_rotation_deg: Vector3 = Vector3(-10, 85, 110)
-@export var knife_hold_scale: float = 1.15
+@export var knife_hold_offset: Vector3 = Vector3(0.22, -0.18, -0.35)
+@export var knife_hold_rotation_deg: Vector3 = Vector3(5, 95, -25)
+@export var knife_hold_scale: float = 1.0
 @export_group("")
 @export var footstep_interval_walk: float = 1.8
 @export var footstep_interval_sprint: float = 1.28
@@ -425,7 +425,7 @@ func begin_sit(chair: Node, sit_xf: Transform3D) -> void:
 	_apply_sit_stance()
 
 
-func end_sit(stand_xf: Variant = null) -> void:
+func end_sit() -> void:
 	if not _sitting:
 		return
 	var chair := _sit_chair
@@ -433,10 +433,6 @@ func end_sit(stand_xf: Variant = null) -> void:
 	_sit_chair = null
 	if chair != null and is_instance_valid(chair) and chair.has_method("clear_occupant"):
 		chair.clear_occupant()
-	if stand_xf is Transform3D:
-		global_position = (stand_xf as Transform3D).origin
-		rotation.y = (stand_xf as Transform3D).basis.get_euler().y
-	velocity = Vector3.ZERO
 	_apply_stance(false)
 	if _prompt and _prompt.has_method("set_prompt"):
 		_prompt.set_prompt("")
@@ -497,10 +493,7 @@ func _update_interact_target() -> void:
 
 func _try_interact() -> void:
 	if _sitting:
-		var stand_xf: Variant = null
-		if _sit_chair != null and is_instance_valid(_sit_chair) and _sit_chair.has_method("get_stand_transform"):
-			stand_xf = _sit_chair.get_stand_transform()
-		end_sit(stand_xf)
+		end_sit()
 		return
 	if _current_target and _current_target.can_interact(self):
 		_current_target.interact(self)

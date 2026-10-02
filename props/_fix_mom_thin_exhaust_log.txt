@@ -1,0 +1,27 @@
+=== THIN EXHAUSTED 2026-09-26 ===
+PRE_GLB anims=['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys'] nodes=['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root']
+BAK C:\Users\hp\Documents\sabira\backups\Mom_Amina.blend.bak_pre_thin_exhaust_20260926_064221
+BAK C:\Users\hp\Documents\sabira\backups\Mom_Amina.glb.bak_pre_thin_exhaust_20260926_064221
+SK_DELTA look_L non-zero=171
+SK_DELTA look_R non-zero=171
+mid_x=0.0632 mid_z_torso=0.1450 face_z_mid=0.1468 face_z_max=0.2363
+THIN moved=681 max_dx=0.0341 width 0.4684 -> 0.4177 (10.8% thinner)
+SK_RESTORE look_L
+SK_RESTORE look_R
+SK_NAMES ['Basis', 'look_L', 'look_R']
+SK_OK look_L_moved=171 look_R_moved=171 L_vs_R_diff=171
+MOUTH Mouth_Plea -> (0.0436, 0.7772, 0.2249) parent=Mom_Amina_Root
+MOUTH Mouth_Scream -> (0.0436, 0.7772, 0.2264) parent=Mom_Amina_Root
+MOUTH Mouth_Grimace -> (0.0436, 0.7772, 0.2279) parent=Mom_Amina_Root
+MOSAIC_FACES 56 avg=(0.0238, 0.126, 0.1204) DISTAL 283 V/P 681/737
+ALBEDO skip (no PIL/numpy): No module named 'PIL'
+CHEST_N (-0.0503, 0.0037, 0.9987)
+ROOT_KIDS ['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream'] STUMPBOX []
+EXPORT mode=ACTIONS anims=['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys'] nodes=['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root'] size=423476
+CLEARED_IMPORTS 72
+PREVIEW C:\Users\hp\Documents\sabira\props\_Mom_Amina_preview_thin_exhaust.png size=632874
+FACE_PREVIEW C:\Users\hp\Documents\sabira\props\_Mom_Amina_preview_thin_exhaust_face.png
+RESTRAINT size before=42140 after=42140 untouched=True
+VERIFY anim_ok=True node_ok=True pre_anims=['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys'] post=['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys']
+VERIFY pre_nodes=['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root'] post=['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root']
+SUCCESS=True pct_thin=10.8

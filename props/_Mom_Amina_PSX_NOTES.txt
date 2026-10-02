@@ -735,3 +735,59 @@ GODOT: clear .godot/imported Mom_Amina*; F5. No StumpBox_*. Clear Mouth_* overri
 
 MOUTH FACE-SNAP after bak restore: base (0.0219, 0.885, 0.2423) (face_zmax+0.006; X from face front mean)
   Plea/Scream/Grimace Z stack +0/+0.0015/+0.003; still parent Mom_Amina_Root.
+
+
+THIN EXHAUSTED 2026-09-26
+========================
+METHOD: Basis-edit width thin (local X toward mid) + torso Z flatten + cheek/undereye sink.
+  Shape-key deltas for look_L/look_R preserved (capture -> edit Basis -> restore).
+  REST pose only; idle_restless* object/shapekey anims untouched.
+  Approx width thin: 10.8% (0.4684 -> 0.4177)
+  Scales: torso_X=0.86 limb_X=0.9 head_X=0.91
+          torso_Z_flat=0.93 cheek_extra_X=0.82 cheek_sink_Z=0.01
+
+BACKUP:
+  backups\Mom_Amina.blend.bak_pre_thin_exhaust_20260926_064221
+  backups\Mom_Amina.glb.bak_pre_thin_exhaust_20260926_064221
+
+HIERARCHY (unchanged):
+  Mom_Amina_Root
+    Body  (albedo + invisible distal + thin mosaic disks in-mesh)
+    Mouth_Plea / Mouth_Scream / Mouth_Grimace
+  NO StumpBox_*. Restraint untouched.
+
+MOUTHS (re-snapped after thin):
+  Mouth_Plea    @ (0.0436, 0.7772, 0.2249)
+  Mouth_Scream  @ (0.0436, 0.7772, 0.2264)
+  Mouth_Grimace @ (0.0436, 0.7772, 0.2279)
+  Parent Mom_Amina_Root; center=(0.0436, 0.7772, 0.2249)
+
+MOSAIC: faces=56 still in Body (Mom_Stump_Mosaic_Mat). Distal invisible=283
+ALBEDO hollows: False (Mom_Amina_albedo_256.png)
+POSE chest_n=(-0.0503, 0.0037, 0.9987) V/P=681/737
+EXPORT mode=ACTIONS anims=['idle_restless', 'idle_restless_body', 'idle_restless_shapekeys'] nodes=['Body', 'Mouth_Grimace', 'Mouth_Plea', 'Mouth_Scream', 'Mom_Amina_Root'] size=423476
+PREVIEW: props\_Mom_Amina_preview_thin_exhaust.png
+RESTRAINT: props/Mom_Restraint.glb UNTOUCHED (42140 bytes)
+GODOT: clear .godot/imported Mom_Amina*; F5. Clear Mouth_* overrides if float.
+SUCCESS=True
+
+MOUTH RE-SNAP after thin-exhaust (face_zmax/top12): base (0.0313, 0.8107, 0.233)
+  Plea (0.0313, 0.8107, 0.233)  Scream (0.0313, 0.8107, 0.2345)  Grimace (0.0313, 0.8107, 0.236)
+
+MOUTH FINAL after thin-exhaust: base (0.0469, 0.885, 0.2122) (Y kept 0.885; X/Z from thinned face front)
+  Plea (0.0469, 0.885, 0.2122) Scream (0.0469, 0.885, 0.2137) Grimace (0.0469, 0.885, 0.2152)
+
+MOUTH FINAL thin-exhaust (parent_inverse cleared): (0.0469, 0.885, 0.2122)
+  Plea (0.0469, 0.885, 0.2122) Scream (0.0469, 0.885, 0.2137) Grimace (0.0469, 0.885, 0.2152) parent=Mom_Amina_Root
+
+THIN EXHAUSTED FINAL MOUTHS 2026-09-26
+=====================================
+parent_inverse cleared; Y kept at proven 0.885; X/Z from thinned face front.
+  Mouth_Plea    @ (0.0469, 0.885, 0.2122)
+  Mouth_Scream  @ (0.0469, 0.885, 0.2137)
+  Mouth_Grimace @ (0.0469, 0.885, 0.2152)
+  normal +Z; parent Mom_Amina_Root
+GLB anims/nodes unchanged; mosaic 56; distal 283; Restraint 42140 untouched.
+PREVIEW: props\_Mom_Amina_preview_thin_exhaust.png (+ _face.png)
+
+LENGTHEN +2% 2026-09-26: Body Basis scaled 1.02 along local Y (head-to-feet); look_L/look_R deltas restored; mouths Y placement scaled with face; mosaic caps preserved; thin/exhaust width and Z unchanged.

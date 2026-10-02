@@ -14,9 +14,9 @@ extends CharacterBody3D
 @export var sit_height: float = 1.15
 @export var interact_distance: float = 2.5
 @export_group("Held Knife")
-@export var knife_hold_offset: Vector3 = Vector3(0.22, -0.22, -0.42)
-@export var knife_hold_rotation_deg: Vector3 = Vector3(-10, 85, 110)
-@export var knife_hold_scale: float = 1.15
+@export var knife_hold_offset: Vector3 = Vector3(0.28, -0.30, -0.38)
+@export var knife_hold_rotation_deg: Vector3 = Vector3(-25, 90, -800)
+@export var knife_hold_scale: float = 1.0
 @export_group("")
 @export var footstep_interval_walk: float = 1.8
 @export var footstep_interval_sprint: float = 1.28

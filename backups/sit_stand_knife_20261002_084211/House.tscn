@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cwlh5gac3ik2a"]
 
-[ext_resource type="PackedScene" uid="uid://xhefinjjqki" path="res://player/Player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://player/Player.tscn" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://u22ggegcr1mr" path="res://interact/Doorway.tscn" id="2_door"]
 [ext_resource type="Script" uid="uid://bxa8ee3w6247e" path="res://world/StairCreak.gd" id="3_creak"]
 [ext_resource type="AudioStream" uid="uid://bnsdl1umlhpmu" path="res://audio/stair_creak.wav" id="4_wav"]
@@ -96,8 +96,8 @@
 [ext_resource type="Script" uid="uid://bkpfgw2ilq7t7" path="res://interact/MomWrap.gd" id="98_momwrap"]
 [ext_resource type="Script" uid="uid://cchj4prbvgsmv" path="res://interact/BookRead.gd" id="99_bookread"]
 [ext_resource type="PackedScene" uid="uid://dq75sq87ta1sb" path="res://props/Mom_Restraint.glb" id="100_mom_restraint"]
-[ext_resource type="Script" uid="uid://dce7meaw0a7o" path="res://interact/ChairSit.gd" id="101_chairsit"]
-[ext_resource type="Script" uid="uid://j7miwpucyiav" path="res://world/HiddenLightFlicker.gd" id="102_flicker"]
+[ext_resource type="Script" path="res://interact/ChairSit.gd" id="101_chairsit"]
+[ext_resource type="Script" path="res://world/HiddenLightFlicker.gd" id="102_flicker"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -668,14 +668,13 @@ shape = SubResource("BoxShape_kchair")
 transform = Transform3D(-1, 0, 4.371139e-08, 0, 1, 0, -4.371139e-08, 0, -1, -0.6604705, 0, -0.95557547)
 
 [node name="Kitchen_Chair_4Body" type="StaticBody3D" parent="Structure/KitchenDining" unique_id=1797505917]
-editor_description = "Chair_4 sit-able only. Mesh at (-0.66,0,-0.96) yaw180; body at (0.38,0.45,-0.96). sit offset (1.04,-0.45,0.12) seat center +Z toward table yaw180; stand (1.04,-0.45,-0.70) beside chair in room yaw0."
 transform = Transform3D(-1, 0, 4.371139e-08, 0, 1, 0, -4.371139e-08, 0, -1, 0.38055563, 0.45, -0.95557547)
 collision_layer = 5
 collision_mask = 0
 script = ExtResource("101_chairsit")
-sit_pose_offset = Vector3(1.05, -0.45, 0.1)
-stand_pose_offset = Vector3(-0.2, -0.45, 0.7)
-stand_pose_yaw_deg = 210.0
+sit_pose_offset = Vector3(1.04, -0.45, 0.08)
+sit_pose_yaw_deg = 0.0
+editor_description = "Chair_4 sit-able only. Mesh at (-0.66,0,-0.96) yaw180; body at (0.38,0.45,-0.96). sit_pose_offset body-local to mesh seat: local +X~1.04 maps world -X; y -0.45 floor; +Z toward table."
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/KitchenDining/Kitchen_Chair_4Body" unique_id=866599024]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
@@ -2504,10 +2503,6 @@ shape = SubResource("BoxShape_lightswitch")
 
 [node name="Player" parent="." unique_id=1317640905 instance=ExtResource("1_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 0.1, 4.4)
-knife_hold_offset = Vector3(0.22, -0.21, -0.3)
-knife_hold_rotation_deg = Vector3(80, 90, 100)
-knife_hold_scale = 1.4
-carry_bumper_size = Vector3(0.32, 0.29, 1)
 
 [node name="Subtitle" parent="." unique_id=1445765641 instance=ExtResource("7_subtitle")]
 

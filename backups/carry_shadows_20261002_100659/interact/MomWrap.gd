@@ -33,8 +33,6 @@ extends Interactable
 @export var carry_local_rotation_deg: Vector3 = Vector3(17.0, -90.0, 180.0)
 @export var carry_scale: float = 0.99
 
-const _CarryShadows = preload("res://player/CarryShadows.gd")
-
 var _mom: Node3D
 var _take_sfx: AudioStreamPlayer3D
 var _mom_home_parent: Node = null
@@ -45,8 +43,6 @@ var _saved_colliders: Array = []
 ## Scene may override Mom_Amina_Root for bed; restore after lay-down / catch.
 var _root_home_transform: Transform3D = Transform3D.IDENTITY
 var _root_home_saved: bool = false
-## Prior GeometryInstance3D.cast_shadow values while Mom is carried under camera.
-var _shadow_store: Dictionary = {}
 
 
 func _ready() -> void:
@@ -252,8 +248,6 @@ func _attach_carry(player: Node) -> void:
 	mom.position = carry_local_offset
 	mom.rotation_degrees = carry_local_rotation_deg
 	mom.scale = Vector3.ONE * carry_scale
-	# No floating mid-air shadow while carried under camera.
-	_CarryShadows.set_tree(mom, false, _shadow_store)
 	_carry_attached = true
 
 
@@ -261,7 +255,6 @@ func _detach_carry() -> void:
 	var mom := _resolve_mom()
 	if mom == null:
 		_carry_attached = false
-		_shadow_store.clear()
 		return
 	var root := _resolve_mom_root(mom)
 	if root != null and _root_home_saved:
@@ -271,7 +264,6 @@ func _detach_carry() -> void:
 			mom.reparent(_mom_home_parent, false)
 		mom.transform = _mom_home_transform
 	_set_mom_collide_enabled(mom, true)
-	_CarryShadows.set_tree(mom, true, _shadow_store)
 	mom.visible = true
 	if mom.has_method("snap_home"):
 		mom.call("snap_home")
