@@ -24,3 +24,30 @@ archive/os_junk/
 # Large local-only scratch (kept on disk under backups/)
 backups/root_scratch/_github_backup.zip
 backups/root_scratch/*.tmp
+# Debug walk proof frames and stretch previews (kept on disk)
+props/_Tash_*.png
+props/_Tash_*.png.import
+props/_Tash_*.json
+props/_proof_copy_*
+props/_fix_stretch_preview/
+props/_inspect_tash_*.py
+
+# Animation source packs (kept on disk)
+archive/humane_basics/
+archive/mixamo_walk/
+archive/motifect_*/
+archive/quaternius_*/
+archive/skol_*/
+
+# Local Tash session backups and blend scratch (kept on disk)
+backups/tash_*/
+props/backups/
+
+# Blender retarget scratch, not required to run
+scripts/
+
+# Unused BoneMaps (playable walk is the clip baked in props/Tash.glb)
+characters/BoneMap_*.tres
+
+# Stale anim-lib prep note (describes an older external-walk path)
+characters/TASH_ANIMLIB_PREP.md

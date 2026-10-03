@@ -1,0 +1,678 @@
+Tash PSX (Character_02 gray hoodie) - Project House
+====================================================
+Source: art/source/characters_psx Rig Male Character_02.fbx + Character_02.png
+Outputs: props/Tash.glb , props/Tash.blend , props/Tash_albedo_256.png
+
+WALK CLIP 2026-10-02
+====================
+Action: walk (in-place looping PSX NPC walk; hand-keyed on Mixamo bones)
+Length: frames 1-36 @ 30fps ~= 1.17s (cyclic F-curves + Action.use_cyclic)
+Root motion: NONE - mixamorig:Hips XY location locked at 0; tiny Z bob only.
+  Godot NavigationAgent should drive world translation on hallway/F1 loop.
+Hierarchy unchanged: Tash_Root / Tash_Armature / Body (33 bones, Character_02)
+Scale unchanged: Tash_Armature scale kept as-is (house-matched; no Mixamo unit rescale)
+Armature scale: (1.010537, 1.010537, 1.010537)
+Body dims (Blender): (0.352796, 0.700597, 1.75)
+Backups:
+  C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_walk_20261002_102837
+  C:\Users\hp\Documents\sabira\props\backups\Tash.blend.bak_pre_walk_20261002_102837
+  C:\Users\hp\Documents\sabira\props\backups\Tash.blend1.bak_pre_walk_20261002_102837
+Source scout: no pack walk under Assets for games or characters_psx Rig FBX
+  (Rig Character_02.fbx only has Armature|mixamo.com|Layer0 frames 1-2 pose).
+  Mixamo retarget skipped (would need Adobe login). Hand-keyed instead.
+Godot: clear .godot/imported Tash* + F5 reimport; play AnimationPlayer clip 'walk'.
+Preview scrub frames: props\_Tash_walk_f01.png .. f28.png and _Tash_walk_side_f01/f19.png
+Script: scripts\add_tash_walk.py
+
+WALK CLIP REPLACE 2026-10-02 (Mixamo retarget)
+==============================================
+Action: walk (in-place looping; Mixamo Walking.fbx retarget onto Tash_Armature)
+Source FBX: archive/mixamo_walk/Walking.fbx
+  (HuggingFace tanish434/Mixamo-Animations-Characters animation_motion/Walking.fbx)
+  Backups on disk: Walking_2.fbx, Standard_Walk.fbx
+License: Adobe Mixamo terms apply to source FBX; used for retarget into Tash only; NOT CC0.
+Length: frames 1-43 @ 30fps ~= 1.4s (cyclic)
+Root motion: NONE - hips forward/lateral translation zeroed; vertical bob kept/centered.
+  Godot PathFollow / NavigationAgent drives world translation.
+Bone map: mixamorig:* 1:1 for all 33 Tash bones; Mixamo finger bones skipped.
+Facing fix: ok_no_flip
+In-place: True; forward_idx_zeroed=2
+Hierarchy unchanged: Tash_Root / Tash_Armature / Body
+Scale unchanged: Tash_Armature left as house-matched
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_mixamo_walk_20261002_110043; C:\Users\hp\Documents\sabira\props\backups\Tash.blend.bak_pre_mixamo_walk_20261002_110043; C:\Users\hp\Documents\sabira\props\backups\Tash.blend1.bak_pre_mixamo_walk_20261002_110043
+Script: scripts/retarget_tash_mixamo_walk.py
+Godot: F5 reimport props/Tash.glb; AnimationPlayer play `walk` (TashWalker looks for walk/Walk).
+
+WALK CLIP REPLACE 2026-10-02b (Mixamo bake retarget)
+=====================================================
+Action: walk (in-place looping; Mixamo Walking.fbx BAKED onto Tash_Armature)
+Source FBX: archive/mixamo_walk/Walking.fbx (HF Mixamo mirror)
+License: Adobe Mixamo terms apply to source FBX; retarget into Tash only; NOT CC0.
+Method: per-frame matrix_basis copy for 33 overlapping mixamorig bones; fingers skipped.
+Length: frames 1-43 @ 30fps ~= 1.4s (cyclic)
+Root motion: NONE - hips large translation axes zeroed; PathFollow drives move.
+Facing: yaw_applied (target mesh forward -Y)
+Rotation mode: QUATERNION on all pose bones (matches Mixamo)
+Hierarchy unchanged: Tash_Root / Tash_Armature / Body; scale unchanged
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_mixamo_bake_20261002_110221; C:\Users\hp\Documents\sabira\props\backups\Tash.blend.bak_pre_mixamo_bake_20261002_110221
+Script: scripts/retarget_tash_mixamo_walk_v2.py
+Godot: F5 reimport props/Tash.glb; AnimationPlayer play `walk`.
+
+WALK CLIP REPLACE 2026-10-02c (Mixamo rebuild+retarget)
+========================================================
+Action: walk - Mixamo Walking.fbx on Character_02 / Tash_Armature
+Source: archive/mixamo_walk/Walking.fbx (HF mirror). Adobe Mixamo terms; NOT CC0.
+Method: direct_assign; rest_avg_dot=0.8506999999999999; overlap=33; fingers skipped.
+Length: frames 1-43 @ 30fps ~= 1.4s (cyclic, in-place)
+Facing: yaw_applied
+Hierarchy: Tash_Root / Tash_Armature / Body; scale house-matched ~1.75m
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_mixamo_rebuild_20261002_110408; C:\Users\hp\Documents\sabira\props\backups\Tash.blend.bak_pre_mixamo_rebuild_20261002_110408
+Godot: F5 reimport props/Tash.glb; play AnimationPlayer `walk`.
+
+WALK CLIP REPLACE 2026-10-02d (Mixamo world-delta retarget)
+===========================================================
+Action: walk - Mixamo Walking.fbx world rest-delta bake onto Tash_Armature
+Source: archive/mixamo_walk/Walking.fbx (HF). Adobe Mixamo terms; NOT CC0.
+Method: world-space posed@rest.inv delta applied to Tash rest (handles bind mismatch)
+Length: frames 1-43 @ 30fps ~= 1.4s; in-place; cyclic
+Bones: 33 overlap; fingers skipped; QUATERNION keys
+Upright check: True
+Scale/hierarchy unchanged from house Tash (restored bak_pre_mixamo_walk)
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_worlddelta_20261002_110513; C:\Users\hp\Documents\sabira\props\backups\Tash.blend.bak_pre_worlddelta_20261002_110513
+Godot: F5 reimport props/Tash.glb; AnimationPlayer `walk`.
+
+WALK CLIP REPLACE 2026-10-02e (native Mixamo, auto_bone_orient=False)
+====================================================================
+Action: walk - direct assign from Walking
+Source: archive/mixamo_walk/Walking.fbx (HF). Adobe Mixamo terms; NOT CC0.
+Import: automatic_bone_orientation=False on Character_02 AND walk FBX
+Rest-dot avg=0.7108; LeftArm=0.1327
+Length: frames 1-36 @ 30fps ~= 1.167s; in-place; cyclic
+Scale: (2.524187, 2.524187, 2.524187) (house ~1.75m); Tash_Root / Tash_Armature / Body
+Upright: False
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_native_20261002_110620; C:\Users\hp\Documents\sabira\props\backups\Tash.blend.bak_pre_native_20261002_110620
+Godot: F5 reimport props/Tash.glb; play `walk`.
+
+WALK CLIP REPLACE 2026-10-02f (Mixamo legs/spine + mild arm swing)
+==================================================================
+Action: walk
+Source: archive/mixamo_walk/Walking.fbx (HF). Adobe Mixamo terms; NOT CC0.
+Method: world rest-delta bake for hips/legs/spine/neck/head only.
+  Arms: NOT from Mixamo (Character_02 arm bind != HF Y-Bot; rest-dot~0.13).
+  Mild opposite arm swing hand-keyed on local X.
+Length: frames 1-43 @ 30fps ~= 1.4s; in-place; cyclic
+Scale/hierarchy: restored house Tash (bak_pre_mixamo_walk)
+Upright: True
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_legs_only_20261002_110710; C:\Users\hp\Documents\sabira\props\backups\Tash.blend.bak_pre_legs_only_20261002_110710
+Godot: F5 reimport props/Tash.glb; play `walk`.
+Note: if PathFollow yaw wrong, face is mesh-forward (-Y in Blender / check in Godot).
+
+WALK CLIP REPLACE 2026-10-02g (Motifect locomotion BVH)
+========================================================
+Action: walk (full body; in-place looping)
+Source: archive/motifect_locomotion/BVH/walk_forward.bvh
+  (copied from Assets for games/animations_tash/02_motifect_locomotion; READ-ONLY source)
+License: Motifect free personal+commercial; do not redistribute raw anims as product.
+  https://motifect.io
+Method: world rest-delta bake; Motifect role bones -> mixamorig:* map
+  Hips/Spine1/Spine2/Chest/Neck1/Head + arms + legs + index fingers.
+  Skipped: Neck2, eyes/jaw, extra finger chains, ToeEnd.
+Length: frames 1-180 @ 30fps ~= 5.967s; cyclic; in-place=True
+Upright: True
+Scale/hierarchy unchanged: Tash_Root / Tash_Armature / Body; scale ~1.010537028312683
+Also exported optional AnimationPlayer clip `idle` from Motifect idle_neutral.bvh (muted NLA; play when needed).
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_motifect_walk_20261002_112202
+Script: scripts/retarget_tash_motifect.py
+Godot: F5 reimport props/Tash.glb; TashWalker plays `walk`.
+Facing: Godot Model yaw already +90; flip +/-90 if crab/moonwalk.
+
+WALK CLIP REPLACE 2026-10-02h (Motifect BVH matrix_basis similarity)
+=====================================================================
+Action: walk (full body; in-place looping)
+Source: archive/motifect_locomotion/BVH/walk_forward.bvh (Motifect; free P+C)
+Method: matrix_basis similarity via rest locals (Dinv@S @ basis @ Sinv@D)
+Mapped: hips/spine/chest/neck/head + arms/hands + legs/feet/toes (22 bones)
+Length: frames 1-180 @ 30fps ~= 5.967s; cyclic; in-place=True
+Upright: True; feet_ok: True
+Scale/hierarchy unchanged: Tash_Root / Tash_Armature / Body; scale ~1.010537028312683
+Also clip `idle` from Motifect idle_neutral.bvh (muted NLA).
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_motifect_walk_20261002_112202
+Script: scripts/retarget_tash_motifect_v2.py
+Godot: F5 reimport props/Tash.glb; TashWalker plays `walk`.
+Facing: Godot Model yaw +90 already; flip +/-90 if crab.
+
+WALK CLIP REPLACE 2026-10-02i (Motifect BVH world CopyRotation bake)
+=====================================================================
+Action: walk (full body; in-place looping)
+Source: archive/motifect_locomotion/BVH/walk_forward.bvh (Motifect free P+C)
+Method: WORLD Copy Rotation (+ Hips Copy Location) constraints; visual bake
+  Bone map Motifect role -> mixamorig:* (22 bones). global_scale=0.01
+Length: frames 1-180 @ 30fps ~= 5.967s; cyclic; in-place=True
+Upright: True; motion_varies: True
+Scale/hierarchy unchanged: Tash_Root / Tash_Armature / Body; scale ~1.010537028312683
+Also clip `idle` from Motifect idle_neutral.bvh (muted NLA).
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_motifect_walk_20261002_112202
+Script: scripts/retarget_tash_motifect_v3.py
+Godot: F5 reimport props/Tash.glb; TashWalker plays `walk`.
+Facing: Godot Model yaw +90 already; flip +/-90 if crab.
+
+WALK CLIP REPLACE 2026-10-02j (Humane-Basics FALLBACK; Motifect failed)
+=======================================================================
+Action: walk (full body Mixamo 1:1; in-place looping)
+PRIMARY Motifect: tried BVH world-delta / basis-similarity / CopyRotation bake
+  -> twisted limbs (role skeleton rest axes != Character_02 Mixamo). Kept Motifect
+  copies in archive/motifect_locomotion/ for later tool-assisted retarget.
+FALLBACK Source: archive/humane_basics/Walking.fbx
+  (from Assets for games/Animations/Humane-Basics/Basics/Walking.fbx)
+Method: absolute world matrix copy mixamorig:* overlap (30 bones); fingers extras skipped
+Length: frames 1-30 @ 30fps ~= 0.967s; cyclic; in-place=True
+Upright: True; motion_varies: True
+Scale/hierarchy unchanged: Tash_Root / Tash_Armature / Body; scale ~1.010537028312683
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_motifect_walk_20261002_112202
+Script: scripts/retarget_tash_humane.py
+Godot: F5 reimport props/Tash.glb; TashWalker plays `walk`.
+Facing: mesh ~+X Blender; Godot Model yaw +90 already; flip +/-90 if crab.
+
+WALK CLIP REPLACE 2026-10-02k (Humane basis high-dot FALLBACK)
+===============================================================
+Action: walk (hips/spine/legs from Humane; mild arm swing; in-place)
+Motifect PRIMARY: failed (role skeleton rest axes != Character_02; twisted).
+  Motifect copies kept in archive/motifect_locomotion/ (FBX+BVH+README).
+FALLBACK Source: archive/humane_basics/Walking.fbx
+  (Assets for games/Animations/Humane-Basics/Basics/Walking.fbx)
+Method: matrix_basis copy for rest-dot~1.0 bones (Hips/Spine*/Neck/Head/UpLeg/Leg);
+  Feet/arms skipped (low rest-dot); mild opposite arm swing hand-keyed.
+Length: frames 1-30 @ 30fps ~= 0.967s; cyclic; in-place=True
+Upright: True; motion_varies: True
+Scale/hierarchy unchanged: Tash_Root / Tash_Armature / Body; scale ~1.010537028312683
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_motifect_walk_20261002_112202
+Script: scripts/retarget_tash_humane_basis.py
+Godot: F5 reimport props/Tash.glb; TashWalker plays `walk`.
+Facing: mesh ~+X Blender; Godot Model yaw +90; flip +/-90 if crab.
+
+WALK CLIP REPLACE 2026-10-02k (Humane basis + hips yaw -90 FALLBACK)
+===============================================================
+Action: walk (hips/spine/legs from Humane; mild arm swing; in-place)
+Motifect PRIMARY: failed (role skeleton rest axes != Character_02; twisted).
+  Motifect copies kept in archive/motifect_locomotion/ (FBX+BVH+README).
+FALLBACK Source: archive/humane_basics/Walking.fbx
+  (Assets for games/Animations/Humane-Basics/Basics/Walking.fbx)
+Method: matrix_basis copy for rest-dot~1.0 bones (Hips/Spine*/Neck/Head/UpLeg/Leg);
+  Feet/arms skipped (low rest-dot); mild opposite arm swing hand-keyed.
+Length: frames 1-30 @ 30fps ~= 0.967s; cyclic; in-place=True
+Upright: True; motion_varies: True
+Scale/hierarchy unchanged: Tash_Root / Tash_Armature / Body; scale ~1.010537028312683
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_motifect_walk_20261002_112202
+Script: scripts/retarget_tash_humane_yaw.py
+Godot: F5 reimport props/Tash.glb; TashWalker plays `walk`.
+Facing: mesh ~+X Blender; Godot Model yaw +90; flip +/-90 if crab.
+
+WALK CLIP REPLACE 2026-10-02k (Humane basis high-dot FALLBACK)
+===============================================================
+Action: walk (hips/spine/legs from Humane; mild arm swing; in-place)
+Motifect PRIMARY: failed (role skeleton rest axes != Character_02; twisted).
+  Motifect copies kept in archive/motifect_locomotion/ (FBX+BVH+README).
+FALLBACK Source: archive/humane_basics/Walking.fbx
+  (Assets for games/Animations/Humane-Basics/Basics/Walking.fbx)
+Method: matrix_basis copy for rest-dot~1.0 bones (Hips/Spine*/Neck/Head/UpLeg/Leg);
+  Feet/arms skipped (low rest-dot); mild opposite arm swing hand-keyed.
+Length: frames 1-30 @ 30fps ~= 0.967s; cyclic; in-place=True
+Upright: True; motion_varies: True
+Scale/hierarchy unchanged: Tash_Root / Tash_Armature / Body; scale ~1.010537028312683
+Backups: C:\Users\hp\Documents\sabira\props\backups\Tash.glb.bak_pre_motifect_walk_20261002_112202
+Script: scripts/retarget_tash_humane_basis.py
+Godot: F5 reimport props/Tash.glb; TashWalker plays `walk`.
+Facing: mesh ~+X Blender; Godot Model yaw +90; flip +/-90 if crab.
+
+HANDOFF 2026-10-02 (Motifect primary failed -> Humane fallback shipped)
+======================================================================
+Shipped clip: walk on props/Tash.glb (in-place, cyclic, ~1.0s @ 30fps frames 1-30)
+Source used: Humane-Basics Walking.fbx (FALLBACK)
+  archive/humane_basics/Walking.fbx
+Motifect (PRIMARY) archived but NOT on GLB: rest-axis mismatch vs Character_02
+  (Hips rest-dot ~-0.92; world-delta / basis / CopyRotation bake all twisted).
+  archive/motifect_locomotion/ (FBX+BVH walk_forward + idle_neutral + README)
+Bone map (Humane): mixamorig 1:1 high-dot only
+  Hips, Spine, Spine1, Spine2, Neck, Head, Left/Right UpLeg+Leg
+  Arms: mild opposite swing (arm rest-dot low ~0.13)
+  Feet: left at rest (follow from shin; foot rest-dot low)
+Godot: F5 reimport props/Tash.glb; TashWalker plays walk; Model yaw +90 keep;
+  if crab/moonwalk flip Model yaw +/-90. PathFollow drives travel (in-place clip).
+
+WALK CLIP REAPPLY 20261002_113835 (delete + source retarget, no hand-keys)
+======================================================================
+Action: walk (in-place looping; full body from source)
+Source used: Quaternius Walk_Loop
+Method: relative-from-rest world delta bake (src_rest^-1 * src_pose applied on dst_rest)
+Attempt chain: motifect_fbx -> motifect_bvh -> quaternius_walk_loop
+Length: frames [0, 40] @ 30fps ~= 1.333s; cyclic; inplace=True
+Arms included: True; Feet included: True; opposite stride: True; upright: True
+Mapped bones: 22
+Scale/hierarchy unchanged: Tash_Root / Tash_Armature / Body
+Backups: ['C:\\Users\\hp\\Documents\\sabira\\props\\backups\\Tash.glb.bak_pre_reapply_walk_20261002_113655', 'C:\\Users\\hp\\Documents\\sabira\\props\\backups\\Tash.blend.bak_pre_reapply_walk_20261002_113655']
+Godot: F5 reimport props/Tash.glb; refresh House.tscn ext_resource UID if warned;
+  TashWalker plays `walk`; PathFollow drives travel (in-place clip).
+Previews: ['C:\\Users\\hp\\Documents\\sabira\\props\\_Tash_reapply_quaternius_walk_loop_pose_proof.json']
+
+WALK CLIP REAPPLY CLEANUP 20261002_113919
+======================================================================
+Action: walk ONLY (stripped Quaternius library leftovers from export)
+Source used: Quaternius Walk_Loop via AnimationLibrary_Godot_Standard.glb
+  archive/quaternius_ual/AnimationLibrary_Godot_Standard.glb
+  (from Assets for games/animations_tash/01_quaternius.../Godot/)
+Method: relative-from-rest world delta bake; Motifect FBX skipped (no Hips bone);
+  Motifect BVH rejected (foot_var=0 / anim not transferring); Quaternius passed.
+Length: frames 0-32 @ 30fps ~= 1.067s; cyclic; in-place=True
+Full body: legs+arms+spine+feet from source (22 bones); NO hand-keyed fillers
+Facing: mesh forward as baked; Godot Model yaw +90 keep; flip +/-90 if crab
+Scale: Tash_Armature ~1.010537 house-matched; hierarchy Tash_Root/Tash_Armature/Body
+Backups: props/backups/Tash.*.bak_pre_reapply_walk_20261002_113655
+Godot: F5 reimport props/Tash.glb; refresh House.tscn UID if warned (Godot already fixed once).
+Pose proof: props/_Tash_reapply_quaternius_walk_loop_pose_proof.json
+
+
+WALK SPAGHETTI FIX 20261002_114849
+============================
+Action: walk (in-place; source retarget ONLY — no scratch keys)
+Method: anim_human_world_constraint_local
+Source: Human Armature|Human Armature|Walk
+Frames: [1, 25] @ 30fps
+Validation: ok=True stride_amp=0.037906158715486526
+Bone-length gate: within 5%; bbox height stable; opposite stride present
+Root motion: NONE — hips XY=0; Z bob centered. PathFollow drives travel.
+Facing (Blender): character forward is -Y (Mixamo); Godot Model yaw +90 matches.
+  Document: Blender +Y is character back; Godot PathFollow forward needs Model yaw +90 (already set).
+Hierarchy: Tash_Root / Tash_Armature / Body unchanged
+Script: scripts/fix_tash_spaghetti_walk.py
+Proof: scripts/_fix_spaghetti_proof.json
+Previews: props/_fix_stretch_preview/
+
+
+WALK GATE PASS 20261002_115146
+method=mixamo_walking frames=[1, 43] src=C:\Users\hp\Documents\sabira\archive\mixamo_walk\Walking.fbx
+
+
+WALK BLOCKER 20261002_115228
+BLOCKER: Character_02 (mixamorig) bind rejects source retargets in Blender. Tried in order: Quaternius Animated Human Walk (local-quat + WORLD constraint), Motifect BVH walk_forward, Humane-Basics Walking, Mixamo Walking (archive). Numeric bone-length gates can pass while mesh still ribbons (rest-axis mismatch). Visual gate FAILED — do NOT F5 spaghetti. Shipped IDLE-ONLY props/Tash.glb (Character_02 hoodie mesh, no walk clip). Godot path: import AnimationLibrary_Godot_Standard.glb from Documents/Assets for games/animations_tash/01_quaternius_universal_animation_library_standard/Animation Library[Standard]/Godot/ (copy also in sabira/archive/quaternius_ual/) and SkeletonProfile-retarget Walk onto Tash skeleton; expose clip name `walk` for TashWalker. Optional later aesthetic donor: Skol PSX rigged+animated human (itch) if local packs keep failing.
+Idle previews: IDLE_rest_front.png, IDLE_rest_side.png
+
+
+SKOL NATIVE WALKER 2026-10-02 (20261002_121107)
+========================================
+LOCKED PIVOT: Character_02 Mixamo bind retired for walker. Every Character_02 bake
+ribboned; Quaternius BoneMap in Godot still twisted. Replaced props/Tash.glb with
+Skol PSX Rigged+Animated Human — NATIVE walk on the same armature the anim was
+authored on. NO retarget onto Character_02. NO hand-keyed walk.
+
+Donor FBX (archived copy):
+  archive/skol_rigged_anims_guy/PSXHumanRigged+Animations.fbx
+  SOURCE_NOTES.txt (itch skol-dev; free; "No credit is needed.")
+Read-only original:
+  Documents/Assets for games/Animations/RiggedAnimsGuy/PSXHumanRigged+Animations.fbx
+
+Hierarchy: Tash_Root / Tash_Armature (Skol Rig, 46 bones) / Body
+Clips:
+  walk  frames [1.0, 30.0] @ 30fps ~= 0.9667s; in-place; cyclic
+  idle  frames [1.0, 120.0] @ 30fps ~= 3.9667s
+Standing height: ~1.780m (target 1.78)
+Facing (Blender toes vs pelvis XY): {'forward_xy': [-0.1919, -0.9814], 'dominant': 'Y', 'sign': -1}
+Material: flat PSX gray-beige (author Overlapping.png path missing on disk)
+Backups: props/backups/Tash.*.bak_pre_skol_*
+Proof PNGs: props/_Tash_skol_walk_front_f01.. / _Tash_skol_walk_side_f01..
+Bone-length gate: ok=True height_ok=True feet_under=True
+
+GODOT (required):
+  1. Set TashWalker.use_external_walk_library = false (play GLB AnimationPlayer `walk` again)
+  2. F5 reimport props/Tash.glb (cleared .godot/imported/Tash.glb-* + sidecar)
+  3. Refresh House.tscn Tash.glb UID if warning returns
+  4. Keep Model yaw +90 unless he crabs — then flip +/-90
+  5. PathFollow still drives travel (clip is in-place)
+
+
+SKOL TEX + FACING 2026-10-02 (20261002_124931)
+========================================
+Walk/idle keys UNTOUCHED (native Skol). Materials + armature yaw under Tash_Root + height only.
+
+Texture:
+  Author Overlapping.png NEVER shipped in RiggedAnimsGuy.zip (FBX-only).
+  Shipped props/Tash_skol_albedo.png (256px, Closest/PSX) — bone-weight UV paint
+  approximating Character_02 gray-hoodie (sampled mid-gray from
+  art/source/characters_psx/textures/Character_02.png) + skin/pants/shoes islands.
+  Image PACKED into blend and EMBEDDED in props/Tash.glb — Godot must NOT look for
+  res://archive/skol_rigged_anims_guy/Overlapping.png on the GLB.
+  Stub copies also at archive/skol_rigged_anims_guy/Overlapping.png (+ Mesh/) so a
+  re-import of the donor FBX won't 404; GLB is self-contained.
+
+Facing:
+  Before: {'forward_xy': [-0.1946, -0.9809], 'dominant': 'Y', 'sign': -1}
+  Armature Z fix under Tash_Root: 11.22 deg (object rotation; no key edits)
+  After:  {'forward_xy': [-0.1946, -0.9809], 'dominant': 'Y', 'sign': -1}
+  GODOT: set TashWalker.model_yaw_offset_deg = 0
+         (was 60/90 for Character_02 — causes sideways on Skol). PathFollow ROTATION_Y.
+         If still crabs after F5, try -90 then +90; art forward is Blender -Y / Godot +Z.
+
+Size: height 1.745m -> 1.745m (max 1.8m, target 1.78m); scale_mul=1.0000
+
+Clips intact: walk [1.0, 30.0] idle [1.0, 120.0]; fcurves 339->339
+Backups: bak_pre_skol_tex_20261002_124931
+Proofs: props/_Tash_skol_tex_front_f01.. / _Tash_skol_tex_side_f01..
+
+
+SKOL TEX + FACING pass2 (20261002_125043)
+=================================
+Facing moved to Tash_Root Z (no anim keys). Armature object Z cleared.
+Root yaw fix: 0.00 deg. Facing {'forward_xy': [0.0, -1.0], 'dominant': 'Y', 'sign': -1} -> {'forward_xy': [0.0, -1.0], 'dominant': 'Y', 'sign': -1}
+GODOT model_yaw_offset_deg = 0  (NOT 60/90)
+Height: 1.800 -> 1.800m (max 1.8)
+Albedo refreshed + packed. Walk fcurves 339->339 untouched=True
+
+
+CHAR02 RESTORE + WALK 20261002_131036
+========================================
+LOCKED LOOK: Characters_psx Character_02 Rig (full face + gray hoodie).
+  Rig: art/source/characters_psx/Models/Rig/Male/Character_02.fbx
+  Albedo: art/source/characters_psx/textures/Character_02.png (packed+embedded in GLB)
+  Copied also to props/Tash_albedo_256.png
+NOT Skol. NOT No-Rig. NOT idle-only.
+
+Walk: YES looping in-place `walk` + `idle`
+  Method: Mixamo Walking.fbx lower-body/spine/head REST-DELTA onto Character_02
+  Mixamo bones (names match); arms/shoulders = native Character_02 counterswing
+  (avoids A-pose vs T-pose arm rest spaghetti from full Mixamo assign)
+  Frames walk [1, 43] @ 30fps; idle [1, 30]; cyclic; hips XY=0 (PathFollow drives travel)
+  Bone-length outliers: []
+
+Hierarchy: Tash_Root / Tash_Armature / Body
+Height: 1.7500007265740862m (target 1.75, max 1.8)
+Facing: Blender forward {'forward_xy': [0.0824, -0.9966], 'dominant': 'Y', 'sign': -1}; NO root yaw bake.
+GODOT: keep model_yaw_offset_deg = 180 (already set for F5).
+  If still crab after F5: try 0 then +/-90 (document which works).
+  use_external_walk_library = false (play GLB AnimationPlayer `walk`).
+  F5 reimport props/Tash.glb (cleared .import + .godot/imported/Tash.glb*).
+
+Backups: props/backups/Tash.*.bak_pre_char02_restore_*
+Proofs: props/_Tash_char02_walk_front/side_*.png + _Tash_char02_idle_* (FACE must show)
+Report: scripts/_char02_restore_report.json
+
+
+CHAR02 RESTORE V3 20261002_131251
+========================================
+LOOK: Character_02 Rig + Character_02.png (face+hoodie EMBEDDED). NOT Skol.
+WALK: YES looping in-place `walk` [1, 32] @30fps + `idle`
+  Procedural on native Character_02 rest (kept FBX +90 X object rot).
+  NO Mixamo retarget. Bone-len outliers: []
+Hierarchy: Tash_Root / Tash_Armature / Body
+Height: 1.7499998806354111m
+Facing: {'forward_xy': [1.0, -0.0], 'dominant': 'X', 'sign': 1}
+GODOT: model_yaw_offset_deg = 180 (keep). use_external_walk_library = false.
+  F5 reimport props/Tash.glb.
+Proofs: props/_Tash_char02_walk_* / _Tash_char02_idle_*
+Report: scripts/_char02_restore_v3_report.json
+
+
+CHAR02 FINAL ON DISK 20261002_131425
+========================================
+LOOK: Character_02 Rig + Character_02.png (FACE + gray hoodie) EMBEDDED. NOT Skol.
+WALK: YES — GLB actions [{'name': 'idle', 'frames': [0.8, 24.0]}, {'name': 'walk', 'frames': [0.8, 25.6]}]
+Hierarchy: Tash_Root / Tash_Armature / Body (Mixamo 33 bones)
+Height: 1.750m
+Facing: mesh forward ~ -Y (Tash_Root Z=-90 baked)
+GODOT: KEEP model_yaw_offset_deg = 180
+  use_external_walk_library = false (play GLB AnimationPlayer `walk`)
+  F5 reimport props/Tash.glb
+  If crab: try 0 / +/-90
+Walk method: procedural native on Character_02 rest (no Mixamo retarget — avoids spaghetti).
+  Looping in-place; PathFollow drives travel. Quality is PSX-simple; can later BoneMap Quaternius in Godot for polish.
+Proofs: props/_Tash_char02_walk_* + _Tash_char02_idle_* (face+hoodie visible)
+Report: scripts/_char02_final_report.json
+GLB: props/Tash.glb (379856 bytes) @ 13:14
+
+
+CHAR02 WALK-PLANE FIX 20261002_131602
+========================================
+LOOK: Character_02 Rig + Character_02.png (FACE+hoodie) EMBEDDED. NOT Skol.
+WALK: YES looping `walk`[1,32] + `idle` — rebuilt AFTER facing lock so stride is in forward (-Y) plane.
+  yspan=0.681 xspan=0.475 (want y>x)
+  Axes: {'mixamorig:LeftUpLeg': 'Z', 'mixamorig:RightUpLeg': 'Z', 'mixamorig:LeftArm': 'Y', 'mixamorig:RightArm': 'Y', 'mixamorig:LeftLeg': 'X', 'mixamorig:RightLeg': 'X', 'mixamorig:LeftFoot': 'X', 'mixamorig:RightFoot': 'X', 'mixamorig:LeftForeArm': 'Y', 'mixamorig:RightForeArm': 'Y', 'mixamorig:LeftHand': 'Y', 'mixamorig:RightHand': 'Y', 'mixamorig:Spine': 'X', 'mixamorig:Spine1': 'X', 'mixamorig:Spine2': 'X', 'mixamorig:Hips': 'Y', 'mixamorig:LeftShoulder': 'Z', 'mixamorig:RightShoulder': 'X'}
+  Bone-len: []
+Facing: {'forward_xy': [1.0, -0.0], 'dominant': 'X', 'sign': 1} -> {'forward_xy': [-0.0, -1.0], 'dominant': 'Y', 'sign': -1}; Tash_Root Z=-90
+GODOT: KEEP model_yaw_offset_deg=180; use_external_walk_library=false; F5 reimport
+Height: 1.750m
+GLB: props/Tash.glb (380548 bytes)
+Proofs: props/_Tash_char02_walk/idle_* (front=face-on)
+Report: scripts/_char02_final_report.json
+
+
+SKOL HYBRID + CHAR02 LOOK (20261002_132518)
+========================================
+PRIORITY: Walk FIRST (Skol native), look SECOND (Character_02-ish face+hoodie).
+
+Mesh/armature/clips: restored from bak_pre_char02_restore_20261002_130812 (Skol)
+  walk [1.0, 30.0] fcurves 339->339 untouched=True
+  idle present: True
+  NOT Character_02 procedural walk. NOT Mixamo retarget. NOT idle-only.
+
+Look: Skol mesh UVs + painted albedo (Closest/PSX)
+  props/Tash_skol_albedo.png — head (spine.006) gets eyes/brows/nose/mouth/hair;
+  torso gets kangaroo-pocket darker patch; colors sampled from Character_02.png.
+  PACKED into blend + EMBEDDED in props/Tash.glb.
+  Stub Overlapping.png refreshed in archive/skol_rigged_anims_guy/.
+
+Facing: Tash_Root Z = +180.0 deg (baked for Godot)
+  before {'forward_xy': [0.0, -1.0], 'dominant': 'Y', 'sign': -1} -> after {'forward_xy': [-0.0, 1.0], 'dominant': 'Y', 'sign': 1}
+GODOT: KEEP model_yaw_offset_deg = 180
+  use_external_walk_library = false; play AnimationPlayer `walk`
+  F5 reimport props/Tash.glb (cleared .import + .godot/imported/Tash.glb*)
+
+Height: 1.800 -> 1.800m (max 1.8)
+GLB: props/Tash.glb (363520 bytes)
+Proofs: props/_Tash_skol_hybrid_front/side_*.png
+Report: scripts/_tash_skol_hybrid_report.json
+Backups of broken Char02: bak_pre_skol_hybrid_*
+
+Albedo hoodie brighten pass: lifted 52919 gray pixels toward ~0.48 mid-gray; proofs refreshed; GLB re-exported 363520 bytes. Walk untouched.
+
+
+SCALE+FACE PASS 20261002_133714
+========================================
+WALK: LOCKED native Skol — fcurves 339->339 untouched=True
+  frames [1.0, 30.0]; NO retarget / NO procedural / NO Char02 swap.
+
+HEIGHT: 1.798 -> 1.798m (uniform scale_mul=1.000000; door-height <=1.8)
+  Object scales uniform; NO non-uniform bake. Godot Model scale MUST stay (1,1,1).
+
+FACING: NO art bake this pass. Godot owns yaw.
+  Recommend model_yaw_offset_deg = 0 (try -90/+90 if crab). Measured forward={'forward_xy': [-0.0, 1.0], 'dominant': 'Y', 'sign': 1}
+
+LOOK: Skol UVs + painted albedo from Character_02 palette (face + gray hoodie + pocket)
+  EMBEDDED in props/Tash.glb; stub Overlapping.png refreshed in archive/.
+
+GODOT: model_yaw_offset_deg=0; Model scale=(1,1,1); use_external_walk_library=false
+  F5 reimport props/Tash.glb
+Proofs: props/_Tash_scale_face_front/side_*.png
+Report: scripts/_tash_scale_face_report.json
+GLB: props/Tash.glb (363696 bytes)
+
+Albedo hoodie brighten 20261002_133753: lifted 52732 gray pixels toward ~0.48; proofs refreshed; GLB re-exported 363696 bytes. Walk untouched.
+
+
+CHAR02 MAIN (PRIORITY FLIP) 20261002_134945
+========================================
+LOOK: Character_02 Rig + Character_02.png (FACE + gray hoodie) EMBEDDED. NOT Skol.
+WALK: YES looping in-place `walk` + `idle`
+  Source: C:\Users\hp\Documents\sabira\archive\mixamo_walk\Walking.fbx
+  Method: mixamo_lowerbody_spine_rest_delta_rot_only + native_arm_counterswing
+  Frames walk [1, 43] @30fps; hips XY=0 (PathFollow drives travel)
+  Quality: bone_len_bad=[] foot_yspan=0.7086456418037415
+Hierarchy: Tash_Root / Tash_Armature / Body
+Height: 1.7499998806354111m (target 1.75, max 1.8); Model scale MUST stay (1,1,1)
+Facing: {'forward_xy': [1.0, -0.0], 'dominant': 'X', 'sign': 1}
+GODOT: model_yaw_offset_deg = 180
+  Mesh forward {'forward_xy': [1.0, -0.0], 'dominant': 'X', 'sign': 1}; PathFollow + model_yaw_offset_deg=180. If moonwalk try the other of {0,180}; if crab try +/-90. Model scale (1,1,1).
+  use_external_walk_library = false; F5 reimport props/Tash.glb
+Backups: props/backups/Tash.*.bak_pre_char02_main_*
+Proofs: props/_Tash_char02_main_walk/idle_*
+Report: scripts/_char02_main_report.json
+GLB: props/Tash.glb (539260 bytes)
+
+
+CHAR02 MAIN FACING FIX 20261002_135046
+========================================
+Baked Tash_Root yaw so mesh faces -Y (face-on). Stripped donor Mixamo action from GLB.
+Facing: {'forward_xy': [-1.0, -0.0097], 'dominant': 'X', 'sign': -1} -> {'forward_xy': [0.0, -1.0], 'dominant': 'Y', 'sign': -1}
+GODOT: model_yaw_offset_deg = 180 (try 0 if moonwalk; +/-90 if crab)
+  Model scale (1,1,1); use_external_walk_library=false; F5 reimport
+Proofs refreshed: props/_Tash_char02_main_walk/idle_*
+GLB: 460796 bytes; actions=['idle', 'walk']
+
+
+CHAR02 MAIN V2 20261002_135201
+========================================
+LOOK: Character_02 Rig + Character_02.png (FACE+gray hoodie) EMBEDDED. NOT Skol.
+WALK: Mixamo Standard_Walk.fbx rest-delta slerp amp=0.82 (legs/spine/head) + native arm counterswing
+  frames [1,36]; inplace hips; foot_yspan=0.689; bone_len_bad=[]
+Hierarchy: Tash_Root / Tash_Armature / Body
+Height: 1.750m; Model scale (1,1,1)
+Facing: {'forward_xy': [-0.0, -1.0], 'dominant': 'Y', 'sign': -1}; GODOT model_yaw_offset_deg=180
+  use_external_walk_library=false; F5 reimport props/Tash.glb
+Proofs: props/_Tash_char02_main_walk/idle_*
+Report: scripts/_char02_main_report.json
+GLB: 451844 bytes actions=['idle', 'walk']
+
+
+CHAR02 MAIN V3 20261002_135317
+========================================
+LOOK: Character_02 Rig + Character_02.png (FACE+gray hoodie) EMBEDDED. NOT Skol.
+WALK: Mixamo Standard_Walk rest-delta slerp amp=0.55 + knee soften + native arms
+  frames [1,36]; yspan=0.475; bone_len_bad=[]; knee_softens=0
+Hierarchy: Tash_Root / Tash_Armature / Body
+Height: 1.750m; Model scale (1,1,1)
+Facing: {'forward_xy': [0.0, -1.0], 'dominant': 'Y', 'sign': -1} (face toward -Y cam)
+GODOT: model_yaw_offset_deg=180; use_external_walk_library=false; F5 reimport
+Proofs: props/_Tash_char02_main_walk/idle_*
+GLB: 451964 bytes actions=['idle', 'walk']
+
+
+CHAR02 WALK-ONLY V3 20261002_140553
+========================================
+LOOK: Character_02 UNCHANGED (mesh/tex/scale/yaw frozen).
+WALK: motifect_walk_forward_sagittal_axis_lock
+  frames [1,32]; yspan=0.358; flare=1.063; pinch=1.050
+  GLB reopen yspan=0.203; bone_bad=[]
+Hierarchy: Tash_Root / Tash_Armature / Body
+Height: 1.750m frozen; Model scale (1,1,1)
+Facing: {'forward_xy': [0.0, -1.0], 'dominant': 'Y', 'sign': -1}; GODOT model_yaw_offset_deg=180
+  use_external_walk_library=false; PathFollow untouched; F5 reimport
+Backups: props/backups/Tash.*.bak_pre_walk_fix_v3_*
+Proofs: props/_Tash_char02_walkfix_walk front+side (sagittal stride, no V/X)
+Report: scripts/_char02_walk_only_v3_report.json
+GLB: 446684 bytes actions=['idle', 'walk']
+
+
+CHAR02 WALK-ONLY V4 20261002_140633
+========================================
+LOOK: Character_02 UNCHANGED (mesh/tex/scale/yaw frozen).
+WALK: handkeyed_sagittal_psx_legsX_armsZ
+  frames [1,32]; yspan=0.892; flare=1.088; pinch=0.988
+  GLB reopen yspan=0.795; bone_bad=[]
+Hierarchy: Tash_Root / Tash_Armature / Body
+Height: 1.750m frozen; Model scale (1,1,1)
+Facing: {'forward_xy': [0.0, -1.0], 'dominant': 'Y', 'sign': -1}; GODOT model_yaw_offset_deg=180
+  use_external_walk_library=false; PathFollow untouched; F5 reimport
+Backups: props/backups/Tash.*.bak_pre_walk_fix_v4_*
+Proofs: props/_Tash_char02_walkfix_walk front+side (sagittal stride, no V/X)
+Report: scripts/_char02_walk_only_v4_report.json
+GLB: 446684 bytes actions=['idle', 'walk']
+
+CHAR02 WALK-ONLY V4 AXIS NOTE
+method=handkeyed_sagittal_psx_legsZ_armsZ_feetX (Tash_Armature local axes; NOT Mixamo leftover X)
+Motifect tried earlier: numeric OK but visual opposite-stride weak � handkey shipped.
+
+
+CHAR02 STD WALK (user Mixamo) 20261003_073126
+========================================
+LOOK: Character_02 UNCHANGED (mesh/tex/scale/yaw frozen). Walk clip ONLY.
+WALK: Standard_Walk_user_20261003.fbx sagittal lock (thigh world-angle + knee/foot bend delta)
+  + native arm counterswing (no Mixamo T-pose arm delta)
+  frames [1,44] @30fps; in-place hips (no XY root travel)
+  yspan=0.661 xspan=0.011 flare=1.071 pinch=0.999 knee_lat=0.008
+  GLB reopen yspan=0.6446319296956062
+Hierarchy: Tash_Root / Tash_Armature / Body
+Height: 1.724m frozen; Model scale (1,1,1)
+Facing: {'forward_xy': [-0.0, -1.0], 'dominant': 'Y', 'sign': -1}; GODOT model_yaw_offset_deg=180 (NOT changed)
+  use_external_walk_library=false; PathFollow untouched; clip name `walk`; F5 reimport
+Source copy: archive/mixamo_walk/Standard_Walk_user_20261003.fbx (Assets original untouched)
+Backups: props/backups/Tash.*.bak_pre_stdwalk_*
+Proofs: props/_Tash_stdwalk_front/side_*.png
+Report: scripts/_stdwalk_report.json
+GLB: 462572 bytes actions=['idle', 'walk']
+
+
+CHAR02 STD WALK (user Mixamo) 20261003_073218
+========================================
+LOOK: Character_02 UNCHANGED (mesh/tex/scale/yaw frozen). Walk clip ONLY.
+WALK: Standard_Walk_user_20261003.fbx sagittal lock (thigh world-angle + knee/foot bend delta)
+  + native arm counterswing (no Mixamo T-pose arm delta)
+  frames [1,44] @30fps; in-place hips (no XY root travel)
+  yspan=0.844 xspan=0.012 flare=1.091 pinch=0.999 knee_lat=0.008
+  GLB reopen yspan=0.7800682485103607
+Hierarchy: Tash_Root / Tash_Armature / Body
+Height: 1.721m frozen; Model scale (1,1,1)
+Facing: {'forward_xy': [-0.0, -1.0], 'dominant': 'Y', 'sign': -1}; GODOT model_yaw_offset_deg=180 (NOT changed)
+  use_external_walk_library=false; PathFollow untouched; clip name `walk`; F5 reimport
+Source copy: archive/mixamo_walk/Standard_Walk_user_20261003.fbx (Assets original untouched)
+Backups: props/backups/Tash.*.bak_pre_stdwalk_*
+Proofs: props/_Tash_stdwalk_front/side_*.png
+Report: scripts/_stdwalk_report.json
+GLB: 462572 bytes actions=['idle', 'walk']
+
+
+CHAR02 KNEE SIGN FIX 20261003_075319
+========================================
+LOOK: Character_02 UNCHANGED (mesh/tex/scale/yaw frozen). Walk clip ONLY.
+FIX: negated rotation sign on calf/shin keys ONLY
+  bones: mixamorig:LeftLeg, mixamorig:RightLeg
+  channels: quaternion x/y/z (W kept) â€” conjugate = opposite knee flexion
+  thigh swing NOT touched; foot/toe keys NOT touched
+  before swing anterior L/R=-0.2221/-0.1987
+  after  swing anterior L/R=0.1267/0.1309
+  swing frames L/R=41/19 ang_deg L/R=58.74/53.64
+  plant anterior L/R=0.0383/0.0635
+  knee_lat L/R=0.0078/0.005
+  GLB reopen gate fails=[]
+Hierarchy: Tash_Root / Tash_Armature / Body
+Height: 1.704m frozen (reopen 1.763); Model scale (1,1,1)
+Facing unchanged; GODOT model_yaw_offset_deg=180
+  use_external_walk_library=false; PathFollow untouched; clip name `walk`; F5 reimport
+Source NOT re-downloaded. Same Standard Walk bake, shin sign flipped.
+Backups: Tash.glb.bak_pre_knee_sign_20261003_075319 / Tash.blend.bak_pre_knee_sign_20261003_075319
+Proofs: props/_Tash_knee_fix_front/side_*.png
+Report: scripts/_knee_sign_report.json
+GLB: 462572 bytes actions=['idle', 'walk']
+
+KNEE SIGN NOTE: 1.704m above is POSED bbox at swing, not a scale change. Mesh/root/scale untouched. Rest height stays the prior ~1.72m. Godot Model scale stays (1,1,1).
+
+
+CHAR02 FULL REIMPORT Standard Walk 20261003_084548
+========================================
+LOOK: Character_02 mesh UNCHANGED (no restore). Walk clip DELETED and rebaked from FBX.
+METHOD: fresh absolute bone-axis retarget from Standard Walk.fbx.
+  Old walk action deleted first. Each mixamorig bone posed axes (Y along the bone, X twist)
+  were copied from the FBX into Character_02 face space and keyed as a new walk.
+  Not a rest-delta and not a conjugate of the 07:53 shin-flip keys.
+  forward_corrected_at_import=False
+  frames [1,44] @30fps; hips XY locked (in-place); Z bob only
+  swing_ant L/R=0.2085/0.1895
+  plant_ant_min L/R=0.0015/0.0211
+  yspan=0.866 xspan=0.081 flare=0.920 pinch=0.328
+  knee_lat=0.043 foot_yaw_deg=[187.43, 153.84]
+  GLB reopen fails=[] swing_ant L/R=0.20767046730436078/0.1953443545732747
+Hierarchy: Tash_Root / Tash_Armature / Body
+Rest height: 1.750m (was 1.750); Model scale (1,1,1)
+Facing: {'forward_xy': [0.0542, -0.9985]}; GODOT model_yaw_offset_deg=180
+  use_external_walk_library=false; no BoneMap; no .res; clip name `walk`
+Source: archive/mixamo_walk/Standard_Walk_user_20261003.fbx (identical SHA256 to Assets Standard Walk.fbx)
+Backup of pre-reimport live file: props/backups/Tash.*.bak_pre_full_reimport_20261003_084000
+Proofs: props/_Tash_reimport_front/side_*.png
+Report: scripts/_reimport_stdwalk_report.json
+GLB: 462572 bytes actions=['idle', 'walk']

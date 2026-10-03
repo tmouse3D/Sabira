@@ -98,6 +98,8 @@
 [ext_resource type="PackedScene" uid="uid://dq75sq87ta1sb" path="res://props/Mom_Restraint.glb" id="100_mom_restraint"]
 [ext_resource type="Script" uid="uid://dce7meaw0a7o" path="res://interact/ChairSit.gd" id="101_chairsit"]
 [ext_resource type="Script" uid="uid://j7miwpucyiav" path="res://world/HiddenLightFlicker.gd" id="102_flicker"]
+[ext_resource type="PackedScene" uid="uid://c1ia6t4uoxeu4" path="res://props/Tash.glb" id="103_tash"]
+[ext_resource type="Script" uid="uid://b4e40fe3r5rb1" path="res://characters/TashWalker.gd" id="104_tashwalk"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -322,6 +324,18 @@ albedo_color = Color(0.75, 0.72, 0.65, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape_lightswitch"]
 size = Vector3(0.12, 0.18, 0.08)
+
+[sub_resource type="Curve3D" id="Curve3D_tash_walk"]
+closed = true
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 3, 0, -0.8, 0, 0, 0, 0, 0, 0, 5, 0, -0.4, 0, 0, 0, 0, 0, 0, 4.5, 0, 2.3, 0, 0, 0, 0, 0, 0, 2.5, 0, 4.3, 0, 0, 0, 0, 0, 0, -1, 0, 3.8, 0, 0, 0, 0, 0, 0, -2, 0, 0.3, 0, 0, 0, 0, 0, 0, -0.3, 0, -1.2),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0)
+}
+point_count = 7
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_tash"]
+radius = 0.24
+height = 1.75
 
 [node name="House" type="Node3D" unique_id=417873040]
 
@@ -975,6 +989,7 @@ collision_mask = 0
 script = ExtResource("94_momlock")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/HiddenRoom/Mom_LockRectBody" unique_id=970800011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.3491766, 0, 0, 0.052600145)
 shape = SubResource("BoxShape_momlock")
 
 [node name="Mom_WrapBody" type="StaticBody3D" parent="Structure/HiddenRoom" unique_id=970800020]
@@ -2501,6 +2516,23 @@ material = SubResource("mat_lightswitch")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="LightSwitches/Switch_TashOffice" unique_id=980000210]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.50468874)
 shape = SubResource("BoxShape_lightswitch")
+
+[node name="TashWalkPath" type="Path3D" parent="." unique_id=981000001]
+curve = SubResource("Curve3D_tash_walk")
+
+[node name="PathFollow3D" type="PathFollow3D" parent="TashWalkPath" unique_id=981000002]
+transform = Transform3D(-0.19611606, 0, -0.9805807, 0, 1, 0, 0.9805807, 0, -0.19611606, 3, 0, -0.8)
+rotation_mode = 1
+
+[node name="Tash" type="CharacterBody3D" parent="TashWalkPath/PathFollow3D" unique_id=981000003]
+script = ExtResource("104_tashwalk")
+walk_speed = 0.6
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TashWalkPath/PathFollow3D/Tash" unique_id=981000004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
+shape = SubResource("CapsuleShape_tash")
+
+[node name="Model" parent="TashWalkPath/PathFollow3D/Tash" unique_id=981000005 instance=ExtResource("103_tash")]
 
 [node name="Player" parent="." unique_id=1317640905 instance=ExtResource("1_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 0.1, 4.4)

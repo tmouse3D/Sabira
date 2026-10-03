@@ -1,6 +1,16 @@
-# Sabira / Project House - Milestone 1
+# Sabira / Project House
 
 Godot 4.x (Forward+, GDScript) stealth-horror greybox.
+
+## Milestone 2 (current)
+
+Working snapshot on top of Milestone 1.
+
+- Tash walks the house on a Path3D (`PathFollow3D` + `characters/TashWalker.gd`). No reactions.
+- Character_02 mesh: `props/Tash.glb`
+- Playable walk clip is baked in `props/Tash.glb`. The Mixamo retargeter addon is enabled; it is not the clip the walker plays until a proven `.res` exists.
+
+Main scene: `res://world/House.tscn`
 
 ## Milestone 1 contents
 
@@ -9,8 +19,6 @@ Godot 4.x (Forward+, GDScript) stealth-horror greybox.
 - Interact loop (raycast + [E] prompt)
 - Inventory HUD
 - Restraint as a separate world prop (not fused into character mesh)
-
-Main scene: `res://world/House.tscn`
 
 ## Open
 
@@ -31,4 +39,5 @@ Script and scene backups live under `backups/`. OS/temp debris was moved to `arc
 
 ## Archive
 
-Git tag / GitHub Release: **Milestone 1** (`milestone-1`).
+- Git tag / GitHub Release: **Milestone 1** (`milestone-1`)
+- Git tag / GitHub Release: **Milestone 2** (`milestone-2`)
