@@ -92,9 +92,44 @@ func _physics_process(delta: float) -> void:
 	if absf(wrapf(current - _target_yaw, -PI, PI)) < 0.01:
 		rotation.y = _target_yaw
 		_busy = false
+		if not _is_open:
+			_set_leaf_solid(true)
 		return
 	_busy = true
 	rotation.y = lerp_angle(current, _target_yaw, clampf(open_speed * delta, 0.0, 1.0))
+
+
+## Scripted passage (Tash). Same hinge target as player interact. Ignores the lock.
+## Opening drops leaf collision immediately. Closing restores it once the hinge settles.
+func set_passage_open(want_open: bool) -> void:
+	_is_open = want_open
+	if want_open:
+		_target_yaw = _closed_yaw + deg_to_rad(open_angle_deg)
+	else:
+		_target_yaw = _closed_yaw
+	_set_leaf_solid(false)
+	_play_creak()
+	_update_prompt()
+
+
+func is_passage_open() -> bool:
+	if not _is_open:
+		return false
+	return absf(wrapf(rotation.y - _target_yaw, -PI, PI)) < 0.08
+
+
+## Player interact only. Tash set_passage_open ignores this flag.
+func set_player_locked(want_locked: bool) -> void:
+	locked = want_locked
+	_update_prompt()
+
+
+func _set_leaf_solid(solid: bool) -> void:
+	collision_layer = 5 if solid else 0
+	for child in find_children("*", "CollisionShape3D", true, false):
+		var shape := child as CollisionShape3D
+		if shape:
+			shape.disabled = not solid
 
 
 func can_interact(_player: Node) -> bool:

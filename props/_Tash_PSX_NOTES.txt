@@ -676,3 +676,134 @@ Backup of pre-reimport live file: props/backups/Tash.*.bak_pre_full_reimport_202
 Proofs: props/_Tash_reimport_front/side_*.png
 Report: scripts/_reimport_stdwalk_report.json
 GLB: 462572 bytes actions=['idle', 'walk']
+
+CHAR02 SIT CLIPS 20261003_091956
+========================================
+LOOK: Character_02 UNCHANGED (mesh/tex/proportions/scale frozen). walk + idle NOT rebaked.
+METHOD: same absolute bone-aim + twist as 08:45 Standard Walk.
+  mixamorig posed Y (bone aim) + X (twist) copied from FBX into Character_02 face space (-Y forward).
+  Hips ground-plane XY travel stripped (in place on the couch marker). Vertical hip drop kept — that is the sit.
+  sitting_idle is cyclic. stand_to_sit is one-shot. No flip needed (knees already forward).
+  stand_to_sit frames [1,87] @30fps
+    hip drop 0.422m (0.992 -> 0.570). XY travel stripped (source xy_max 0.483m).
+    swing_ant L/R=0.1925/0.1994  kfwd L/R=0.402/0.412  knee_lat_max=0.099
+    height 1.746 -> 1.192. fails=[]
+  sitting_idle frames [1,129] @30fps loop=True (duplicate frame 130 dropped)
+    hip z held 0.5702..0.5705 (matches seated). source xy_max 0.014m
+    swing_ant L/R=0.1918/0.2033  kfwd L/R=0.402/0.408  knee_lat_max=0.099
+    height ~1.30-1.31. fails=[]
+  Knees bend FORWARD (toward face -Y), not hyperextended. Proofs are a real sit, no ribbon.
+  walk blend sha256=3e8904a3ddf7 frames [1,44] nfcurves=231 UNCHANGED
+  idle blend sha256=443e74a622f0 frames [1,30] UNCHANGED
+  GLB reopen @30fps: walk [1,44], idle [1,30], stand_to_sit [1,87], sitting_idle [1,129]
+    (a 24fps factory reopen reported walk as 35 frames; that was 44*(24/30), not a trim)
+Hierarchy: Tash_Root / Tash_Armature / Body
+Rest height: 1.750m unchanged. Scales untouched root (1,1,1) arm ~1.0105 body (1,1,1)
+Sources READ-ONLY, SHA256 match Assets originals:
+  art/anim/mixamo/Stand_To_Sit.fbx 54588DB5...
+  art/anim/mixamo/Sitting_Idle.fbx 1045B6A2...
+  archive/mixamo_walk copies are the same bytes. Assets folder not mutated.
+Backup: props/backups/Tash.glb.bak_pre_sit_clips_20261003_091719
+        props/backups/Tash.blend.bak_pre_sit_clips_20261003_091719
+Proofs: props/_Tash_sit_{stand,mid,seated,idle}_{side,front}.png
+Report: scripts/_sit_clips_report.json
+GLB: 792944 bytes mtime=2026-10-03 09:20:02 actions=['idle','sitting_idle','stand_to_sit','walk']
+Cleared props/Tash.glb.import and .godot/imported/Tash.glb*
+No BoneMap. Godot: reimport only. Loop sitting_idle. Yaw/scale/path stay Godot's.
+
+
+CHAR02 STAIRS+LOOK CLIPS 20261003_100236
+========================================
+LOOK: Character_02 UNCHANGED (mesh/tex/proportions/scale frozen).
+PROTECTED: walk, idle, stand_to_sit, sitting_idle NOT edited (no sit-depth tilt — Godot marker handles seat push).
+NO door clip (Opening and Closing.fbx not baked).
+METHOD: same absolute bone-aim + twist as 09:20 sit / 08:45 Standard Walk.
+  mixamorig posed Y (bone aim) + X (twist) copied from FBX into Character_02 face space (-Y forward).
+  Hips: ALL root translation stripped (XY + Z). PathFollow owns travel AND stair height.
+  Hips locked at rest/walk height 0.993m (walk mid ~0.997). span=0 on all three new clips.
+  walk_up_stairs frames [1,41] @30fps loop=True (dup end dropped from 42) flip=False
+    src xy_max 0.489 / src Z climb stripped; swing_ant L/R=0.320/0.356 kfwd L/R=0.335/0.368
+  walk_down_stairs frames [1,16] @30fps loop=True (dup end dropped from 17) flip=False
+    src Z drop stripped; swing_ant L/R=0.386/0.379; posed bbox min~1.18 (hanging step foot) hips still 0.993
+  look_around frames [1,232] @30fps one-shot loop=False flip=False
+    swing_ant L/R=0.100/0.057 kfwd positive; standing height held
+  walk blend sha256=3e8904a3ddf7 frames [1,44] nfcurves=231 UNCHANGED
+  idle/stand_to_sit/sitting_idle fingerprints match 09:20 bake UNCHANGED
+  GLB reopen @30fps: walk [1,44], idle [1,30], stand_to_sit [1,87], sitting_idle [1,129],
+    walk_up_stairs [1,41], walk_down_stairs [1,16], look_around [1,232]
+Hierarchy: Tash_Root / Tash_Armature / Body
+Rest height: 1.750m unchanged. Scales untouched root (1,1,1) arm ~1.0105 body (1,1,1)
+Knees: bend FORWARD (toward face -Y), not hyperextended. No ribbon.
+Sources READ-ONLY, SHA256 match Assets originals:
+  art/anim/mixamo/Walking_Up_The_Stairs.fbx 6CF2EF27...
+  art/anim/mixamo/Descending_Stairs.fbx 8CC515E5...
+  art/anim/mixamo/Looking_Around.fbx BAD5927E...
+  archive/mixamo_walk copies are the same bytes. Assets folder not mutated.
+Backup: props/backups/Tash.glb.bak_pre_stairs_door_20261003_100032
+        props/backups/Tash.blend.bak_pre_stairs_door_20261003_100032
+Proofs: props/_Tash_walk_up_stairs_{mid,late}_side.png
+        props/_Tash_walk_down_stairs_{mid,late}_side.png
+        props/_Tash_look_around_mid_{side,front}.png
+Report: scripts/_stairs_look_report.json
+GLB: 1242172 bytes mtime=2026-10-03 10:02:44 actions=['idle','look_around','sitting_idle','stand_to_sit','walk','walk_down_stairs','walk_up_stairs']
+Cleared props/Tash.glb.import and .godot/imported/Tash.glb*
+No BoneMap. Godot: reimport only. Loop stairs clips; look_around one-shot. Yaw/scale/path stay Godot's.
+
+CHAR02 OPEN_CLOSE_DOOR 20261003_104659
+========================================
+LOOK: Character_02 UNCHANGED (mesh/tex/proportions/scale frozen).
+PROTECTED: walk, idle, stand_to_sit, sitting_idle, walk_up_stairs, walk_down_stairs, look_around NOT edited.
+METHOD: same absolute bone-aim + twist as 10:02 stairs/look.
+  mixamorig posed Y (bone aim) + X (twist) copied from FBX into Character_02 face space (-Y forward).
+  Hips: root XY stripped and hip location locked (no added hip drop). PathFollow owns placement.
+  open_close_door frames [1,145] @30fps one-shot loop=False flip=False (not split)
+    hip_z locked 0.9932 (rest 0.9932, walk frame1 0.9966). source xy_max 0.076m stripped. source Z bob ~2cm not applied.
+    knees forward (swing_ant L/R ~0.102/0.104). knee_lat_max 0.057. no ribbon.
+  walk blend sha256=3e8904a3ddf7 frames [1,44] nfcurves=231 UNCHANGED
+  idle [1,30], stand_to_sit [1,87], sitting_idle [1,129], walk_up_stairs [1,41], walk_down_stairs [1,16], look_around [1,232] UNCHANGED
+  GLB reopen @30fps: those ranges exact, plus open_close_door [1,145]
+  GLB reimport walk hash is resampled (export_force_sampling, 330 fcurves) — blend curves were not rewritten.
+Hierarchy: Tash_Root / Tash_Armature / Body
+Rest height: 1.750m unchanged. Scales untouched root (1,1,1) arm ~1.0105 body (1,1,1)
+Source READ-ONLY SHA256 77E3C476973CCDDE48EDD9BB5864A9EA18EE56486EBA0BA0FA4AD351B1C7107D
+  Assets\Animations\Opening and Closing.fbx
+  copies: art/anim/mixamo/Opening_and_Closing.fbx and archive/mixamo_walk/Opening_and_Closing.fbx
+Backup: props/backups/Tash.glb.bak_pre_door_clip_20261003_104549
+        props/backups/Tash.blend.bak_pre_door_clip_20261003_104549
+Proofs: props/_Tash_open_close_door_start_side.png
+        props/_Tash_open_close_door_mid_side.png
+        props/_Tash_open_close_door_mid_front.png
+        props/_Tash_open_close_door_end_side.png
+GLB: 1456620 bytes mtime=2026-10-03 10:47:05 actions=idle,look_around,open_close_door,sitting_idle,stand_to_sit,walk,walk_down_stairs,walk_up_stairs
+Cleared props/Tash.glb.import and .godot/imported/Tash.glb*
+No BoneMap. Godot: reimport only. open_close_door is a one-shot (do not loop). Yaw/scale/path stay Godot's.
+
+
+
+CHAR02 IDLES 20261003_122300
+========================================
+LOOK: Character_02 UNCHANGED (mesh/tex/proportions/scale frozen).
+REPLACED: idle (old standing idle overwritten by Mixamo Idle.fbx).
+ADDED: idle_foot, idle_looking_down, idle_head_nod.
+PROTECTED: walk, stand_to_sit, sitting_idle, walk_up_stairs, walk_down_stairs, look_around, open_close_door NOT edited.
+METHOD: same absolute bone-aim + twist as door / stairs / 08:45 Standard Walk.
+  mixamorig posed Y (bone aim) + X (twist) copied from FBX into Character_02 face space (-Y forward).
+  Hips: root XY stripped and hip location locked (no hip drop). PathFollow owns placement.
+  Hips stay at walk/rest height (~0.993m).
+  idle frames [1,176] @30fps loop=True flip=False hip_z 0.9932..0.9932 (rest=0.9932 span=0.0000)
+  idle_foot frames [1,119] @30fps loop=True flip=False hip_z 0.9932..0.9932 (rest=0.9932 span=0.0000)
+  idle_looking_down frames [1,143] @30fps loop=True flip=False hip_z 0.9932..0.9932 (rest=0.9932 span=0.0000)
+  idle_head_nod frames [1,70] @30fps loop=True flip=False hip_z 0.9932..0.9932 (rest=0.9932 span=0.0000)
+  walk blend sha256=3e8904a3ddf7 frames=44 range=[1, 44] UNCHANGED (expect 3e8904a3)
+  protected fingerprints and frame ranges unchanged
+  GLB reopen walk frames=44 range=[1, 44]
+Hierarchy: Tash_Root / Tash_Armature / Body
+Rest height: 1.750m (was 1.750); scales untouched ((1.0, 1.0, 1.0), (1.010537, 1.010537, 1.010537), (1.0, 1.0, 1.0))
+Knees: bend FORWARD (positive anterior toward face -Y), not hyperextended.
+Sources READ-ONLY under Assets for games\Animations (Idle, Idle foot, Looking Down idle, Sarcastic Head Nod idle).
+  copies: art/anim/mixamo/Idle.fbx Idle_foot.fbx Looking_Down_idle.fbx Sarcastic_Head_Nod_idle.fbx
+Backup: props/backups/Tash.glb.bak_pre_idles_20261003_122045
+Proofs: props/_Tash_idle_*.png _Tash_idle_foot_*.png _Tash_idle_looking_down_*.png _Tash_idle_head_nod_*.png
+Report: scripts/_idles_report.json
+GLB: 2161776 bytes mtime=2026-10-03 12:23:14 actions=['idle', 'idle_foot', 'idle_head_nod', 'idle_looking_down', 'look_around', 'open_close_door', 'sitting_idle', 'stand_to_sit', 'walk', 'walk_down_stairs', 'walk_up_stairs']
+No BoneMap. Godot: reimport only. Loop the clips marked loop=True. Yaw/scale/path stay Godot's.

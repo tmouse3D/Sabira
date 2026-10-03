@@ -100,6 +100,8 @@
 [ext_resource type="Script" uid="uid://j7miwpucyiav" path="res://world/HiddenLightFlicker.gd" id="102_flicker"]
 [ext_resource type="PackedScene" uid="uid://c1ia6t4uoxeu4" path="res://props/Tash.glb" id="103_tash"]
 [ext_resource type="Script" uid="uid://b4e40fe3r5rb1" path="res://characters/TashWalker.gd" id="104_tashwalk"]
+[ext_resource type="Script" uid="uid://cupbxb2yac8dg" path="res://characters/TvSlideshow.gd" id="105_tvslide"]
+[ext_resource type="PackedScene" uid="uid://bvqh0mojy73rs" path="res://props/IBM_5155.glb" id="106_ibm"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -153,6 +155,9 @@ size = Vector3(1.2, 0.5, 0.4)
 
 [sub_resource type="BoxShape3D" id="BoxShape_tv"]
 size = Vector3(0.9, 0.55, 0.25)
+
+[sub_resource type="QuadMesh" id="QuadMesh_tvslide"]
+size = Vector2(0.78, 0.46)
 
 [sub_resource type="StandardMaterial3D" id="mat_furniture"]
 albedo_texture = ExtResource("21_floortex")
@@ -328,10 +333,10 @@ size = Vector3(0.12, 0.18, 0.08)
 [sub_resource type="Curve3D" id="Curve3D_tash_walk"]
 closed = true
 _data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 3, 0, -0.8, 0, 0, 0, 0, 0, 0, 5, 0, -0.4, 0, 0, 0, 0, 0, 0, 4.5, 0, 2.3, 0, 0, 0, 0, 0, 0, 2.5, 0, 4.3, 0, 0, 0, 0, 0, 0, -1, 0, 3.8, 0, 0, 0, 0, 0, 0, -2, 0, 0.3, 0, 0, 0, 0, 0, 0, -0.3, 0, -1.2),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0)
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 2.2, 0, 4.6, 0, 0, 0, 0, 0, 0, -0.5, 0, 4.5, 0, 0, 0, 0, 0, 0, -3.6, 0, 4.2, 0, 0, 0, 0, 0, 0, -3.6, 0, 3.2, 0, 0, 0, 0, 0, 0, -3.6, 0.161, 2.55, 0, 0, 0, 0, 0, 0, -3.6, 0.966, 1.45, 0, 0, 0, 0, 0, 0, -3.6, 1.771, 0.35, 0, 0, 0, 0, 0, 0, -3.6, 2.576, -0.75, 0, 0, 0, 0, 0, 0, -3.6, 2.898, -1.19, 0, 0, 0, 0, 0, 0, -3.6, 3.01, -1.7, 0, 0, 0, 0, 0, 0, -2.4, 3.01, -2.12, 0, 0, 0, 0, 0, 0, -1.2, 3.01, -2.12, 0, 0, 0, 0, 0, 0, -1.2, 3.01, 0.2, 0, 0, 0, 0, 0, 0, -1.2, 3.01, 3.88, 0, 0, 0, 0, 0, 0, 1.85, 3.01, 3.88, 0, 0, 0, 0, 0, 0, 3.2, 3.01, 3.88, 0, 0, 0, 0, 0, 0, 3.2, 3.01, 4.38, 0, 0, 0, 0, 0, 0, 6.05, 3.01, 4.38, 0, 0, 0, 0, 0, 0, 6.05, 3.01, 3.55, 0, 0, 0, 0, 0, 0, 6.05, 3.01, 4.38, 0, 0, 0, 0, 0, 0, 5.15, 3.01, 4.38, 0, 0, 0, 0, 0, 0, 5.15, 3.01, 4.05, 0, 0, 0, 0, 0, 0, 3.2, 3.01, 3.88, 0, 0, 0, 0, 0, 0, 1.85, 3.01, 3.88, 0, 0, 0, 0, 0, 0, -1.2, 3.01, 3.88, 0, 0, 0, 0, 0, 0, -1.2, 3.01, -2.12, 0, 0, 0, 0, 0, 0, -2.4, 3.01, -2.12, 0, 0, 0, 0, 0, 0, -3.6, 3.01, -1.7, 0, 0, 0, 0, 0, 0, -3.6, 2.898, -1.19, 0, 0, 0, 0, 0, 0, -3.6, 2.576, -0.75, 0, 0, 0, 0, 0, 0, -3.6, 1.771, 0.35, 0, 0, 0, 0, 0, 0, -3.6, 0.966, 1.45, 0, 0, 0, 0, 0, 0, -3.6, 0.161, 2.55, 0, 0, 0, 0, 0, 0, -3.6, 0, 3.2, 0, 0, 0, 0, 0, 0, -2, 0, 2.4, 0, 0, 0, 0, 0, 0, -1.6, 0, 0.8, 0, 0, 0, 0, 0, 0, -0.2, 0, 0.3, 0, 0, 0, 0, 0, 0, 1.876662, 0, 0.9638408, 0, 0, 0, 0, 0, 0, 0.6, 0, 4.6),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 }
-point_count = 7
+point_count = 39
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_tash"]
 radius = 0.24
@@ -611,6 +616,21 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, -3.55)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/Living/Living_TVBody" unique_id=970100022]
 shape = SubResource("BoxShape_tv")
 
+[node name="Living_TVScreen" type="MeshInstance3D" parent="Structure/Living" unique_id=981000030]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, -3.4)
+visible = false
+cast_shadow = 0
+mesh = SubResource("QuadMesh_tvslide")
+script = ExtResource("105_tvslide")
+
+[node name="TvFlicker" type="OmniLight3D" parent="Structure/Living/Living_TVScreen" unique_id=981000040]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.06)
+visible = false
+light_color = Color(0.86, 0.91, 1, 1)
+light_energy = 0.0
+omni_range = 1.8
+omni_attenuation = 1.4
+
 [node name="Living_Clock" parent="Structure/Living" unique_id=970100023 instance=ExtResource("70_clock")]
 transform = Transform3D(-2.2941315e-08, 0, -2.913382, 0, 0.9017308, 0, 0.5248361, 0, -1.2734797e-07, -1.0934114, 0.49102736, -3.528424)
 
@@ -632,6 +652,9 @@ script = ExtResource("95_dosebottle")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/Living/Living_BottleBody" unique_id=960000761]
 shape = SubResource("BoxShape_bottle")
+
+[node name="Living_CouchGlass" parent="Structure/Living" unique_id=981000041 instance=ExtResource("66_eglass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.45, 0.6045, 1.2)
 
 [node name="Living_FloorDrawers" parent="Structure/Living" unique_id=960000701 instance=ExtResource("42_fdrawers")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.067221, 0, -3.5303028)
@@ -1895,6 +1918,9 @@ shape = SubResource("BoxShape_cupboard")
 [node name="TashOffice_Desk" parent="Structure/TashOffice" unique_id=960000301 instance=ExtResource("31_desk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0, -0.95)
 
+[node name="TashOffice_Computer" parent="Structure/TashOffice/TashOffice_Desk" unique_id=1531045813 instance=ExtResource("106_ibm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+
 [node name="TashOffice_DeskBody" type="StaticBody3D" parent="Structure/TashOffice" unique_id=960000302]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.375, -0.95)
 collision_layer = 5
@@ -2319,8 +2345,9 @@ include_wall_segment = false
 open_angle_deg = -90.0
 
 [node name="Door_UpperBath" parent="Doors" unique_id=1367812134 instance=ExtResource("2_door")]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4.1, 3, -2.5235023)
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1.08, 0, 0, -3.1621964, 3, -2.514)
 include_wall_segment = false
+open_angle_deg = -90.0
 
 [node name="Door_Closet" parent="Doors" unique_id=1683250866 instance=ExtResource("2_door")]
 transform = Transform3D(0, 0, 1.0838213, 0, 1, 0, -1, 0, 0, -0.28833207, 3, -2.5)
@@ -2521,18 +2548,31 @@ shape = SubResource("BoxShape_lightswitch")
 curve = SubResource("Curve3D_tash_walk")
 
 [node name="PathFollow3D" type="PathFollow3D" parent="TashWalkPath" unique_id=981000002]
-transform = Transform3D(-0.19611606, 0, -0.9805807, 0, 1, 0, 0.9805807, 0, -0.19611606, 3, 0, -0.8)
+transform = Transform3D(0.037011545, 0, 0.9993136, 0, 1, 0, -0.9993136, 0, 0.037011545, 2.2, 0, 4.6)
 rotation_mode = 1
 
 [node name="Tash" type="CharacterBody3D" parent="TashWalkPath/PathFollow3D" unique_id=981000003]
 script = ExtResource("104_tashwalk")
-walk_speed = 0.6
+sit_body_yaw_deg = 0.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TashWalkPath/PathFollow3D/Tash" unique_id=981000004]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
 shape = SubResource("CapsuleShape_tash")
 
 [node name="Model" parent="TashWalkPath/PathFollow3D/Tash" unique_id=981000005 instance=ExtResource("103_tash")]
+transform = Transform3D(1.05, 0, 0, 0, 1.05, 0, 0, 0, 1.05, 0, 0, 0)
+
+[node name="TashCouchSit" type="Marker3D" parent="." unique_id=981000010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0, 1.4)
+
+[node name="TashOfficeSit" type="Marker3D" parent="." unique_id=981000011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.15, 3.01, 3.72)
+
+[node name="TashToiletSit" type="Marker3D" parent="." unique_id=981000031]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.474046, 3.01, -4.92511)
+
+[node name="TashRedCouchSit" type="Marker3D" parent="." unique_id=327921795]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.75, 3.01, 1.27)
 
 [node name="Player" parent="." unique_id=1317640905 instance=ExtResource("1_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 0.1, 4.4)

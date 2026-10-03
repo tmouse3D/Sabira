@@ -64,3 +64,18 @@ func _apply_door_props() -> void:
 	if _door == null:
 		return
 	_door.configure_from_parent(open_angle_deg, starts_open, locked, required_key)
+
+func set_passage_open(want_open: bool) -> void:
+	if _door == null:
+		return
+	_door.set_passage_open(want_open)
+
+
+func is_passage_open() -> bool:
+	return _door != null and _door.is_passage_open()
+
+
+func set_player_locked(want_locked: bool) -> void:
+	if _door == null:
+		return
+	_door.set_player_locked(want_locked)
