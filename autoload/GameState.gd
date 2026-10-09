@@ -19,6 +19,7 @@ var is_on_stairs: bool = false
 var has_photos: bool = false
 var has_pills: bool = false
 var has_knife: bool = false
+var knife_bloody: bool = false
 var has_front_key: bool = false
 var has_tash_room_key: bool = false
 var has_back_key: bool = false
@@ -323,6 +324,7 @@ func reset_for_new_game() -> void:
 	has_photo = false
 	has_pills = false
 	has_knife = false
+	knife_bloody = false
 	has_front_key = false
 	has_tash_room_key = false
 	has_back_key = false

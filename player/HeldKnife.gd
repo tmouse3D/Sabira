@@ -19,6 +19,7 @@ var _shadow_store: Dictionary = {}
 
 
 func _ready() -> void:
+	add_to_group("held_knife")
 	if knife_scene == null:
 		knife_scene = load("res://props/clutter/knife.glb") as PackedScene
 	if GameState != null and not GameState.inventory_changed.is_connected(_on_inventory_changed):
@@ -79,6 +80,8 @@ func _spawn_mesh() -> void:
 	# No floating mid-air shadow while knife is on camera.
 	_shadow_store.clear()
 	_CarryShadows.set_tree(_mesh, false, _shadow_store)
+	if GameState != null and GameState.knife_bloody:
+		stain_blood()
 
 
 func _clear_mesh() -> void:
@@ -90,3 +93,58 @@ func _clear_mesh() -> void:
 	for c in get_children():
 		if c is Node3D:
 			c.queue_free()
+
+func stain_blood() -> void:
+	if GameState != null:
+		GameState.knife_bloody = true
+	if _mesh == null or not is_instance_valid(_mesh):
+		return
+	_redden_knife(_mesh)
+	if _mesh.get_node_or_null("KnifeBlood") != null:
+		return
+	var stain := MeshInstance3D.new()
+	stain.name = "KnifeBlood"
+	var box := BoxMesh.new()
+	box.size = Vector3(0.018, 0.008, 0.06)
+	stain.mesh = box
+	# Blade runs along local Z. Child only. Hold offset is untouched.
+	stain.position = Vector3(0.0, 0.006, 0.04)
+	stain.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.48, 0.02, 0.03)
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	stain.material_override = mat
+	_mesh.add_child(stain)
+
+func _redden_knife(node: Node) -> void:
+	if node is MeshInstance3D and String(node.name) != "KnifeBlood":
+		var mi := node as MeshInstance3D
+		var mat := StandardMaterial3D.new()
+		var active := mi.get_active_material(0)
+		if active != null:
+			var copied := active.duplicate() as Material
+			if copied is StandardMaterial3D:
+				mat = copied as StandardMaterial3D
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.albedo_color = Color(0.36, 0.025, 0.03)
+		mi.material_override = mat
+	for child in node.get_children():
+		_redden_knife(child)
+
+func wash_blood() -> void:
+	if GameState != null:
+		GameState.knife_bloody = false
+	if _mesh == null or not is_instance_valid(_mesh):
+		return
+	var blob := _mesh.get_node_or_null("KnifeBlood")
+	if blob != null:
+		blob.queue_free()
+	_clear_blood_override(_mesh)
+
+
+func _clear_blood_override(node: Node) -> void:
+	if node is MeshInstance3D and String(node.name) != "KnifeBlood":
+		(node as MeshInstance3D).material_override = null
+	for child in node.get_children():
+		_clear_blood_override(child)

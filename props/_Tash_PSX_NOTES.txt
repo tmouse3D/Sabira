@@ -807,3 +807,51 @@ Proofs: props/_Tash_idle_*.png _Tash_idle_foot_*.png _Tash_idle_looking_down_*.p
 Report: scripts/_idles_report.json
 GLB: 2161776 bytes mtime=2026-10-03 12:23:14 actions=['idle', 'idle_foot', 'idle_head_nod', 'idle_looking_down', 'look_around', 'open_close_door', 'sitting_idle', 'stand_to_sit', 'walk', 'walk_down_stairs', 'walk_up_stairs']
 No BoneMap. Godot: reimport only. Loop the clips marked loop=True. Yaw/scale/path stay Godot's.
+
+
+CHAR02 SIT DRINK 20261003_143455
+========================================
+LOOK: Character_02 UNCHANGED (mesh/tex/proportions/scale frozen).
+ADDED: sitting_drinking, sitting_drunk.
+PROTECTED: walk, idle, idle_foot, idle_looking_down, idle_head_nod, stand_to_sit, sitting_idle, walk_up_stairs, walk_down_stairs, look_around, open_close_door NOT edited.
+METHOD: same absolute bone-aim + twist as stand_to_sit / sitting_idle.
+  mixamorig posed Y (bone aim) + X (twist) copied from FBX into Character_02 face space (-Y forward).
+  Hips: horizontal root XY stripped. Hip location locked to existing sitting_idle hip height (0.5704 m), not the walk hip (0.9932 m). No extra root drop.
+  sitting_drinking frames [1,263] @30fps loop=False one_shot=True flip=False hip_z 0.5704..0.5704 (sitting_idle=0.5704) src_fbx_frames=[194, 456]
+  sitting_drunk frames [1,178] @30fps loop=True one_shot=False flip=False hip_z 0.5704..0.5704 (sitting_idle=0.5704) src_fbx_frames=[1, 179]
+  walk blend sha256=3e8904a3ddf7 frames=44 range=[1, 44] UNCHANGED (expect 3e8904a3)
+Sources READ-ONLY:
+  Assets for games\Animations\Sitting Drinking.fbx -> sitting_drinking (seated sip only; the FBX also contains a stand-to-sit at the start, which was not baked)
+  copy: art/anim/mixamo/Sitting_Drinking.fbx
+  Assets for games\Animations\Sitting drunk.fbx -> sitting_drunk (full cycle, duplicate end frame dropped)
+  copy: art/anim/mixamo/Sitting_drunk.fbx
+Backup: props/backups/Tash.glb.bak_pre_drink_20261003_143058
+Proofs: props/_Tash_sitting_drinking_*.png props/_Tash_sitting_drunk_*.png
+GLB: 2790980 bytes mtime=2026-10-03 14:35:08 actions=['idle', 'idle_foot', 'idle_head_nod', 'idle_looking_down', 'look_around', 'open_close_door', 'sitting_drinking', 'sitting_drunk', 'sitting_idle', 'stand_to_sit', 'walk', 'walk_down_stairs', 'walk_up_stairs']
+No BoneMap. Godot: reimport only. Loop sitting_drunk. sitting_drinking is the seated sip (one-shot unless noted loop).
+
+
+CHAR02 DYING 20261004_055840
+========================================
+LOOK: Character_02 UNCHANGED (mesh/tex/proportions/scale frozen). Live albedo NOT replaced.
+ADDED: dying.
+PROTECTED: walk, idle, idle_foot, idle_looking_down, idle_head_nod, stand_to_sit, sitting_idle, sitting_drinking, sitting_drunk, walk_up_stairs, walk_down_stairs, look_around, open_close_door NOT edited.
+METHOD: same absolute bone-aim + twist. mixamorig posed Y (bone aim) + X (twist) copied into Character_02 face space (-Y forward).
+  Hip XY root travel stripped (in place on the couch).
+  Hip Z starts at sitting_idle (0.5704 m), NOT walk height (rest hip 0.9932). Source vertical bob kept (not locked flat).
+  Source is a lying/collapsed cycle, not a stand-then-fall. Duplicate end frame dropped. Looping replays the ground writhe; it does NOT stand him back up. Last frame is the same collapsed pose Godot can freeze.
+  frames [1,207] @30fps loop=True flip=False hip_z 0.5607..0.6008 (start 0.5704 end 0.5708)
+  walk blend sha256=3e8904a3ddf7 range=[1, 44] UNCHANGED (expect 3e8904a3)
+Source READ-ONLY: Assets for games\Animations\Dying.fbx
+  copy: art/anim/mixamo/Dying.fbx
+Backup: props/backups/Tash.glb.bak_pre_dying_20261004_055129
+Proofs: props/_Tash_dying_start_side.png _Tash_dying_mid_side.png _Tash_dying_end_side.png
+Blood: {"written": false, "reason": "neck UVs too scattered to trust an island", "span": [0.6566612012684345, 0.6728390567004681], "albedo": "Tash_albedo_256.png", "size": [512, 512]}
+GLB: 3087768 bytes mtime=2026-10-04 05:58:50 actions=['dying', 'idle', 'idle_foot', 'idle_head_nod', 'idle_looking_down', 'look_around', 'open_close_door', 'sitting_drinking', 'sitting_drunk', 'sitting_idle', 'stand_to_sit', 'walk', 'walk_down_stairs', 'walk_up_stairs']
+Godot import sidecar NOT cleared (uid restore is Godot's). No BoneMap. No scene edits.
+
+
+CHAR02 BLOOD ALBEDO (not applied)
+========================================
+props/Tash_albedo_blood.png is a copy of the 512x512 albedo with a small dark-red blotch on the neck skin strip and the upper hoodie chest only.
+Live mesh material still uses Tash_albedo_256.png. Pixels of that image were not modified (hash unchanged). Do not assign the blood map until the knife hit.

@@ -1,34 +1,24 @@
-# Godot 4.x ?- Sabira / HOUSE
+# Godot 4.x - Sabira / HOUSE
 class_name UseKnifeOnTash
 extends Interactable
-## Stub: use knife on Tash only when sedated and catch_count == 0 (else no prompt).
-
-@export var use_line: String = "Not yet."
-@export var use_line_duration: float = 1.5
+## Bedroom marker. Not the living-couch stab.
+## Couch [E] Stab lives on TashDrunkLook while drunk-locked. catch_count does not gate that.
+## This body stays inactive so it is not a second ray hit.
 
 func _ready() -> void:
-	collision_layer = 5
+	collision_layer = 0
 	collision_mask = 0
-	prompt_text = "[E] Use knife"
+	interact_enabled = false
+	prompt_text = ""
 
-func _eligible() -> bool:
-	if GameState == null:
-		return false
-	if not GameState.has_knife:
-		return false
-	if not GameState.tash_sedated:
-		return false
-	if GameState.catch_count != 0:
-		return false
-	return interact_enabled
 
 func can_interact(_player: Node) -> bool:
-	return _eligible()
+	return false
+
 
 func get_prompt() -> String:
-	return prompt_text if _eligible() else ""
+	return ""
+
 
 func _on_interact(_player: Node) -> void:
-	if not _eligible():
-		return
-	get_tree().call_group("subtitle", "show_line", "SABIRA", use_line, use_line_duration)
+	return

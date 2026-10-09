@@ -21,12 +21,14 @@ enum _Act { WALK, LOOK, SIT_DOWN, SIT_HOLD, STAND_UP, DOOR, PAUSE, IDLE }
 ## Uniform mesh scale. Collision capsule is unchanged so doors stay passable.
 @export_range(1.0, 1.2, 0.01) var model_scale: float = 1.05
 
-@export_group("Диван")
+@export_group("Ð”Ð¸Ð²Ð°Ð½")
 @export var couch_sit_enabled: bool = true
 ## Index into TashWalkPath. 35 is the living-room stop in front of the couch.
 @export var couch_point_index: int = 35
 @export var couch_arrive_distance: float = 0.45
 @export var sit_hold_seconds: float = 24.0
+## F1 living-room couch TV sit only. Office / toilet / red couch keep sit_hold_seconds.
+@export var couch_sit_hold_seconds: float = 72.0
 ## World yaw while seated on the F1 couch. 0 faces world -Z.
 ## Living_TVScreen is world -Z from TashCouchSit (same X). Model yaw 180
 ## maps body -Z onto the mesh face, so 0 looks at the TV.
@@ -57,6 +59,10 @@ enum _Act { WALK, LOOK, SIT_DOWN, SIT_HOLD, STAND_UP, DOOR, PAUSE, IDLE }
 @export var office_model_z_offset: float = -0.04
 @export var stand_to_sit_clip_names: PackedStringArray = PackedStringArray(["stand_to_sit", "Stand_To_Sit", "Stand To Sit"])
 @export var sitting_idle_clip_names: PackedStringArray = PackedStringArray(["sitting_idle", "Sitting_Idle", "Sitting Idle"])
+@export var sitting_drinking_clip_names: PackedStringArray = PackedStringArray(["sitting_drinking", "Sitting_Drinking", "Sitting Drinking"])
+@export var sitting_drunk_clip_names: PackedStringArray = PackedStringArray(["sitting_drunk", "Sitting_Drunk", "Sitting Drunk", "Sitting drunk"])
+@export var couch_bottle_path: NodePath = NodePath("../../../Structure/Living/Living_Bottle")
+@export var couch_glass_path: NodePath = NodePath("../../../Structure/Living/Living_CouchGlass")
 
 @export_group("Route")
 ## Segment start index, inclusive. A segment is the span that leaves that point.
@@ -78,8 +84,8 @@ enum _Act { WALK, LOOK, SIT_DOWN, SIT_HOLD, STAND_UP, DOOR, PAUSE, IDLE }
 ## so the visible face is body yaw + 180. Yaw 90 looks world -X. Yaw -90 looks world +X.
 ## F1 books face +X and the case is west of f1stand, so yaw 90 looks at them.
 @export var f1_idle_body_yaw_deg: float = 90.0
-## F2 case is east of f2stand and its front points world +X, so yaw -90 looks at the books.
-@export var f2_idle_body_yaw_deg: float = -90.0
+## F2 case sits on Wall_Sabira_W_N; its front points world +X. Stand east of it and yaw 90 looks -X at the books.
+@export var f2_idle_body_yaw_deg: float = 90.0
 ## Office case is east of p18. Its front points world -X, so yaw -90 looks +X at the books.
 @export var office_idle_body_yaw_deg: float = -90.0
 
@@ -110,11 +116,10 @@ enum _Act { WALK, LOOK, SIT_DOWN, SIT_HOLD, STAND_UP, DOOR, PAUSE, IDLE }
 @export var toilet_sit_marker_path: NodePath = NodePath("../../../TashToiletSit")
 @export var red_couch_sit_enabled: bool = true
 ## Body yaw while snapped on the upstairs red couch. Same rule as the shelf idles:
-## visible face is body yaw + 180, so yaw 90 looks world -X.
-## Couch_DarkRed backrest is the mesh -Z side. This node maps local +Z onto world -X,
-## so someone sitting looks world -X, out from the back and into the room.
-## The old -90 looked world +X, into the backrest. It is a sit yaw, not a stand yaw.
-@export var red_couch_sit_body_yaw_deg: float = 90.0
+## visible face is body yaw + 180, so yaw -90 looks world +X.
+## Landing_Couch (Couch_DarkRed) maps mesh +Z onto world +X. Backrest is mesh -Z,
+## so yaw -90 faces into the room (away from the wall). Yaw 90 faced the wall.
+@export var red_couch_sit_body_yaw_deg: float = -90.0
 @export var red_couch_sit_marker_path: NodePath = NodePath("../../../TashRedCouchSit")
 @export var footstep_paths: PackedStringArray = PackedStringArray(["res://audio/psx_footsteps/stone/Footstep Stone 1.ogg", "res://audio/psx_footsteps/stone/Footstep Stone 2.ogg", "res://audio/psx_footsteps/stone/Footstep Stone 3.ogg", "res://audio/psx_footsteps/stone/Footstep Stone 4.ogg"])
 @export var tv_screen_path: NodePath = NodePath("../../../Structure/Living/Living_TVScreen")
@@ -196,13 +201,68 @@ var _turn_count: int = 0
 var _idle_when_flat: bool = false
 var _turn_ids: Dictionary = {}
 var _cf_n: int = 0
-## Last two chosen stops. The third pick is the toilet when neither was the toilet.
+## Recent destination picks. Force toilet only when none of the last N was toilet.
+const _TOILET_QUOTA_WINDOW := 8
 var _recent_picks: Array = []
 var _toilet_owed: bool = false
+## F1 living-couch TV sits this run. Counted when the sit starts. 2, 4, 6 drink.
+var _couch_tv_sits: int = 0
+var _couch_drink_this: bool = false
+const _DRINK_OFF := 0
+const _DRINK_CLIP := 1
+const _DRUNK_LOCK := 2
+var _couch_drink_phase: int = _DRINK_OFF
+var _drink_clip: String = ""
+var _drunk_clip: String = ""
+var _drink_missing_warned: bool = false
+var _drunk_missing_warned: bool = false
+var _hand_missing_warned: bool = false
+var _bottle_node: Node3D = null
+var _glass_node: Node3D = null
+var _bottle_home: Node = null
+var _glass_home: Node = null
+var _bottle_home_xf: Transform3D = Transform3D.IDENTITY
+var _glass_home_xf: Transform3D = Transform3D.IDENTITY
+var _props_held: bool = false
+var _hand_attach: Array = []
+var _door_was_open: Dictionary = {}
+const _DRUNK_FREEZE_SEC := 2.3
+var _drunk_frozen: bool = false
+var _drunk_look: Node = null
+var _tash_dead: bool = false
+var _dying_clip: String = ""
+var _dying_left: int = 0
+var _dying_frozen: bool = false
+var _dying_hooked: bool = false
+var _stab_layer: CanvasLayer = null
+var _stab_rect: ColorRect = null
+const _STAB_HOLD_SEC := 3.0
+const _STAB_FADE_SEC := 0.7
+const _STAB_CARD := "Some monsters cannot be tamed. Some injuries cannot be healed. All we have left is just a moment."
+const _STAB_TEXT_IN_SEC := 0.8
+const _DYING_LOOPS := 2
+const _DYING_MODEL_DROP := -0.44
+const _DYING_FORWARD_Z := -1.2
+var _dying_loop_index: int = 0
+var _blood_puddle: MeshInstance3D = null
+var _puddle_age: float = 0.0
+var _puddle_locked: bool = false
+const _PUDDLE_GROW_SEC := 10.0
+const _PUDDLE_MIN_R := 0.05
+const _PUDDLE_MAX_R := 0.46
+const _STAB_LINES: PackedStringArray = [
+	"Some monsters cannot be tamed.",
+	"Some injuries cannot be healed.",
+	"All we have left is just a moment.",
+]
+const _STAB_LINE_IN := 0.6
+const _STAB_LINE_HOLD := 3.0
+const _STAB_LINE_OUT := 0.55
 
 
 func _ready() -> void:
 	add_to_group("tash")
+	_ensure_drunk_look()
 	collision_layer = 1
 	collision_mask = 1
 	randomize()
@@ -311,6 +371,7 @@ func _bind_sit_clips() -> void:
 		_idle_clip = _resolve_clip_path(String(clip_name))
 		if _idle_clip != "":
 			break
+	_bind_drink_clips()
 	if _sit_clip == "" or _idle_clip == "":
 		if not _sit_warned:
 			_sit_warned = true
@@ -600,11 +661,285 @@ func _set_bath_lock(want_locked: bool) -> void:
 		door.set_player_locked(want_locked)
 
 
+func _bind_drink_clips() -> void:
+	_drink_clip = _first_clip(sitting_drinking_clip_names)
+	_drunk_clip = _first_clip(sitting_drunk_clip_names)
+	if _drink_clip != "":
+		_force_loop(_drink_clip, Animation.LOOP_NONE)
+	if _drunk_clip != "":
+		_force_loop(_drunk_clip, Animation.LOOP_NONE)
+
+
+func _house_root() -> Node:
+	var house := get_parent()
+	if house != null:
+		house = house.get_parent()
+	if house != null:
+		house = house.get_parent()
+	return house
+
+
+func _living_prop(path: NodePath, fallback_name: String) -> Node3D:
+	var node := get_node_or_null(path) as Node3D
+	if node != null:
+		return node
+	var house := _house_root()
+	if house == null:
+		return null
+	return house.get_node_or_null("Structure/Living/" + fallback_name) as Node3D
+
+
+func _tash_skeleton() -> Skeleton3D:
+	var skel := find_child("GeneralSkeleton", true, false) as Skeleton3D
+	if skel == null:
+		skel = find_child("Skeleton3D", true, false) as Skeleton3D
+	return skel
+
+
+func _find_bone(skel: Skeleton3D, names: PackedStringArray) -> int:
+	if skel == null:
+		return -1
+	for bone_name in names:
+		var idx := skel.find_bone(String(bone_name))
+		if idx >= 0:
+			return idx
+	for i in skel.get_bone_count():
+		var have := String(skel.get_bone_name(i))
+		for bone_name in names:
+			var want := String(bone_name).replace(":", "_")
+			if have == want or have.ends_with(want):
+				return i
+	return -1
+
+
+func _start_couch_drink() -> void:
+	# Even living-couch TV sit, after he is seated. Not stand_to_sit.
+	_couch_drink_phase = _DRINK_CLIP
+	_force_loop(_drink_clip, Animation.LOOP_NONE)
+	_grab_couch_props()
+	if _anim != null:
+		_anim.play(_drink_clip)
+	print("TashWalker: couch drink sit ", _couch_tv_sits)
+
+
+func _finish_couch_drink() -> void:
+	# Dose is read when the drink clip ends, not when the sit starts.
+	var dosed := GameState != null and GameState.bottle_dosed
+	if dosed:
+		if _drunk_clip == "":
+			_bind_drink_clips()
+		if _drunk_clip != "":
+			# Sitting Drunk is a slumped sit, not a two-hand hold. Props go back to the couch.
+			_restore_couch_props()
+			_enter_drunk_lock()
+			return
+		if not _drunk_missing_warned:
+			_drunk_missing_warned = true
+			push_warning("TashWalker: sitting_drunk missing. Dosed drink does not lock.")
+	_restore_couch_props()
+	_couch_drink_phase = _DRINK_OFF
+	if _hold_left <= 0.0:
+		_begin_stand()
+		return
+	if _anim != null and _idle_clip != "":
+		_force_loop(_idle_clip, Animation.LOOP_LINEAR)
+		_anim.play(_idle_clip)
+
+
+func _enter_drunk_lock() -> void:
+	_couch_drink_phase = _DRUNK_LOCK
+	if GameState != null:
+		GameState.tash_sedated = true
+	_drunk_frozen = false
+	_snapshot_doors()
+	# Play sitting_drunk once from the start, then freeze at the bowed pose.
+	_force_loop(_drunk_clip, Animation.LOOP_NONE)
+	if _anim != null:
+		_anim.play(_drunk_clip)
+	# One-shot Sabira caption when he falls asleep. Not again on wake.
+	get_tree().call_group("subtitle", "show_line", "SABIRA", "I think it worked - dad's asleep. I better hurry.", 4.0)
+	_set_drunk_look_active(true)
+	print("TashWalker: couch drunk lock")
+
+func _wake_from_drunk() -> void:
+	if _tash_dead:
+		return
+	if _couch_drink_phase != _DRUNK_LOCK:
+		return
+	_set_drunk_look_active(false)
+	_restore_couch_props()
+	_couch_drink_phase = _DRINK_OFF
+	_couch_drink_this = false
+	if GameState != null:
+		GameState.tash_sedated = false
+	print("TashWalker: couch drunk wake")
+	_begin_stand()
+
+func is_drunk_locked() -> bool:
+	# True only during F1 living-couch sitting_drunk lock (not normal sit/drink).
+	return _couch_drink_phase == _DRUNK_LOCK
+
+
+func _ensure_drunk_look() -> void:
+	if _drunk_look != null and is_instance_valid(_drunk_look):
+		return
+	var existing := get_node_or_null("TashDrunkLook")
+	if existing != null:
+		_drunk_look = existing
+		return
+	var scr := load("res://interact/TashDrunkLook.gd") as GDScript
+	if scr == null:
+		push_warning("TashWalker: TashDrunkLook.gd missing")
+		return
+	var look := scr.new() as Node
+	look.name = "TashDrunkLook"
+	add_child(look)
+	_drunk_look = look
+
+
+func _set_drunk_look_active(active: bool) -> void:
+	_ensure_drunk_look()
+	if _drunk_look == null:
+		return
+	if _drunk_look.has_method("set_look_active"):
+		_drunk_look.call("set_look_active", active)
+
+func _grab_couch_props() -> void:
+	if _props_held:
+		return
+	_bottle_node = _living_prop(couch_bottle_path, "Living_Bottle")
+	_glass_node = _living_prop(couch_glass_path, "Living_CouchGlass")
+	var skel := _tash_skeleton()
+	var right := _find_bone(skel, PackedStringArray(["mixamorig:RightHand", "mixamorig_RightHand", "RightHand"]))
+	var left := _find_bone(skel, PackedStringArray(["mixamorig:LeftHand", "mixamorig_LeftHand", "LeftHand"]))
+	_hold_prop(_glass_node, skel, right, Vector3(0.02, 0.08, 0.02), false)
+	_hold_prop(_bottle_node, skel, left, Vector3(-0.02, 0.07, 0.02), true)
+	_props_held = true
+
+
+func _hold_prop(node: Node3D, skel: Skeleton3D, bone: int, offset: Vector3, is_bottle: bool) -> void:
+	if node == null:
+		return
+	if is_bottle:
+		_bottle_home = node.get_parent()
+		_bottle_home_xf = node.transform
+	else:
+		_glass_home = node.get_parent()
+		_glass_home_xf = node.transform
+	var host: Node3D = null
+	if skel != null and bone >= 0:
+		var att := BoneAttachment3D.new()
+		att.name = "DrinkBottleAttach" if is_bottle else "DrinkGlassAttach"
+		skel.add_child(att)
+		att.bone_name = skel.get_bone_name(bone)
+		_hand_attach.append(att)
+		host = att
+	elif skel != null:
+		if not _hand_missing_warned:
+			_hand_missing_warned = true
+			push_warning("TashWalker: hand bone missing. Drink props parented to the skeleton.")
+		host = skel
+	if host == null:
+		node.visible = false
+		return
+	node.reparent(host)
+	node.position = offset
+	if is_bottle:
+		# Bottle mesh +Y is the neck (base at Y 0). LeftHand leaves it neck-down. Local X 150, was 120.
+		node.rotation_degrees = Vector3(140.0, 50.0, -50.0)
+	else:
+		node.rotation = Vector3.ZERO
+	node.visible = true
+
+
+func _restore_couch_props() -> void:
+	if not _props_held:
+		return
+	if _bottle_node != null and is_instance_valid(_bottle_node) and _bottle_home != null and is_instance_valid(_bottle_home):
+		if _bottle_node.get_parent() != _bottle_home:
+			_bottle_node.reparent(_bottle_home)
+		_bottle_node.transform = _bottle_home_xf
+		_bottle_node.visible = true
+	if _glass_node != null and is_instance_valid(_glass_node) and _glass_home != null and is_instance_valid(_glass_home):
+		if _glass_node.get_parent() != _glass_home:
+			_glass_node.reparent(_glass_home)
+		_glass_node.transform = _glass_home_xf
+		_glass_node.visible = true
+	for att_any in _hand_attach:
+		var att := att_any as Node
+		if att != null and is_instance_valid(att):
+			att.queue_free()
+	_hand_attach.clear()
+	_props_held = false
+
+
+func _all_doorways() -> Array:
+	# Every Doorway under Doors (F1 and F2). Wake uses a rising edge of is_passage_open.
+	var out: Array = []
+	var house := _house_root()
+	if house == null:
+		return out
+	var doors := house.get_node_or_null("Doors")
+	if doors == null:
+		return out
+	for child in doors.get_children():
+		var door := child as Doorway
+		if door == null:
+			continue
+		out.append(door)
+	return out
+
+
+func _snapshot_doors() -> void:
+	# Doorway has no open signal. Snapshot is_passage_open so a door already open does not wake him.
+	_door_was_open.clear()
+	for door_any in _all_doorways():
+		var door := door_any as Doorway
+		_door_was_open[door.get_instance_id()] = door.is_passage_open()
+
+
+func _tick_drunk_freeze() -> void:
+	if _dying_clip != "":
+		return
+	# Play from 0 until _DRUNK_FREEZE_SEC (frame 69 / 30 fps), then hold the bowed pose.
+	if _drunk_frozen:
+		return
+	if _anim == null or _drunk_clip == "":
+		return
+	if String(_anim.current_animation) != _drunk_clip:
+		return
+	if _anim.current_animation_position < _DRUNK_FREEZE_SEC:
+		return
+	_anim.seek(_DRUNK_FREEZE_SEC, true)
+	_anim.pause()
+	_drunk_frozen = true
+
+
+func _poll_door_wake() -> void:
+	if _tash_dead:
+		return
+	if _couch_drink_phase != _DRUNK_LOCK:
+		return
+	for door_any in _all_doorways():
+		var door := door_any as Doorway
+		var id := door.get_instance_id()
+		var open := door.is_passage_open()
+		var was := false
+		if _door_was_open.has(id):
+			was = bool(_door_was_open[id])
+		_door_was_open[id] = open
+		if open and not was:
+			_wake_from_drunk()
+			return
+
 func _begin_couch() -> bool:
 	if _sit_clip == "" or _idle_clip == "":
 		_bind_sit_clips()
 	if _sit_clip == "" or _idle_clip == "" or _anim == null:
 		return false
+	_couch_tv_sits += 1
+	_couch_drink_this = (_couch_tv_sits % 2) == 0
+	_couch_drink_phase = _DRINK_OFF
 	var marker := _marker(sit_marker_path, "TashCouchSit")
 	_act = _Act.SIT_DOWN
 	_sit_kind = _SIT_COUCH
@@ -699,6 +1034,8 @@ func _begin_stand() -> void:
 
 
 func _finish_stand() -> void:
+	_restore_couch_props()
+	_couch_drink_phase = _DRINK_OFF
 	_set_tv(false)
 	_set_bath_lock(false)
 	_act = _Act.WALK
@@ -807,9 +1144,21 @@ func _on_animation_finished(anim_name: StringName) -> void:
 		rotation_degrees = Vector3(0.0, _sit_yaw, 0.0)
 		_apply_couch_visual()
 		_act = _Act.SIT_HOLD
-		_hold_left = sit_hold_seconds
+		_hold_left = couch_sit_hold_seconds
+		if _sit_kind == _SIT_COUCH and _couch_drink_this:
+			if _drink_clip == "":
+				_bind_drink_clips()
+			if _drink_clip != "":
+				_start_couch_drink()
+				return
+			if not _drink_missing_warned:
+				_drink_missing_warned = true
+				push_warning("TashWalker: sitting_drinking missing. Drink sit stays on sitting_idle.")
 		if _idle_clip != "":
 			_anim.play(_idle_clip)
+		return
+	if _act == _Act.SIT_HOLD and _couch_drink_phase == _DRINK_CLIP and done == _drink_clip:
+		_finish_couch_drink()
 		return
 	if _act == _Act.STAND_UP and done == _sit_clip:
 		_finish_stand()
@@ -848,6 +1197,15 @@ func _play_locomotion() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _tash_dead:
+		if _act == _Act.SIT_HOLD:
+			global_position = _sit_global
+			_latch_couch_path_yaw()
+			rotation_degrees = Vector3(0.0, _sit_yaw, 0.0)
+			_apply_dying_model()
+			_tick_dying_speed()
+			_tick_blood_puddle(delta)
+		return
 	_tick_steps(delta)
 	if _act == _Act.IDLE:
 		_look_left -= delta
@@ -905,8 +1263,16 @@ func _physics_process(delta: float) -> void:
 			_latch_couch_path_yaw()
 			rotation_degrees = Vector3(0.0, _sit_yaw, 0.0)
 			_apply_couch_visual()
+		# Drunk lock: path stays paused, no stand. TV stays on until wake stands him.
+		if _sit_kind == _SIT_COUCH and _couch_drink_phase == _DRUNK_LOCK:
+			_tick_drunk_freeze()
+			_poll_door_wake()
+			return
 		_hold_left -= delta
 		if _hold_left <= 0.0:
+			# Drink clip keeps playing. Stand only after it ends, if time is already up.
+			if _sit_kind == _SIT_COUCH and _couch_drink_phase == _DRINK_CLIP:
+				return
 			if _snap_sit:
 				_finish_stand()
 			else:
@@ -969,13 +1335,20 @@ func _build_nav() -> void:
 	_add_pt("f1a", -2.15, 0.0, -0.5)
 	_add_pt("f1b", -2.15, 0.0, -2.6)
 	_add_pt("f1stand", -3.68, 0.0, -2.6)
-	# F2 bookcase is east of f2stand, front toward +X. Idle yaw -90 looks at it.
+	# F2 bookcase front at X~-1.80 (Wall_North_W/Bookcase). Wall_Sabira_W_N is at X~-2.38.
+	# Stand east of the books, clear of the wall. Idle yaw 90 looks -X at them.
 	# rcouch is the sit approach, not a stand. The snap uses TashRedCouchSit.
 	_add_pt("f2a", -1.2, 3.01, -1.05)
-	_add_pt("f2b", -2.75, 3.01, -1.05)
-	_add_pt("f2stand", -2.75, 3.01, 0.15)
-	# In front of the red couch right corner. Snap sits onto the marker.
-	_add_pt("rcouch", -2.55, 3.01, 1.27)
+	_add_pt("f2b", -1.4, 3.01, -0.55)
+	_add_pt("f2stand", -1.4, 3.01, 0.15)
+	# East of Wall_Sabira_W_N, in front of the red couch. Snap sits onto the marker.
+	# East of the red couch. Old rcouch (-1.85, 1.27) sat inside the mesh.
+	_add_pt("rcin", -1.0, 3.01, 0.15)
+	_add_pt("rcouch", -1.0, 3.01, 1.27)
+	# Hall p12-p13 used to run at X -1.2 and clip the east face (X -1.393).
+	_add_pt("rcs", -1.2, 3.01, 0.35)
+	_add_pt("rce", -0.9, 3.01, 0.35)
+	_add_pt("rcn", -0.9, 3.01, 3.5)
 	_link("p0", "p1")
 	_link("p1", "p2")
 	_link("p2", "p3")
@@ -988,7 +1361,10 @@ func _build_nav() -> void:
 	_link("p9", "p10")
 	_link("p10", "p11")
 	_link("p11", "p12")
-	_link("p12", "p13")
+	_link("p12", "rcs")
+	_link("rcs", "rce")
+	_link("rce", "rcn")
+	_link("rcn", "p13")
 	_link("p13", "p14")
 	_link("p14", "p15")
 	_link("p15", "p16")
@@ -1015,7 +1391,8 @@ func _build_nav() -> void:
 	_link("p12", "f2a")
 	_link("f2a", "f2b")
 	_link("f2b", "f2stand")
-	_link("f2stand", "rcouch")
+	_link("f2stand", "rcin")
+	_link("rcin", "rcouch")
 	_stop_node = {
 		"idle_f1": "f1stand",
 		"idle_f2": "f2stand",
@@ -1030,14 +1407,15 @@ func _build_nav() -> void:
 	}
 	# Bookshelf idles are the usual stop. Sits are next. Wander is light.
 	# The stop just finished is never picked again.
+	# Couch TV sit is common. Toilet is rare (weight 1 + quota every ~8 picks).
 	_stop_weight = {
 		"idle_f1": 6,
 		"idle_f2": 6,
 		"shelf": 6,
 		"office": 3,
-		"couch": 3,
+		"couch": 6,
 		"redcouch": 3,
-		"toilet": 3,
+		"toilet": 1,
 		"wander_living": 1,
 		"wander_kitchen": 1,
 		"wander_hall": 1,
@@ -1259,7 +1637,8 @@ func _toilet_quota_due() -> bool:
 		return false
 	if _toilet_owed:
 		return true
-	if _recent_picks.size() < 2:
+	# Force only after a long dry spell (about every 8-10 picks), not every third.
+	if _recent_picks.size() < _TOILET_QUOTA_WINDOW:
 		return false
 	for prev_any in _recent_picks:
 		if String(prev_any) == "toilet":
@@ -1269,7 +1648,7 @@ func _toilet_quota_due() -> bool:
 
 func _note_pick(id: String) -> void:
 	_recent_picks.append(id)
-	while _recent_picks.size() > 2:
+	while _recent_picks.size() > _TOILET_QUOTA_WINDOW:
 		_recent_picks.pop_front()
 	if id == "toilet":
 		_toilet_owed = false
@@ -1421,3 +1800,313 @@ func _advance_route(delta: float) -> void:
 			return
 		return
 	_place(a.lerp(b, _seg_dist / seg_len), b - a)
+
+func is_tash_dead() -> bool:
+	return _tash_dead
+
+func begin_couch_stab() -> void:
+	if _tash_dead:
+		return
+	if not is_drunk_locked():
+		return
+	if GameState == null or not GameState.has_knife:
+		return
+	# Death is not a wake. Leave tash_sedated and bottle_dosed. Do not stand or resume the route.
+	_tash_dead = true
+	_set_drunk_look_active(false)
+	_place_dying_on_floor()
+	_set_player_locked(true)
+	_show_stab_card()
+	await _play_stab_lines()
+	_apply_stab_blood()
+	_start_dying()
+	await _fade_stab_card()
+	_set_player_locked(false)
+	if _dying_clip == "":
+		_enable_corpse_look()
+
+func _set_player_locked(locked: bool) -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	tree.call_group("player", "set_input_locked", locked)
+
+func _show_stab_card() -> void:
+	# SFX stub: a stab sting would play here. No audio file yet.
+	if _stab_layer != null and is_instance_valid(_stab_layer):
+		return
+	var tree := get_tree()
+	if tree == null:
+		return
+	_stab_layer = CanvasLayer.new()
+	_stab_layer.name = "TashStabCard"
+	_stab_layer.layer = 90
+	_stab_rect = ColorRect.new()
+	_stab_rect.name = "Black"
+	_stab_rect.color = Color(0, 0, 0, 1)
+	_stab_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_stab_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var label := Label.new()
+	label.name = "Card"
+	label.text = _STAB_CARD
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	label.offset_left = 72
+	label.offset_right = -72
+	label.offset_top = 40
+	label.offset_bottom = -40
+	label.add_theme_font_size_override("font_size", 26)
+	label.add_theme_color_override("font_color", Color(0.93, 0.91, 0.86))
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.modulate.a = 0.0
+	_stab_rect.add_child(label)
+	_stab_layer.add_child(_stab_rect)
+	tree.root.add_child(_stab_layer)
+
+func _fade_stab_text_in() -> void:
+	if _stab_rect == null or not is_instance_valid(_stab_rect):
+		return
+	var label := _stab_rect.get_node_or_null("Card") as CanvasItem
+	if label == null:
+		return
+	label.modulate.a = 0.0
+	var tween := create_tween()
+	tween.tween_property(label, "modulate:a", 1.0, _STAB_TEXT_IN_SEC)
+	await tween.finished
+
+func _fade_stab_card() -> void:
+	if _stab_rect == null or not is_instance_valid(_stab_rect):
+		return
+	var tween := create_tween()
+	tween.tween_property(_stab_rect, "modulate:a", 0.0, _STAB_FADE_SEC)
+	await tween.finished
+	if _stab_layer != null and is_instance_valid(_stab_layer):
+		_stab_layer.queue_free()
+	_stab_layer = null
+	_stab_rect = null
+
+func _place_dying_on_floor() -> void:
+	# Dying hips stay near couch height. Drop the mesh onto the floor and slide
+	# world -Z so the body is in front of the living couch, not across the cushions.
+	var spot := _sit_global + Vector3(0.0, 0.0, _DYING_FORWARD_Z)
+	spot.y = 0.0
+	_sit_global = spot
+	if _path_follow != null:
+		_path_follow.rotation = Vector3.ZERO
+		_path_follow.position = spot
+	position = Vector3.ZERO
+	global_position = spot
+	rotation_degrees = Vector3(0.0, _sit_yaw, 0.0)
+	_apply_dying_model()
+	var body_shape := get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if body_shape != null:
+		body_shape.disabled = true
+
+func _apply_dying_model() -> void:
+	if _model == null:
+		_apply_model_yaw_offset()
+	if _model == null:
+		return
+	_model.rotation_degrees = Vector3(0.0, model_yaw_offset_deg, 0.0)
+	_model.scale = Vector3.ONE * model_scale
+	_model.position = Vector3(0.0, _DYING_MODEL_DROP, 0.0)
+
+func _start_dying() -> void:
+	if _anim == null:
+		push_warning("TashWalker: dying clip missing. Stab leaves the drunk pose.")
+		return
+	var clip := _resolve_clip_path("dying")
+	if clip == "":
+		push_warning("TashWalker: dying clip missing. Stab leaves the drunk pose.")
+		return
+	_dying_clip = clip
+	_dying_left = _DYING_LOOPS
+	_dying_loop_index = 0
+	_dying_frozen = false
+	_force_loop(clip, Animation.LOOP_NONE)
+	if not _dying_hooked:
+		_anim.animation_finished.connect(_on_dying_finished)
+		_dying_hooked = true
+	_anim.speed_scale = 1.0
+	_anim.play(clip, 0.4)
+
+func _on_dying_finished(anim_name: StringName) -> void:
+	if _dying_frozen:
+		return
+	if _dying_clip == "" or String(anim_name) != _dying_clip:
+		return
+	_dying_left -= 1
+	if _dying_left > 0:
+		_dying_loop_index += 1
+		if _anim != null:
+			_anim.play(_dying_clip, 0.0)
+		return
+	_freeze_dying()
+
+func _tick_dying_speed() -> void:
+	if _dying_frozen or _anim == null or _dying_clip == "":
+		return
+	if String(_anim.current_animation) != _dying_clip:
+		return
+	var anim := _anim.get_animation(_dying_clip)
+	if anim == null or anim.length <= 0.001:
+		return
+	var along := clampf(_anim.current_animation_position / anim.length, 0.0, 1.0)
+	var base := 1.0
+	if _dying_loop_index > 0:
+		base = 0.5
+	_anim.speed_scale = lerpf(base, base * 0.25, along * along)
+
+func _freeze_dying() -> void:
+	_dying_frozen = true
+	if _anim != null:
+		_anim.speed_scale = 1.0
+	if _anim == null or _dying_clip == "":
+		_enable_corpse_look()
+		return
+	var anim := _anim.get_animation(_dying_clip)
+	var end_sec := 0.0
+	if anim != null:
+		end_sec = maxf(anim.length - 0.001, 0.0)
+	if String(_anim.current_animation) != _dying_clip:
+		_anim.play(_dying_clip)
+	_anim.seek(end_sec, true)
+	_anim.pause()
+	_enable_corpse_look()
+
+func _enable_corpse_look() -> void:
+	_ensure_drunk_look()
+	if _drunk_look != null and _drunk_look.has_method("set_corpse_look"):
+		_drunk_look.call("set_corpse_look", true)
+
+
+func _play_stab_lines() -> void:
+	if _stab_rect == null or not is_instance_valid(_stab_rect):
+		return
+	var label := _stab_rect.get_node_or_null("Card") as Label
+	if label == null:
+		return
+	for line in _STAB_LINES:
+		label.text = line
+		label.modulate.a = 0.0
+		var fade_in := create_tween()
+		fade_in.tween_property(label, "modulate:a", 1.0, _STAB_LINE_IN)
+		await fade_in.finished
+		await get_tree().create_timer(_STAB_LINE_HOLD).timeout
+		if not is_instance_valid(label):
+			return
+		var fade_out := create_tween()
+		fade_out.tween_property(label, "modulate:a", 0.0, _STAB_LINE_OUT)
+		await fade_out.finished
+
+
+func _ensure_blood_puddle() -> void:
+	if _blood_puddle != null and is_instance_valid(_blood_puddle):
+		return
+	var house := _house_root()
+	if house == null:
+		return
+	_blood_puddle = MeshInstance3D.new()
+	_blood_puddle.name = "StabBloodPuddle"
+	var disc := CylinderMesh.new()
+	disc.top_radius = 1.0
+	disc.bottom_radius = 1.0
+	disc.height = 0.01
+	disc.radial_segments = 28
+	_blood_puddle.mesh = disc
+	_blood_puddle.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.4, 0.015, 0.02, 0.88)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_blood_puddle.material_override = mat
+	house.add_child(_blood_puddle)
+	_puddle_age = 0.0
+	_puddle_locked = false
+	_blood_puddle.scale = Vector3(_PUDDLE_MIN_R, 1.0, _PUDDLE_MIN_R)
+	_blood_puddle.global_position = _neck_floor_pos()
+
+
+func _neck_floor_pos() -> Vector3:
+	var pos := global_position
+	var skel := _tash_skeleton()
+	var bone := _find_bone(skel, PackedStringArray(["mixamorig:Neck", "mixamorig_Neck", "Neck"]))
+	if skel != null and bone >= 0:
+		var pose := skel.get_bone_global_pose(bone)
+		pos = skel.to_global(pose.origin)
+	pos.y = 0.02
+	return pos
+
+
+func _tick_blood_puddle(delta: float) -> void:
+	if _blood_puddle == null or not is_instance_valid(_blood_puddle):
+		return
+	if not _puddle_locked:
+		_puddle_age = minf(_puddle_age + delta, _PUDDLE_GROW_SEC)
+		var u := clampf(_puddle_age / _PUDDLE_GROW_SEC, 0.0, 1.0)
+		var eased := u * u * (3.0 - 2.0 * u)
+		var radius := lerpf(_PUDDLE_MIN_R, _PUDDLE_MAX_R, eased)
+		_blood_puddle.scale = Vector3(radius, 1.0, radius)
+		if not _dying_frozen:
+			_blood_puddle.global_position = _neck_floor_pos()
+		if u >= 1.0:
+			_puddle_locked = true
+func _swap_blood_albedo() -> void:
+	var tex := load("res://props/Tash_albedo_blood.png") as Texture2D
+	if tex == null:
+		push_warning("TashWalker: blood albedo missing")
+		return
+	for node in find_children("*", "MeshInstance3D", true, false):
+		var mesh_inst := node as MeshInstance3D
+		if mesh_inst == null or mesh_inst.name == "Stain":
+			continue
+		var mesh := mesh_inst.mesh
+		if mesh == null:
+			continue
+		for s in mesh.get_surface_count():
+			var mat := mesh_inst.get_active_material(s) as StandardMaterial3D
+			if mat == null:
+				continue
+			var copy := mat.duplicate() as StandardMaterial3D
+			if copy == null:
+				continue
+			copy.albedo_texture = tex
+			mesh_inst.set_surface_override_material(s, copy)
+
+func _apply_stab_blood() -> void:
+	_swap_blood_albedo()
+	var tree := get_tree()
+	if tree != null:
+		tree.call_group("held_knife", "stain_blood")
+	_ensure_blood_puddle()
+
+func _add_blood_box(skel: Skeleton3D, names: PackedStringArray, att_name: String, offset: Vector3, size: Vector3) -> void:
+	if skel == null:
+		push_warning("TashWalker: no skeleton for " + att_name)
+		return
+	if skel.get_node_or_null(att_name) != null:
+		return
+	var bone := _find_bone(skel, names)
+	if bone < 0:
+		push_warning("TashWalker: bone missing for " + att_name)
+		return
+	var att := BoneAttachment3D.new()
+	att.name = att_name
+	skel.add_child(att)
+	att.bone_name = skel.get_bone_name(bone)
+	var stain := MeshInstance3D.new()
+	stain.name = "Stain"
+	var box := BoxMesh.new()
+	box.size = size
+	stain.mesh = box
+	stain.position = offset
+	stain.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.45, 0.02, 0.03)
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	stain.material_override = mat
+	att.add_child(stain)

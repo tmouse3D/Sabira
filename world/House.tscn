@@ -100,6 +100,7 @@
 [ext_resource type="Script" uid="uid://j7miwpucyiav" path="res://world/HiddenLightFlicker.gd" id="102_flicker"]
 [ext_resource type="PackedScene" uid="uid://c1ia6t4uoxeu4" path="res://props/Tash.glb" id="103_tash"]
 [ext_resource type="Script" uid="uid://b4e40fe3r5rb1" path="res://characters/TashWalker.gd" id="104_tashwalk"]
+[ext_resource type="Script" uid="uid://chiev7hlgcsyd" path="res://interact/SinkWash.gd" id="105_sinkwash"]
 [ext_resource type="Script" uid="uid://cupbxb2yac8dg" path="res://characters/TvSlideshow.gd" id="105_tvslide"]
 [ext_resource type="PackedScene" uid="uid://bvqh0mojy73rs" path="res://props/IBM_5155.glb" id="106_ibm"]
 
@@ -333,7 +334,7 @@ size = Vector3(0.12, 0.18, 0.08)
 [sub_resource type="Curve3D" id="Curve3D_tash_walk"]
 closed = true
 _data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 2.2, 0, 4.6, 0, 0, 0, 0, 0, 0, -0.5, 0, 4.5, 0, 0, 0, 0, 0, 0, -3.6, 0, 4.2, 0, 0, 0, 0, 0, 0, -3.6, 0, 3.2, 0, 0, 0, 0, 0, 0, -3.6, 0.161, 2.55, 0, 0, 0, 0, 0, 0, -3.6, 0.966, 1.45, 0, 0, 0, 0, 0, 0, -3.6, 1.771, 0.35, 0, 0, 0, 0, 0, 0, -3.6, 2.576, -0.75, 0, 0, 0, 0, 0, 0, -3.6, 2.898, -1.19, 0, 0, 0, 0, 0, 0, -3.6, 3.01, -1.7, 0, 0, 0, 0, 0, 0, -2.4, 3.01, -2.12, 0, 0, 0, 0, 0, 0, -1.2, 3.01, -2.12, 0, 0, 0, 0, 0, 0, -1.2, 3.01, 0.2, 0, 0, 0, 0, 0, 0, -1.2, 3.01, 3.88, 0, 0, 0, 0, 0, 0, 1.85, 3.01, 3.88, 0, 0, 0, 0, 0, 0, 3.2, 3.01, 3.88, 0, 0, 0, 0, 0, 0, 3.2, 3.01, 4.38, 0, 0, 0, 0, 0, 0, 6.05, 3.01, 4.38, 0, 0, 0, 0, 0, 0, 6.05, 3.01, 3.55, 0, 0, 0, 0, 0, 0, 6.05, 3.01, 4.38, 0, 0, 0, 0, 0, 0, 5.15, 3.01, 4.38, 0, 0, 0, 0, 0, 0, 5.15, 3.01, 4.05, 0, 0, 0, 0, 0, 0, 3.2, 3.01, 3.88, 0, 0, 0, 0, 0, 0, 1.85, 3.01, 3.88, 0, 0, 0, 0, 0, 0, -1.2, 3.01, 3.88, 0, 0, 0, 0, 0, 0, -1.2, 3.01, -2.12, 0, 0, 0, 0, 0, 0, -2.4, 3.01, -2.12, 0, 0, 0, 0, 0, 0, -3.6, 3.01, -1.7, 0, 0, 0, 0, 0, 0, -3.6, 2.898, -1.19, 0, 0, 0, 0, 0, 0, -3.6, 2.576, -0.75, 0, 0, 0, 0, 0, 0, -3.6, 1.771, 0.35, 0, 0, 0, 0, 0, 0, -3.6, 0.966, 1.45, 0, 0, 0, 0, 0, 0, -3.6, 0.161, 2.55, 0, 0, 0, 0, 0, 0, -3.6, 0, 3.2, 0, 0, 0, 0, 0, 0, -2, 0, 2.4, 0, 0, 0, 0, 0, 0, -1.6, 0, 0.8, 0, 0, 0, 0, 0, 0, -0.2, 0, 0.3, 0, 0, 0, 0, 0, 0, 1.876662, 0, 0.9638408, 0, 0, 0, 0, 0, 0, 0.6, 0, 4.6),
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 2.2, 0, 4.6, 0, 0, 0, 0, 0, 0, -0.5, 0, 4.5, 0, 0, 0, 0, 0, 0, -3.6, 0, 4.2, 0, 0, 0, 0, 0, 0, -3.6, 0, 3.2, 0, 0, 0, 0, 0, 0, -3.6, 0.161, 2.55, 0, 0, 0, 0, 0, 0, -3.6, 0.966, 1.45, 0, 0, 0, 0, 0, 0, -3.6, 1.771, 0.35, 0, 0, 0, 0, 0, 0, -3.6, 2.576, -0.75, 0, 0, 0, 0, 0, 0, -3.6, 2.898, -1.19, 0, 0, 0, 0, 0, 0, -3.6, 3.01, -1.7, 0, 0, 0, 0, 0, 0, -2.4, 3.01, -1.9996979, 0, 0, 0, 0, 0, 0, -1.2, 3.01, -1.9758935, 0, 0, 0, 0, 0, 0, -1.2, 3.01, 0.2, 0, 0, 0, 0, 0, 0, -0.9811657, 3.01, 3.88, 0, 0, 0, 0, 0, 0, 1.85, 3.01, 3.88, 0, 0, 0, 0, 0, 0, 3.2, 3.01, 3.88, 0, 0, 0, 0, 0, 0, 3.2, 3.01, 4.38, 0, 0, 0, 0, 0, 0, 6.05, 3.01, 4.38, 0, 0, 0, 0, 0, 0, 6.05, 3.01, 3.55, 0, 0, 0, 0, 0, 0, 6.05, 3.01, 4.38, 0, 0, 0, 0, 0, 0, 5.15, 3.01, 4.38, 0, 0, 0, 0, 0, 0, 5.15, 3.01, 4.05, 0, 0, 0, 0, 0, 0, 3.2, 3.01, 3.88, 0, 0, 0, 0, 0, 0, 1.85, 3.01, 3.88, 0, 0, 0, 0, 0, 0, -1.2, 3.01, 3.88, 0, 0, 0, 0, 0, 0, -1.2, 3.01, -1.9756355, 0, 0, 0, 0, 0, 0, -2.4, 3.01, -2.0028071, 0, 0, 0, 0, 0, 0, -3.6, 3.01, -1.7, 0, 0, 0, 0, 0, 0, -3.6, 2.898, -1.19, 0, 0, 0, 0, 0, 0, -3.6, 2.576, -0.75, 0, 0, 0, 0, 0, 0, -3.6, 1.771, 0.35, 0, 0, 0, 0, 0, 0, -3.6, 0.966, 1.45, 0, 0, 0, 0, 0, 0, -3.6, 0.161, 2.55, 0, 0, 0, 0, 0, 0, -3.6, 0, 3.2, 0, 0, 0, 0, 0, 0, -2, 0, 2.4, 0, 0, 0, 0, 0, 0, -1.6783397, 0, 0.6086919, 0, 0, 0, 0, 0, 0, -0.2, 0, 0.3, 0, 0, 0, 0, 0, 0, 1.876662, 0, 0.9638408, 0, 0, 0, 0, 0, 0, 0.31160533, 0, 3.867156),
 "tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 }
 point_count = 39
@@ -564,7 +565,7 @@ size = Vector3(0.2, 2.7951171, 2)
 material = SubResource("mat_wall_dark")
 
 [node name="Wall_Hall_Living" type="CSGBox3D" parent="Structure" unique_id=1568706586]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.3462477, 1.3971313, 2.9842284)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.3956327, 1.3971313, 2.9842284)
 use_collision = true
 size = Vector3(2, 2.7942626, 0.2)
 material = SubResource("mat_wall_dark")
@@ -617,8 +618,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, -3.55)
 shape = SubResource("BoxShape_tv")
 
 [node name="Living_TVScreen" type="MeshInstance3D" parent="Structure/Living" unique_id=981000030]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, -3.4)
-visible = false
+transform = Transform3D(1.3055801, 0, 0, 0, 1.092408, 0, 0, 0, 1, -0.0020522624, 0.7983353, -3.5326166)
 cast_shadow = 0
 mesh = SubResource("QuadMesh_tvslide")
 script = ExtResource("105_tvslide")
@@ -882,6 +882,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0, -1.2)
 
 [node name="DownstairsBath_SinkBody" type="StaticBody3D" parent="Structure/DownstairsBathroom" unique_id=642270854]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.425, -1.2)
+collision_layer = 5
+collision_mask = 0
+script = ExtResource("105_sinkwash")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/DownstairsBathroom/DownstairsBath_SinkBody" unique_id=848992850]
 shape = SubResource("BoxShape_bathsink")
@@ -1554,6 +1557,9 @@ shape = SubResource("BoxShape_pillsjar")
 
 [node name="UpperBath_SinkBody" type="StaticBody3D" parent="Structure/UpperBathroom" unique_id=1514293086]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.29999995, 0.42499995, -1.4480603)
+collision_layer = 5
+collision_mask = 0
+script = ExtResource("105_sinkwash")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/UpperBathroom/UpperBath_SinkBody" unique_id=999602245]
 shape = SubResource("BoxShape_bathsink")
@@ -2553,7 +2559,6 @@ rotation_mode = 1
 
 [node name="Tash" type="CharacterBody3D" parent="TashWalkPath/PathFollow3D" unique_id=981000003]
 script = ExtResource("104_tashwalk")
-sit_body_yaw_deg = 0.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TashWalkPath/PathFollow3D/Tash" unique_id=981000004]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
