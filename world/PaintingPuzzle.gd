@@ -47,10 +47,10 @@ const COUNT_DEFS := [
 	{"count": 3, "title": "Three Birds", "files": ["count_3.jpg", "count_3_b.jpg", "count_3_c.jpg"], "looks": [[
 		"Three crows, waiting for something to die. Not me. Not tonight.",
 		"Three crows. A family portrait, more or less."], [
-		"Three birds. The big one tears into her, and she still covers the little one.",
-		"Three birds, and only one of them is bleeding. A family portrait, more or less."], [
-		"Three birds. The big one tears into her, and she still covers the little one.",
-		"Three birds, and only one of them is bleeding. A family portrait, more or less."]]},
+		"Three birds. The big one tears into her, and she still shields the little one. That's a mother.",
+		"Three birds. One hunts, one bleeds, one hides under her wing. I know which one I am."], [
+		"Three birds. The big one tears into her, and she still shields the little one. That's a mother.",
+		"Three birds. One hunts, one bleeds, one hides under her wing. I know which one I am."]]},
 	{"count": 4, "title": "Four Worms", "files": ["count_4.jpg"], "looks": [[
 		"Four worms, crawling out of the mud. At least they get to leave.",
 		"Four worms in the rain. Even they have somewhere to go."]]},
