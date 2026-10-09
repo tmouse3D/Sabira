@@ -2,6 +2,8 @@
 extends Node
 ## Stub game state from design bible. Minimal logic for greybox steps 1-2.
 
+const EndingCardScript := preload("res://ui/EndingCard.gd")
+
 signal catch_count_changed(new_count: int)
 signal inventory_changed
 signal hiding_changed(is_hiding: bool)
@@ -34,10 +36,16 @@ var has_photo: bool = false  # alias mirror of has_photos for older callers
 ## Wine bottle near Living couch dosed with sleeping pills.
 var bottle_dosed: bool = false
 
+## 4-digit keypad code for the Tash-bedroom drawer (front_key). Written by
+## world/PaintingPuzzle.gd when it lays out the paintings at scene start.
+## Digits 1-9 (no 0), all different. Not stripped on catch (layout does not change).
+var front_code: String = ""
+
 ## In-hand carry list (pickup order). Max 4 shown in SlotHud. Bible flags still tracked above.
 const CARRY_CAPACITY: int = 4
 ## Canonical carry flag ids (icon = res://ui/icons/<id>.png). glass / legacy key excluded.
-## office_key removed (dead). back_key is stub: from couch Tash sleep/death later.
+## office_key removed (dead). back_key: TashDrunkLook [E] Search on sedated / dead Tash.
+## front_key: Tash-bedroom keypad drawer (code = front_code from the painting layout).
 const CARRYABLE_FLAGS: PackedStringArray = [
 	"photos", "pills", "knife", "front_key", "tash_room_key", "back_key", "cage_key", "blanket",
 ]
@@ -70,6 +78,10 @@ var mom_needs_blanket_said: bool = false
 ## Carrying wrapped Mum - NOT a HUD inventory slot.
 var carrying_amina: bool = false
 var ending_reached: String = ""
+## Ending card key ("<mum>/<photos>/<tash>/<door>", see ui/EndingCard.gd) once an exit is used.
+var ending_id: String = ""
+## Set when Tash dies (couch stab). is_tash_dead() also asks the "tash" group live.
+var tash_dead: bool = false
 
 # Noise / awareness stubs (stair creak can bump this later)
 var last_noise_time: float = -999.0
@@ -280,37 +292,38 @@ func report_noise(amount: float = 0.5) -> void:
 	last_noise_time = Time.get_ticks_msec() / 1000.0
 
 
-func trigger_escape_win() -> void:
+func is_tash_dead() -> bool:
+	if tash_dead:
+		return true
+	var tree := get_tree()
+	if tree == null:
+		return false
+	for n in tree.get_nodes_in_group("tash"):
+		if n.has_method("is_tash_dead") and bool(n.call("is_tash_dead")):
+			tash_dead = true
+			return true
+	return false
+
+
+## Escape ending. exit_door = "front" | "back". Called by interact/Door.gd when the player opens an
+## unlocked exit door. Amina is optional. The card text table lives in ui/EndingCard.gd.
+func trigger_escape_win(exit_door: String = "front") -> void:
 	if ending_reached != "":
 		return
 	ending_reached = "escape"
-	print("[HOUSE] WIN escape - We're out.")
-	var tree := get_tree()
-	if tree:
-		tree.call_group("player", "set_input_locked", true)
-	_ensure_win_label()
-
-
-func _ensure_win_label() -> void:
+	var with_mum := carrying_amina
+	var photos := has_inventory_flag("photos")
+	var dead := is_tash_dead()
+	ending_id = EndingCardScript.make_key(with_mum, photos, dead, exit_door)
+	print("[HOUSE] ENDING escape: %s" % ending_id)
 	var tree := get_tree()
 	if tree == null:
 		return
-	var existing := tree.root.find_child("WinLabelLayer", true, false)
-	if existing:
-		existing.visible = true
-		return
-	var layer := CanvasLayer.new()
-	layer.name = "WinLabelLayer"
-	layer.layer = 80
-	var label := Label.new()
-	label.name = "WinLabel"
-	label.text = "We're out.\nYou escaped with Mum."
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	label.add_theme_font_size_override("font_size", 28)
-	layer.add_child(label)
-	tree.root.add_child(layer)
+	tree.call_group("player", "set_input_locked", true)
+	var card := EndingCardScript.new()
+	tree.root.add_child(card)
+	card.play(ending_id)
+
 
 func reset_for_new_game() -> void:
 	catch_count = 0
@@ -334,6 +347,8 @@ func reset_for_new_game() -> void:
 	has_key = false
 	carried_flags.clear()
 	bottle_dosed = false
+	# Painting layout re-rolls when House.tscn loads again; PaintingPuzzle rewrites this.
+	front_code = ""
 	dinner_started = false
 	bookcase_unlocked = false
 	discovered_photos = false
@@ -348,6 +363,8 @@ func reset_for_new_game() -> void:
 	mom_needs_blanket_said = false
 	carrying_amina = false
 	ending_reached = ""
+	ending_id = ""
+	tash_dead = false
 	last_noise_time = -999.0
 	noise_level = 0.0
 

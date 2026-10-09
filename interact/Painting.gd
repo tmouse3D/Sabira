@@ -8,6 +8,8 @@ extends Interactable
 @export var speaker: String = ""
 @export var show_every_look: bool = true
 @export var canvas_texture: Texture2D
+## Look subtitle time. Paintings only: global Subtitle default (3.5 s) + 1.0 s.
+@export var look_duration: float = 4.5
 
 var _seen: bool = false
 
@@ -38,4 +40,4 @@ func _on_interact(_player: Node) -> void:
 		return
 	_seen = true
 	var who := speaker if speaker != "" else painting_title
-	get_tree().call_group("subtitle", "show_line", who, look_text)
+	get_tree().call_group("subtitle", "show_line", who, look_text, look_duration)

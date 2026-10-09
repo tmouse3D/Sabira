@@ -28,7 +28,7 @@ const LINE_DURATION := 2.0
 ## Keys removed on Unlock (tash_room_key stays - opens two doors).
 const CONSUME_ON_UNLOCK := ["front_key", "cage_key"]
 const ESCAPE_PROMPT := "[E] Get her out."
-const ESCAPE_LINE := "We're out."
+const LEAVE_PROMPT := "[E] Leave."
 const ESCAPE_KEYS := ["front_key", "back_key"]
 
 
@@ -145,9 +145,21 @@ func _carrying_amina() -> bool:
 	return GameState != null and GameState.carrying_amina
 
 
+## Ending only through an exit that is already unlocked (front_key / back_key used first).
+## Amina is optional: alone = "[E] Leave.", carrying her = "[E] Get her out.".
+func _can_escape_here() -> bool:
+	return _is_escape_exit() and not locked
+
+
+func _exit_name() -> String:
+	return "back" if required_key == "back_key" else "front"
+
+
 func get_prompt() -> String:
-	if _carrying_amina() and _is_escape_exit():
-		return ESCAPE_PROMPT
+	if GameState != null and GameState.ending_reached != "":
+		return ""
+	if _can_escape_here():
+		return ESCAPE_PROMPT if _carrying_amina() else LEAVE_PROMPT
 	return prompt_text if interact_enabled else ""
 
 
@@ -176,18 +188,25 @@ func _consume_key_if_needed() -> void:
 		GameState.remove_inventory_flag(required_key)
 
 func _on_interact(_player: Node) -> void:
-	# Escape win while carrying Mum at front/back door.
-	if _carrying_amina() and _is_escape_exit():
-		get_tree().call_group("subtitle", "show_line", "SABIRA", ESCAPE_LINE, LINE_DURATION)
-		if GameState:
-			GameState.trigger_escape_win()
+	# Ending: opening an unlocked front/back exit (with or without Mum) -> GameState ending card.
+	# Locked exit falls through to the lock check below (needs front_key / back_key).
+	if _can_escape_here():
+		if GameState == null or GameState.ending_reached != "":
+			return
+		if not _is_open:
+			_is_open = true
+			_target_yaw = _closed_yaw + deg_to_rad(open_angle_deg)
+			_play_creak()
+		GameState.trigger_escape_win(_exit_name())
 		return
 	if locked:
 		if _has_required_key():
 			locked = false
-			_is_open = true
-			_target_yaw = _closed_yaw + deg_to_rad(open_angle_deg)
-			_play_creak()
+			# Exit doors unlock but stay shut: the next [E] (Leave / Get her out) is the ending.
+			if not _is_escape_exit():
+				_is_open = true
+				_target_yaw = _closed_yaw + deg_to_rad(open_angle_deg)
+				_play_creak()
 			_consume_key_if_needed()
 			get_tree().call_group("subtitle", "show_line", "SABIRA", UNLOCKED_LINE, LINE_DURATION)
 			_update_prompt()
@@ -221,9 +240,7 @@ func _play_creak() -> void:
 
 
 func _update_prompt() -> void:
-	if _carrying_amina() and _is_escape_exit():
-		prompt_text = ESCAPE_PROMPT
-		return
+	# Escape prompt is resolved live in get_prompt(); prompt_text always mirrors lock/open state.
 	if locked:
 		prompt_text = "[E] Unlock"
 	elif _is_open:

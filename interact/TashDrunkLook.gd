@@ -5,9 +5,14 @@ extends Interactable
 ## Pool A: Amina lock still on. Pool B: GameState.mom_unlocked (padlock removed).
 ## Look never wakes him, never clears bottle_dosed, never resumes the route.
 ## With the knife, the same body prompts [E] Stab instead of Look.
+## back_key: after the FIRST Look (sedated OR corpse), the prompt becomes [E] Search until
+## the key is taken; Search gives back_key once, then the prompt returns to [E] Look.
+## Search never wakes him (no walker calls, no noise). Stab keeps priority while alive + knife.
 
 @export var look_prompt: String = "[E] Look"
 @export var stab_prompt: String = "[E] Stab"
+@export var search_prompt: String = "[E] Search"
+@export var back_key_line: String = "This key... I think it's from the back door. Our way out of this place."
 @export var speaker: String = "SABIRA"
 @export var line_duration: float = 3.5
 
@@ -34,6 +39,8 @@ const POOL_CORPSE: PackedStringArray = [
 ]
 
 var _corpse_look: bool = false
+## True once a Look line has played on him (unlocks [E] Search for back_key).
+var _looked: bool = false
 
 var _last_line: String = ""
 var _walker: Node = null
@@ -94,6 +101,9 @@ func _has_knife() -> bool:
 
 func set_corpse_look(active: bool) -> void:
 	_corpse_look = active
+	# First interaction on the body is always a corpse Look, then Search (if key not taken yet).
+	if active and not _has_back_key():
+		_looked = false
 	set_look_active(active)
 	if active:
 		_reshape_for_corpse()
@@ -119,14 +129,24 @@ func can_interact(_player: Node) -> bool:
 	return _eligible()
 
 
+func _has_back_key() -> bool:
+	return GameState != null and GameState.has_inventory_flag("back_key")
+
+
+## Search is offered after the first Look while the player does not hold back_key.
+## Only one back_key exists; it is re-searchable only if a catch strip took it away.
+func _search_ready() -> bool:
+	return _looked and GameState != null and not _has_back_key()
+
+
 func get_prompt() -> String:
 	if not _eligible():
 		return ""
 	if _corpse_look:
-		return look_prompt
+		return search_prompt if _search_ready() else look_prompt
 	if _has_knife():
 		return stab_prompt
-	return look_prompt
+	return search_prompt if _search_ready() else look_prompt
 
 
 func _pool() -> PackedStringArray:
@@ -157,16 +177,34 @@ func _on_interact(_player: Node) -> void:
 	if not _eligible():
 		return
 	if _corpse_look:
+		if _search_ready():
+			_search_for_back_key()
+			return
 		var corpse_line := _pick_line(POOL_CORPSE)
 		if corpse_line == "":
 			return
+		_looked = true
 		get_tree().call_group("subtitle", "show_line", speaker, corpse_line, line_duration)
 		return
 	if _has_knife():
 		if _walker != null and _walker.has_method("begin_couch_stab"):
 			_walker.call("begin_couch_stab")
 		return
+	if _search_ready():
+		_search_for_back_key()
+		return
 	var line := _pick_line(_pool())
 	if line == "":
 		return
+	_looked = true
 	get_tree().call_group("subtitle", "show_line", speaker, line, line_duration)
+
+
+## Pockets: back_key into the carry slots. Never touches the walker (he stays asleep / dead).
+func _search_for_back_key() -> void:
+	if GameState == null or _has_back_key():
+		return
+	# Carry full: GameState shows "Can't carry more." and the prompt stays [E] Search.
+	if not GameState.add_inventory_flag("back_key"):
+		return
+	get_tree().call_group("subtitle", "show_line", speaker, back_key_line, line_duration)

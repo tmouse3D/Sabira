@@ -28,9 +28,6 @@
 [ext_resource type="Texture2D" uid="uid://nwvjt8mwgm5g" path="res://textures/ceiling_plaster_128.png" id="22_ceiltex"]
 [ext_resource type="Texture2D" uid="uid://4ddbyhxn1c77" path="res://textures/wall_tile_bath_64.png" id="23_bathwall"]
 [ext_resource type="Texture2D" uid="uid://c1jhro6yu7xwk" path="res://textures/floor_tile_bath_64.png" id="24_bathfloor"]
-[ext_resource type="Texture2D" uid="uid://buy561pl7n32y" path="res://textures/lookables/painting_01.png" id="25_pfamily"]
-[ext_resource type="Texture2D" uid="uid://cc47b3umiseok" path="res://textures/lookables/painting_02.jpg" id="26_pmarket"]
-[ext_resource type="Texture2D" uid="uid://dwbxvrpo6id5v" path="res://textures/lookables/painting_03.jpg" id="27_pwedding"]
 [ext_resource type="PackedScene" path="res://interact/Painting.tscn" id="28_painting"]
 [ext_resource type="PackedScene" path="res://props/WashingMachine.tscn" id="29_washer"]
 [ext_resource type="PackedScene" uid="uid://cqr4euoqlj72i" path="res://props/Shower.glb" id="30_shower"]
@@ -38,9 +35,6 @@
 [ext_resource type="PackedScene" uid="uid://bgnpew28l5c2k" path="res://props/OfficeChair.glb" id="32_ochair"]
 [ext_resource type="PackedScene" uid="uid://ckbbd8nx0ekrx" path="res://props/WindowBlinds.glb" id="33_blinds"]
 [ext_resource type="Texture2D" uid="uid://d3ko8qt16pgy" path="res://textures/window_sill_dark_64.png" id="34_sill"]
-[ext_resource type="Texture2D" uid="uid://drwjvjvoe7gam" path="res://textures/lookables/art_vintage_01.jpg" id="35_pf2hall"]
-[ext_resource type="Texture2D" uid="uid://dbvxisqqwkp12" path="res://textures/lookables/painting_04.jpg" id="36_pf2watch"]
-[ext_resource type="Texture2D" uid="uid://cjc8r2xiximnd" path="res://textures/lookables/painting_05.jpg" id="37_pf2thresh"]
 [ext_resource type="PackedScene" uid="uid://cp6g5ftim0bb0" path="res://props/PlantPot.glb" id="38_plant"]
 [ext_resource type="PackedScene" uid="uid://by63qmju03n35" path="res://props/BoxStack.glb" id="39_boxstack"]
 [ext_resource type="PackedScene" uid="uid://bccns7ovnc0p4" path="res://props/HallChair.glb" id="40_hchair"]
@@ -103,6 +97,11 @@
 [ext_resource type="Script" uid="uid://chiev7hlgcsyd" path="res://interact/SinkWash.gd" id="105_sinkwash"]
 [ext_resource type="Script" uid="uid://cupbxb2yac8dg" path="res://characters/TvSlideshow.gd" id="105_tvslide"]
 [ext_resource type="PackedScene" uid="uid://bvqh0mojy73rs" path="res://props/IBM_5155.glb" id="106_ibm"]
+[ext_resource type="Script" path="res://world/PaintingPuzzle.gd" id="200_paintpuzzle"]
+[ext_resource type="Script" path="res://interact/KeypadDrawer.gd" id="201_keypaddrawer"]
+[ext_resource type="Texture2D" path="res://props/keypad/code_lock.jpg" id="202_kp_codelock"]
+[ext_resource type="Texture2D" path="res://props/keypad/wood_rustic.png" id="203_kp_wood"]
+[ext_resource type="Texture2D" path="res://props/keypad/metal_grunge_panel_01.png" id="204_kp_metal"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -342,6 +341,72 @@ point_count = 39
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_tash"]
 radius = 0.24
 height = 1.75
+
+[sub_resource type="StandardMaterial3D" id="mat_kp_wood"]
+albedo_color = Color(0.82, 0.76, 0.7, 1)
+albedo_texture = ExtResource("203_kp_wood")
+roughness = 0.95
+uv1_scale = Vector3(1.6, 1.6, 1.6)
+uv1_triplanar = true
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_kp_drawerwood"]
+albedo_color = Color(0.66, 0.58, 0.5, 1)
+albedo_texture = ExtResource("203_kp_wood")
+roughness = 0.95
+uv1_scale = Vector3(1.6, 1.6, 1.6)
+uv1_triplanar = true
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_kp_metal"]
+albedo_color = Color(0.55, 0.52, 0.48, 1)
+albedo_texture = ExtResource("204_kp_metal")
+metallic = 0.5
+roughness = 0.7
+uv1_scale = Vector3(4, 4, 4)
+uv1_triplanar = true
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_kp_brass"]
+albedo_color = Color(0.78, 0.62, 0.26, 1)
+metallic = 0.8
+roughness = 0.35
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_kp_face"]
+albedo_texture = ExtResource("202_kp_codelock")
+roughness = 0.6
+emission_enabled = true
+emission_texture = ExtResource("202_kp_codelock")
+emission_energy_multiplier = 0.35
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_kp_cabinet"]
+material = SubResource("mat_kp_wood")
+size = Vector3(0.8, 0.75, 0.45)
+
+[sub_resource type="BoxMesh" id="BoxMesh_kp_drawer"]
+material = SubResource("mat_kp_drawerwood")
+size = Vector3(0.7, 0.2, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_kp_handle"]
+material = SubResource("mat_kp_metal")
+size = Vector3(0.16, 0.025, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_kp_key"]
+material = SubResource("mat_kp_brass")
+size = Vector3(0.1, 0.012, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_kp_pad"]
+material = SubResource("mat_kp_metal")
+size = Vector3(0.18, 0.18, 0.02)
+
+[sub_resource type="QuadMesh" id="QuadMesh_kp_face"]
+material = SubResource("mat_kp_face")
+size = Vector2(0.16, 0.16)
+
+[sub_resource type="BoxShape3D" id="BoxShape_kp_cabinet"]
+size = Vector3(0.8, 0.75, 0.45)
 
 [node name="House" type="Node3D" unique_id=417873040]
 
@@ -2033,44 +2098,6 @@ material = SubResource("mat_fixture")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/BookcaseButton" unique_id=1362114059]
 shape = SubResource("BoxShape_bc_btn")
 
-[node name="Paintings" type="Node3D" parent="Structure" unique_id=940000000]
-
-[node name="Painting_Family" parent="Structure/Paintings" unique_id=940000001 instance=ExtResource("28_painting")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 3.38, 1.55, -2.5)
-painting_title = "Three Watchers"
-look_text = "Three owls. All staring."
-canvas_texture = ExtResource("25_pfamily")
-
-[node name="Painting_Market" parent="Structure/Paintings" unique_id=940000002 instance=ExtResource("28_painting")]
-transform = Transform3D(2.9802322e-08, 0, -1, 0, 1, 0, 1, 0, 2.9802322e-08, 3.3261256, 1.5388669, 1.4274466)
-painting_title = "The Fall"
-look_text = "Pretty water. Going somewhere."
-canvas_texture = ExtResource("26_pmarket")
-
-[node name="Painting_Wedding" parent="Structure/Paintings" unique_id=940000003 instance=ExtResource("28_painting")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 2.5, 1.55, 2.87)
-painting_title = "Built on Love"
-look_text = "This house is built on love. Someone believed that."
-canvas_texture = ExtResource("27_pwedding")
-
-[node name="Painting_F2_Landing" parent="Structure/Paintings" unique_id=960000501 instance=ExtResource("28_painting")]
-transform = Transform3D(0, 0, 1.8, 0, 1.8, 0, -1.8, 0, 0, -4.88, 4.55, 4.294656)
-painting_title = "Perfume Ad"
-look_text = "A woman sold as a scent."
-canvas_texture = ExtResource("35_pf2hall")
-
-[node name="Painting_F2_Watchers" parent="Structure/Paintings" unique_id=960000502 instance=ExtResource("28_painting")]
-transform = Transform3D(-1.8, 0, -3.6597726e-07, 0, 1.8000001, 0, 3.6597726e-07, 0, -1.8, 0.065504074, 1.4554362, 5.2363343)
-painting_title = "The Park"
-look_text = "A bright little bridge. Not this street."
-canvas_texture = ExtResource("36_pf2watch")
-
-[node name="Painting_F2_Threshold" parent="Structure/Paintings" unique_id=960000503 instance=ExtResource("28_painting")]
-transform = Transform3D(0, 0, -1.8, 0, 1.8, 0, 1.8, 0, 0, 2.3065724, 4.55, 2.4089642)
-painting_title = "Evening River"
-look_text = "Trees, water, sky. Too much outside."
-canvas_texture = ExtResource("37_pf2thresh")
-
 [node name="ClothesCloset" type="Node3D" parent="Structure" unique_id=960000800]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 3.05, -4)
 
@@ -2634,6 +2661,61 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5894103, 0.26, 0.5343077)
 [node name="HiddenBox1Body#CollisionShape3D" type="CollisionShape3D" parent="." unique_id=681797780]
 transform = Transform3D(0.5926844, 0, 0, 0, 0.6887931, 0, 0, 0, 0.8334949, -1.2893033, 0.6966547, -2.972485)
 shape = SubResource("BoxShape_clothesbox")
+
+[node name="KeypadDrawer" type="StaticBody3D" parent="Structure/TashRoom" unique_id=993000101]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 2, -0.04, 1.8)
+collision_layer = 5
+collision_mask = 0
+script = ExtResource("201_keypaddrawer")
+prompt_text = "[E] Use keypad"
+
+[node name="Cabinet" type="MeshInstance3D" parent="Structure/TashRoom/KeypadDrawer" unique_id=993000102]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.375, 0)
+mesh = SubResource("BoxMesh_kp_cabinet")
+
+[node name="Drawer" type="MeshInstance3D" parent="Structure/TashRoom/KeypadDrawer" unique_id=993000103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0.035)
+mesh = SubResource("BoxMesh_kp_drawer")
+
+[node name="Handle" type="MeshInstance3D" parent="Structure/TashRoom/KeypadDrawer/Drawer" unique_id=993000104]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.22)
+mesh = SubResource("BoxMesh_kp_handle")
+
+[node name="KeyMesh" type="MeshInstance3D" parent="Structure/TashRoom/KeypadDrawer/Drawer" unique_id=993000105]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.106, 0.05)
+visible = false
+mesh = SubResource("BoxMesh_kp_key")
+
+[node name="Keypad" type="MeshInstance3D" parent="Structure/TashRoom/KeypadDrawer" unique_id=993000106]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 0.28, 0.235)
+mesh = SubResource("BoxMesh_kp_pad")
+
+[node name="Face" type="MeshInstance3D" parent="Structure/TashRoom/KeypadDrawer/Keypad" unique_id=993000108]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0105)
+mesh = SubResource("QuadMesh_kp_face")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/TashRoom/KeypadDrawer" unique_id=993000107]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.375, 0)
+shape = SubResource("BoxShape_kp_cabinet")
+
+[node name="PaintingPuzzle" type="Node3D" parent="." unique_id=993000001]
+script = ExtResource("200_paintpuzzle")
+painting_scene = ExtResource("28_painting")
+
+[node name="F1_Run_0" type="Marker3D" parent="PaintingPuzzle" unique_id=993000011]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, -2.6, 1.6, -5.34)
+
+[node name="F1_Run_1" type="Marker3D" parent="PaintingPuzzle" unique_id=993000012]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, -1.45, 1.6, -5.34)
+
+[node name="F1_Run_2" type="Marker3D" parent="PaintingPuzzle" unique_id=993000013]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, -0.3, 1.6, -5.34)
+
+[node name="F1_Run_3" type="Marker3D" parent="PaintingPuzzle" unique_id=993000014]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 0.85, 1.6, -5.34)
+
+[node name="F1_Run_4" type="Marker3D" parent="PaintingPuzzle" unique_id=993000015]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 2.0, 1.6, -5.34)
 
 [editable path="Structure/HiddenRoom/Hidden_Mom_Amina"]
 [editable path="Structure/HiddenRoom/Hidden_Mom_Restraint"]
