@@ -1822,8 +1822,8 @@ func begin_couch_stab() -> void:
 	_start_dying()
 	await _fade_stab_card()
 	_set_player_locked(false)
-	if _dying_clip == "":
-		_enable_corpse_look()
+	# Corpse Look/Search as soon as the black card fades (dying anim still playing).
+	_enable_corpse_look()
 
 func _set_player_locked(locked: bool) -> void:
 	var tree := get_tree()

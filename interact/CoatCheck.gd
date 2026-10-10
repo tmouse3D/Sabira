@@ -171,6 +171,12 @@ func _can_give_loot() -> bool:
 
 func _on_interact(_player: Node) -> void:
 	_play_search_sfx()
+	if GameState != null and GameState.search_site_for_minute_hand(self, is_bedroom_key_site and _site_armed):
+		return
+	# Bedroom site now hides Dad's pocket watch (clock puzzle), not tash_room_key.
+	if is_bedroom_key_site and _site_armed and GameState != null:
+		GameState.find_pocket_watch(self)
+		return
 	if not _can_give_loot():
 		get_tree().call_group("subtitle", "show_line", "SABIRA", _empty_caption(), line_duration)
 		return

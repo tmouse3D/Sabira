@@ -147,6 +147,12 @@ func _on_interact(_player: Node) -> void:
 		get_tree().call_group("subtitle", "show_line", "SABIRA", _empty_caption(), dur)
 		return
 	var key_flag := _key_flag()
+	if GameState.search_site_for_minute_hand(self, is_bedroom_key_site and _key_armed):
+		return
+	# Bedroom site now hides Dad's pocket watch (clock puzzle), not tash_room_key.
+	if is_bedroom_key_site and _key_armed:
+		GameState.find_pocket_watch(self)
+		return
 	# After catch strip, allow re-loot if flag gone.
 	if _looted and not key_flag.is_empty() and not GameState.has_inventory_flag(key_flag):
 		_looted = false

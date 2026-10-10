@@ -31,7 +31,7 @@ const POOL_B: PackedStringArray = [
 	"The knife is in the kitchen. I don't know if I have the strength to do it.",
 ]
 
-## After dying freezes. Look only. Stab stays off.
+## Corpse (from the stab card fade, through dying and after the freeze). Look/Search only. Stab stays off.
 const POOL_CORPSE: PackedStringArray = [
 	"It's done. I don't want to look at him.",
 	"It's horrifying. I don't want to stay and look.",
@@ -100,9 +100,12 @@ func _has_knife() -> bool:
 
 
 func set_corpse_look(active: bool) -> void:
+	# Called when the stab card fades (dying starts) and again when dying freezes.
+	# Only the first switch resets _looked, so a Search unlocked during dying survives the freeze.
+	var was := _corpse_look
 	_corpse_look = active
 	# First interaction on the body is always a corpse Look, then Search (if key not taken yet).
-	if active and not _has_back_key():
+	if active and not was and not _has_back_key():
 		_looked = false
 	set_look_active(active)
 	if active:

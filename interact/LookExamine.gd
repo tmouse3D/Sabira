@@ -7,8 +7,11 @@ extends Interactable
 @export var speaker: String = "SABIRA"
 @export var line_duration: float = 2.5
 @export var look_prompt: String = "[E] Look"
+## Pick a random line each time, never the same one twice in a row.
+@export var random_order: bool = false
 
 var _next: int = 0
+var _last: int = -1
 
 
 func _ready() -> void:
@@ -25,6 +28,14 @@ func get_prompt() -> String:
 func _on_interact(_player: Node) -> void:
 	if look_lines.is_empty():
 		return
-	var line := look_lines[_next % look_lines.size()]
-	_next = (_next + 1) % look_lines.size()
+	var line := ""
+	if random_order:
+		var i := randi() % look_lines.size()
+		if look_lines.size() > 1 and i == _last:
+			i = (i + 1 + randi() % (look_lines.size() - 1)) % look_lines.size()
+		_last = i
+		line = look_lines[i]
+	else:
+		line = look_lines[_next % look_lines.size()]
+		_next = (_next + 1) % look_lines.size()
 	get_tree().call_group("subtitle", "show_line", speaker, line, line_duration)

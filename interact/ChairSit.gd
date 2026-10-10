@@ -17,6 +17,12 @@ var stand_pose: Marker3D
 var _occupant: Node = null
 var _click_sfx: AudioStreamPlayer3D
 
+## Seated = safe spot (GameState "chair" source). Future detection / catch must skip the
+## player while GameState.is_player_safe().
+@export var safe_while_seated: bool = true
+@export var safe_first_line: String = "Eat. Sit still. He doesn't touch a girl at the table."
+const SAFE_SOURCE := "chair"
+
 
 func _ready() -> void:
 	collision_layer = 5
@@ -109,6 +115,27 @@ func is_occupied_by(player: Node) -> bool:
 
 func clear_occupant() -> void:
 	_occupant = null
+	_sync_safe()
+
+
+func _physics_process(_delta: float) -> void:
+	# Stood up by any path (stand prompt, catch, teleport): drop the safe flag.
+	if _occupant != null and (not is_instance_valid(_occupant) or not _occupant.has_method("is_sitting") or not _occupant.is_sitting()):
+		_occupant = null
+	_sync_safe()
+
+
+func _sync_safe() -> void:
+	if GameState == null or not safe_while_seated:
+		return
+	var seated := _occupant != null and is_instance_valid(_occupant)
+	# Per-chair source id so one empty chair never clears another chair's seat.
+	var src := "%s:%s" % [SAFE_SOURCE, name]
+	if seated == GameState.has_safe_source(src):
+		return
+	GameState.set_safe_source(src, seated)
+	if seated and GameState.mark_safe_line_said(SAFE_SOURCE) and safe_first_line != "":
+		get_tree().call_group("subtitle", "show_line", "SABIRA", safe_first_line, 3.5)
 
 
 func _on_interact(player: Node) -> void:
@@ -128,3 +155,4 @@ func _on_interact(player: Node) -> void:
 		player.begin_sit(self, sit_pose.global_transform)
 		if player.has_method("is_sitting") and player.is_sitting():
 			_occupant = player
+			_sync_safe()

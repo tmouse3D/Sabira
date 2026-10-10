@@ -17,6 +17,14 @@ var _take_sfx: AudioStreamPlayer3D
 var _sedated_knife_line_said: bool = false
 var _sedated_knife_last: String = ""
 
+var _dead_knife_last: String = ""
+
+## After Tash is dead (couch stab). Random, no immediate repeat.
+const _DEAD_KNIFE_LINES: PackedStringArray = [
+	"He won't be torturing us anymore.",
+	"It's done. No more tears. No more scars.",
+]
+
 const _SEDATED_KNIFE_LINES: PackedStringArray = [
 	"For everything he did to Mom. He's a monster.",
 	"Now or never. I end him.",
@@ -131,6 +139,12 @@ func _refresh_prompt() -> void:
 	prompt_text = get_prompt()
 
 func _say_take_line() -> void:
+	# After the stab: aftermath lines instead of the sedated ones (never Took the knife).
+	if GameState != null and GameState.is_tash_dead():
+		var dead_line := _pick_dead_knife_line()
+		if dead_line != "":
+			_show_sabira_deferred(dead_line, 3.5)
+		return
 	# While he is sedated, never say Took the knife. That line was replacing the reaction.
 	if GameState != null and GameState.tash_sedated:
 		if not _sedated_knife_line_said:
@@ -161,6 +175,17 @@ func _pick_sedated_knife_line() -> String:
 		return ""
 	var pick: String = choices[randi() % choices.size()]
 	_sedated_knife_last = pick
+	return pick
+
+func _pick_dead_knife_line() -> String:
+	var choices: Array[String] = []
+	for line in _DEAD_KNIFE_LINES:
+		if line != _dead_knife_last:
+			choices.append(line)
+	if choices.is_empty():
+		return ""
+	var pick: String = choices[randi() % choices.size()]
+	_dead_knife_last = pick
 	return pick
 
 func _sync_world_blood() -> void:

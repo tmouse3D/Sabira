@@ -1,0 +1,296 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://props/ClothesPile.glb" id="1_pile"]
+[ext_resource type="PackedScene" path="res://props/closet/box.glb" id="2_box"]
+[ext_resource type="PackedScene" path="res://props/closet/box2.glb" id="3_box2"]
+[ext_resource type="PackedScene" path="res://props/closet/box3.glb" id="4_box3"]
+[ext_resource type="PackedScene" path="res://props/closet/teddybear.glb" id="5_teddy"]
+[ext_resource type="PackedScene" path="res://props/closet/basketball.glb" id="6_ball"]
+[ext_resource type="Texture2D" path="res://props/closet/cloth_gray_64.png" id="7_cloth"]
+[ext_resource type="Script" path="res://interact/LookExamine.gd" id="8_look"]
+
+[sub_resource type="BoxShape3D" id="shape_teddy_look"]
+size = Vector3(0.3, 0.36, 0.3)
+
+[sub_resource type="BoxShape3D" id="shape_ball_look"]
+size = Vector3(0.24, 0.21, 0.24)
+
+[sub_resource type="StandardMaterial3D" id="mat_cloth_red"]
+albedo_color = Color(0.62, 0.24, 0.2, 1)
+albedo_texture = ExtResource("7_cloth")
+roughness = 1.0
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_cloth_blue"]
+albedo_color = Color(0.26, 0.34, 0.56, 1)
+albedo_texture = ExtResource("7_cloth")
+roughness = 1.0
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_cloth_yellow"]
+albedo_color = Color(0.72, 0.6, 0.26, 1)
+albedo_texture = ExtResource("7_cloth")
+roughness = 1.0
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_cloth_green"]
+albedo_color = Color(0.3, 0.5, 0.28, 1)
+albedo_texture = ExtResource("7_cloth")
+roughness = 1.0
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_shoe_dark"]
+albedo_color = Color(0.16, 0.11, 0.08, 1)
+roughness = 0.95
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_shoe_sole"]
+albedo_color = Color(0.07, 0.06, 0.05, 1)
+roughness = 0.95
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_shoe_white"]
+albedo_color = Color(0.62, 0.6, 0.55, 1)
+roughness = 0.95
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_hanger"]
+albedo_color = Color(0.42, 0.3, 0.18, 1)
+roughness = 0.95
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_hook"]
+albedo_color = Color(0.35, 0.35, 0.37, 1)
+roughness = 0.95
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_blk_r"]
+albedo_color = Color(0.55, 0.12, 0.1, 1)
+roughness = 0.95
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_blk_b"]
+albedo_color = Color(0.15, 0.25, 0.5, 1)
+roughness = 0.95
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_blk_y"]
+albedo_color = Color(0.7, 0.55, 0.15, 1)
+roughness = 0.95
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_blk_g"]
+albedo_color = Color(0.2, 0.42, 0.2, 1)
+roughness = 0.95
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="bm_sole"]
+material = SubResource("mat_shoe_sole")
+size = Vector3(0.1, 0.03, 0.27)
+
+[sub_resource type="BoxMesh" id="bm_upper_dark"]
+material = SubResource("mat_shoe_dark")
+size = Vector3(0.09, 0.08, 0.17)
+
+[sub_resource type="BoxMesh" id="bm_upper_white"]
+material = SubResource("mat_shoe_white")
+size = Vector3(0.09, 0.08, 0.17)
+
+[sub_resource type="BoxMesh" id="bm_hanger_bar"]
+material = SubResource("mat_hanger")
+size = Vector3(0.42, 0.012, 0.018)
+
+[sub_resource type="BoxMesh" id="bm_hanger_arm"]
+material = SubResource("mat_hanger")
+size = Vector3(0.24, 0.012, 0.018)
+
+[sub_resource type="BoxMesh" id="bm_hook"]
+material = SubResource("mat_hook")
+size = Vector3(0.012, 0.012, 0.09)
+
+[sub_resource type="BoxMesh" id="bm_blk_r"]
+material = SubResource("mat_blk_r")
+size = Vector3(0.07, 0.07, 0.07)
+
+[sub_resource type="BoxMesh" id="bm_blk_b"]
+material = SubResource("mat_blk_b")
+size = Vector3(0.07, 0.07, 0.07)
+
+[sub_resource type="BoxMesh" id="bm_blk_y"]
+material = SubResource("mat_blk_y")
+size = Vector3(0.07, 0.07, 0.07)
+
+[sub_resource type="BoxMesh" id="bm_blk_g"]
+material = SubResource("mat_blk_g")
+size = Vector3(0.07, 0.07, 0.07)
+
+[sub_resource type="BoxShape3D" id="bs_heap"]
+size = Vector3(0.6, 0.42, 0.8)
+
+[sub_resource type="BoxShape3D" id="bs_boxes"]
+size = Vector3(0.8, 0.62, 0.44)
+
+[sub_resource type="BoxShape3D" id="bs_box2"]
+size = Vector3(0.36, 0.17, 0.38)
+
+[node name="ClosetClutter" type="Node3D"]
+
+[node name="Heap_1" parent="." unique_id=996100001 instance=ExtResource("1_pile")]
+transform = Transform3D(1.0806, 0, -0.3933, 0, 1.15, 0, 0.3933, 0, 1.0806, -0.62, 0, -4.2)
+
+[node name="Heap_2" parent="." unique_id=996100002 instance=ExtResource("1_pile")]
+transform = Transform3D(0.7782, -0.1318, 0.5287, 0.0000, 0.9218, 0.2298, -0.5449, -0.1883, 0.7551, -0.4800, 0.0000, -3.9000)
+
+[node name="Heap_3" parent="." unique_id=996100003 instance=ExtResource("1_pile")]
+transform = Transform3D(0.2765, -0.0898, -0.7987, 0.2627, 0.8084, 0.0000, 0.7596, -0.2468, 0.2907, -0.6000, 0.1700, -4.0500)
+
+[node name="Heap_4" parent="." unique_id=996100004 instance=ExtResource("1_pile")]
+transform = Transform3D(-0.2736, 0.1563, 0.7354, 0.0000, 0.7825, -0.1663, -0.7518, -0.0569, -0.2676, -0.7000, 0.0000, -4.5500)
+
+[node name="HeapBody" type="StaticBody3D" parent="." unique_id=996100005]
+transform = Transform3D(1, 0, -0, 0, 1, 0, 0, 0, 1, -0.6, 0.21, -4.18)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HeapBody" unique_id=996100006]
+shape = SubResource("bs_heap")
+
+[node name="Teddy" parent="." unique_id=996100007 instance=ExtResource("5_teddy")]
+transform = Transform3D(0.6, 0, 0.8, 0, 1, 0, -0.8, 0, 0.6, -0.43, 0, -4.61)
+
+[node name="Box_A" parent="." unique_id=996100008 instance=ExtResource("2_box")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -0.3, 0, -5.16)
+
+[node name="Box_B" parent="." unique_id=996100009 instance=ExtResource("4_box3")]
+transform = Transform3D(0.9781, 0, -0.2079, 0, 1, 0, 0.2079, 0, 0.9781, -0.38, 0.38, -5.15)
+
+[node name="BoxesBody" type="StaticBody3D" parent="." unique_id=996100010]
+transform = Transform3D(1, 0, -0, 0, 1, 0, 0, 0, 1, -0.3, 0.31, -5.16)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BoxesBody" unique_id=996100011]
+shape = SubResource("bs_boxes")
+
+[node name="Box_C" parent="." unique_id=996100012 instance=ExtResource("3_box2")]
+transform = Transform3D(0.4698, 0, 0.171, 0, 0.5, 0, -0.171, 0, 0.4698, 0.9, 0, -2.85)
+
+[node name="Box_CBody" type="StaticBody3D" parent="." unique_id=996100013]
+transform = Transform3D(0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, 0.9397, 0.9, 0.08, -2.85)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Box_CBody" unique_id=996100014]
+shape = SubResource("bs_box2")
+
+[node name="Ball" parent="." unique_id=996100015 instance=ExtResource("6_ball")]
+transform = Transform3D(0.3897, 0, -0.225, 0, 0.45, 0, 0.225, 0, 0.3897, -0.12, 0.105, -4.72)
+
+[node name="Block_0" type="MeshInstance3D" parent="." unique_id=996100016]
+transform = Transform3D(0.9659, 0, -0.2588, 0, 1, 0, 0.2588, 0, 0.9659, -0.2, 0.035, -4.45)
+mesh = SubResource("bm_blk_r")
+
+[node name="Block_1" type="MeshInstance3D" parent="." unique_id=996100017]
+transform = Transform3D(0.766, 0, -0.6428, 0, 1, 0, 0.6428, 0, 0.766, 0.05, 0.035, -4.38)
+mesh = SubResource("bm_blk_b")
+
+[node name="Block_2" type="MeshInstance3D" parent="." unique_id=996100018]
+transform = Transform3D(0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, 0.9397, -0.12, 0.035, -3.78)
+mesh = SubResource("bm_blk_y")
+
+[node name="Block_3" type="MeshInstance3D" parent="." unique_id=996100019]
+transform = Transform3D(0.4226, 0, -0.9063, 0, 1, 0, 0.9063, 0, 0.4226, 0.18, 0.035, -4.15)
+mesh = SubResource("bm_blk_g")
+
+[node name="Block_4" type="MeshInstance3D" parent="." unique_id=996100020]
+transform = Transform3D(0.9962, 0, -0.0872, 0, 1, 0, 0.0872, 0, 0.9962, -0.05, 0.105, -4.42)
+mesh = SubResource("bm_blk_r")
+
+[node name="Shoe_L" type="Node3D" parent="." unique_id=996100021]
+transform = Transform3D(0.9063, 0, -0.4226, 0, 1, 0, 0.4226, 0, 0.9063, -0.15, 0, -3.72)
+
+[node name="Sole" type="MeshInstance3D" parent="Shoe_L" unique_id=996100022]
+transform = Transform3D(1, 0, -0, 0, 1, 0, 0, 0, 1, 0, 0.015, 0)
+mesh = SubResource("bm_sole")
+
+[node name="Upper" type="MeshInstance3D" parent="Shoe_L" unique_id=996100023]
+transform = Transform3D(1, 0, -0, 0, 1, 0, 0, 0, 1, 0, 0.07, -0.04)
+mesh = SubResource("bm_upper_dark")
+
+[node name="Shoe_R" type="Node3D" parent="." unique_id=996100024]
+transform = Transform3D(0, 1, 0, -0.5, 0, -0.866, -0.866, 0, 0.5, 0.03, 0.05, -3.95)
+
+[node name="Sole" type="MeshInstance3D" parent="Shoe_R" unique_id=996100025]
+transform = Transform3D(1, 0, -0, 0, 1, 0, 0, 0, 1, 0, 0.015, 0)
+mesh = SubResource("bm_sole")
+
+[node name="Upper" type="MeshInstance3D" parent="Shoe_R" unique_id=996100026]
+transform = Transform3D(1, 0, -0, 0, 1, 0, 0, 0, 1, 0, 0.07, -0.04)
+mesh = SubResource("bm_upper_dark")
+
+[node name="Sneaker" type="Node3D" parent="." unique_id=996100027]
+transform = Transform3D(-0.766, 0, 0.6428, 0, 1, 0, -0.6428, 0, -0.766, -0.82, 0, -3.68)
+
+[node name="Sole" type="MeshInstance3D" parent="Sneaker" unique_id=996100028]
+transform = Transform3D(1, 0, -0, 0, 1, 0, 0, 0, 1, 0, 0.015, 0)
+mesh = SubResource("bm_sole")
+
+[node name="Upper" type="MeshInstance3D" parent="Sneaker" unique_id=996100029]
+transform = Transform3D(1, 0, -0, 0, 1, 0, 0, 0, 1, 0, 0.07, -0.04)
+mesh = SubResource("bm_upper_white")
+
+[node name="Hanger" type="Node3D" parent="." unique_id=996100030]
+transform = Transform3D(0.9063, 0, -0.4226, 0, 1, 0, 0.4226, 0, 0.9063, -0.02, 0.008, -4.6)
+
+[node name="Bar" type="MeshInstance3D" parent="Hanger" unique_id=996100031]
+mesh = SubResource("bm_hanger_bar")
+
+[node name="ArmL" type="MeshInstance3D" parent="Hanger" unique_id=996100032]
+transform = Transform3D(0.848, 0, -0.5299, 0, 1, 0, 0.5299, 0, 0.848, -0.105, 0, -0.065)
+mesh = SubResource("bm_hanger_arm")
+
+[node name="ArmR" type="MeshInstance3D" parent="Hanger" unique_id=996100033]
+transform = Transform3D(0.848, 0, 0.5299, 0, 1, 0, -0.5299, 0, 0.848, 0.105, 0, -0.065)
+mesh = SubResource("bm_hanger_arm")
+
+[node name="Hook" type="MeshInstance3D" parent="Hanger" unique_id=996100034]
+transform = Transform3D(1, 0, -0, 0, 1, 0, 0, 0, 1, 0, 0, -0.17)
+mesh = SubResource("bm_hook")
+
+[node name="ClothesPile" parent="Heap_1" index="0"]
+material_override = SubResource("mat_cloth_red")
+
+[node name="ClothesPile" parent="Heap_2" index="0"]
+material_override = SubResource("mat_cloth_blue")
+
+[node name="ClothesPile" parent="Heap_3" index="0"]
+material_override = SubResource("mat_cloth_yellow")
+
+[node name="ClothesPile" parent="Heap_4" index="0"]
+material_override = SubResource("mat_cloth_green")
+
+[editable path="Heap_1"]
+[editable path="Heap_2"]
+[editable path="Heap_3"]
+[editable path="Heap_4"]
+
+[node name="TeddyLook" type="StaticBody3D" parent="." unique_id=996100060]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.43, 0.18, -4.61)
+collision_layer = 5
+collision_mask = 0
+script = ExtResource("8_look")
+look_lines = PackedStringArray("Grandma gave me this when I was little. Dad's mum. She doesn't come anymore.", "From Grandma. She used to visit. Then she just... stopped.")
+line_duration = 3.5
+random_order = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TeddyLook" unique_id=996100061]
+shape = SubResource("shape_teddy_look")
+
+[node name="BallLook" type="StaticBody3D" parent="." unique_id=996100062]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.143, 0.105, -4.72)
+collision_layer = 5
+collision_mask = 0
+script = ExtResource("8_look")
+look_lines = PackedStringArray("Grandma gave me this when I was little. Dad's mum. She doesn't come anymore.", "From Grandma. She used to visit. Then she just... stopped.")
+line_duration = 3.5
+random_order = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BallLook" unique_id=996100063]
+shape = SubResource("shape_ball_look")

@@ -9,9 +9,12 @@ extends CharacterBody3D
 @export var jump_velocity: float = 5.5
 @export var mouse_sensitivity: float = 0.0025
 @export var gravity: float = 20.0
-@export var stand_height: float = 1.55
-@export var crouch_height: float = 1.0
-@export var sit_height: float = 1.15
+## Heights ~9% shorter than the old 1.55 / 1.0 / 1.15 (2026-10-10). Eye = height - eye_below_top.
+@export var stand_height: float = 1.41
+@export var crouch_height: float = 0.91
+@export var sit_height: float = 1.05
+## Camera pivot sits this far below the top of the capsule (old fixed 0.15, scaled 0.91).
+@export var eye_below_top: float = 0.1365
 @export var interact_distance: float = 2.5
 @export_group("Held Knife")
 @export var knife_hold_offset: Vector3 = Vector3(0.22, -0.22, -0.42)
@@ -393,7 +396,7 @@ func _apply_stance(crouch: bool) -> void:
 	if shape:
 		shape.height = height
 		_collision.position.y = height * 0.5
-	_pivot.position.y = height - 0.15
+	_pivot.position.y = height - eye_below_top
 
 
 func _apply_sit_stance() -> void:
@@ -402,7 +405,7 @@ func _apply_sit_stance() -> void:
 	if shape:
 		shape.height = height
 		_collision.position.y = height * 0.5
-	_pivot.position.y = height - 0.15
+	_pivot.position.y = height - eye_below_top
 
 
 func is_sitting() -> bool:
@@ -486,6 +489,10 @@ func _update_interact_target() -> void:
 					interactable = behind2
 			_ray.remove_exception(collider)
 			_ray.force_raycast_update()
+		# Per-interactable reach cap (e.g. kitchen counter drawer: only right in front).
+		if interactable and interactable.max_interact_distance > 0.0 and _ray.is_colliding():
+			if _ray.global_position.distance_to(_ray.get_collision_point()) > interactable.max_interact_distance:
+				interactable = null
 		if interactable and interactable.can_interact(self):
 			_current_target = interactable
 	if _prompt and _prompt.has_method("set_prompt"):

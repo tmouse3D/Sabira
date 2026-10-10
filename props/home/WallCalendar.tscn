@@ -1,0 +1,43 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://6mveu2fbun7d" path="res://interact/LookExamine.gd" id="99_callook"]
+[ext_resource type="Texture2D" uid="uid://x8cweak1afpb" path="res://props/calendar/calendar_oct_page.png" id="99_caltex"]
+
+[sub_resource type="StandardMaterial3D" id="mat_calendar_back"]
+albedo_color = Color(0.3, 0.24, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_calendar_back"]
+size = Vector3(0.66, 0.94, 0.008)
+
+[sub_resource type="StandardMaterial3D" id="mat_calendar"]
+albedo_texture = ExtResource("99_caltex")
+roughness = 0.95
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_calendar"]
+size = Vector2(0.64, 0.914)
+
+[sub_resource type="BoxShape3D" id="BoxShape_calendar"]
+size = Vector3(0.75, 1.05, 0.08)
+
+[node name="WallCalendar" type="StaticBody3D" unique_id=997100010]
+collision_layer = 5
+collision_mask = 0
+script = ExtResource("99_callook")
+look_lines = PackedStringArray("It's my birthday today. Another year in this house, and I already feel so old. I don't know if there's anything I should look forward to.")
+line_duration = 6.0
+prompt_text = "[E] Look"
+
+[node name="Back" type="MeshInstance3D" parent="." unique_id=997100011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.004)
+material_override = SubResource("mat_calendar_back")
+mesh = SubResource("BoxMesh_calendar_back")
+
+[node name="Page" type="MeshInstance3D" parent="." unique_id=997100012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0095)
+material_override = SubResource("mat_calendar")
+mesh = SubResource("QuadMesh_calendar")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=997100013]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+shape = SubResource("BoxShape_calendar")

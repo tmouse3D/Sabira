@@ -1,0 +1,177 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://6mveu2fbun7d" path="res://interact/LookExamine.gd" id="99_callook"]
+[ext_resource type="PackedScene" uid="uid://5ica8j8ipbgs" path="res://props/school/book3.glb" id="99_sc_book3"]
+[ext_resource type="PackedScene" uid="uid://cfp4fro0f1a3l" path="res://props/school/pencilCup.glb" id="99_sc_cup"]
+[ext_resource type="PackedScene" path="res://props/school/book.glb" id="99_hs_book"]
+[ext_resource type="PackedScene" path="res://props/school/book2.glb" id="99_hs_book2"]
+[ext_resource type="Texture2D" path="res://props/school/tex/drawing_0.png" id="99_hst_drawing_0"]
+[ext_resource type="Texture2D" path="res://props/school/tex/drawing_1.png" id="99_hst_drawing_1"]
+[ext_resource type="Texture2D" path="res://props/school/tex/drawing_2.png" id="99_hst_drawing_2"]
+[ext_resource type="Texture2D" path="res://props/school/tex/drawing_3.png" id="99_hst_drawing_3"]
+[ext_resource type="Texture2D" path="res://props/school/tex/sketchbook.png" id="99_hst_sketchbook"]
+[ext_resource type="Texture2D" path="res://props/school/tex/diary.png" id="99_hst_diary"]
+
+[sub_resource type="StandardMaterial3D" id="mat_hs_drawing_0"]
+albedo_texture = ExtResource("99_hst_drawing_0")
+roughness = 1.0
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_hs_drawing_1"]
+albedo_texture = ExtResource("99_hst_drawing_1")
+roughness = 1.0
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_hs_drawing_2"]
+albedo_texture = ExtResource("99_hst_drawing_2")
+roughness = 1.0
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_hs_drawing_3"]
+albedo_texture = ExtResource("99_hst_drawing_3")
+roughness = 1.0
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_hs_sketchbook"]
+albedo_texture = ExtResource("99_hst_sketchbook")
+roughness = 1.0
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_hs_diary"]
+albedo_texture = ExtResource("99_hst_diary")
+roughness = 1.0
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_hs_pencil"]
+albedo_color = Color(0.78, 0.62, 0.16, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="mat_hs_clasp"]
+albedo_color = Color(0.55, 0.45, 0.22, 1)
+roughness = 0.8
+
+[sub_resource type="PlaneMesh" id="mesh_hs_page"]
+size = Vector2(0.2, 0.26)
+
+[sub_resource type="BoxMesh" id="mesh_hs_sketch"]
+size = Vector3(0.24, 0.014, 0.32)
+
+[sub_resource type="BoxMesh" id="mesh_hs_diary"]
+size = Vector3(0.15, 0.03, 0.2)
+
+[sub_resource type="BoxMesh" id="mesh_hs_clasp"]
+size = Vector3(0.02, 0.034, 0.04)
+
+[sub_resource type="BoxMesh" id="mesh_hs_pencil"]
+size = Vector3(0.007, 0.007, 0.17)
+
+[sub_resource type="BoxShape3D" id="shape_hs_sketch"]
+size = Vector3(0.56, 0.06, 0.36)
+
+[sub_resource type="BoxShape3D" id="shape_hs_diary"]
+size = Vector3(0.2, 0.06, 0.25)
+
+[node name="SabiraHomeStudy" type="Node3D" unique_id=997300001]
+
+
+[node name="Sketchbook" type="StaticBody3D" parent="." unique_id=997300002]
+transform = Transform3D(0.9781, 0, -0.2079, 0, 1, 0, 0.2079, 0, 0.9781, 0.74, 0.7813, 1.38)
+collision_layer = 5
+collision_mask = 0
+script = ExtResource("99_callook")
+prompt_text = "[E] Look"
+look_lines = PackedStringArray("I draw what I can't say. Nobody ever looks at these.")
+line_duration = 4.5
+
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchbook" unique_id=997300003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.13, 0.03, 0)
+shape = SubResource("shape_hs_sketch")
+
+
+[node name="Cover" type="MeshInstance3D" parent="Sketchbook" unique_id=997300004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.007, 0)
+material_override = SubResource("mat_hs_sketchbook")
+mesh = SubResource("mesh_hs_sketch")
+
+
+[node name="Drawing" type="MeshInstance3D" parent="Sketchbook" unique_id=997300005]
+transform = Transform3D(0.9976, 0, 0.0698, 0, 1, 0, -0.0698, 0, 0.9976, 0.005, 0.0145, 0.005)
+material_override = SubResource("mat_hs_drawing_2")
+mesh = SubResource("mesh_hs_page")
+
+
+[node name="LooseDrawing" type="MeshInstance3D" parent="Sketchbook" unique_id=997300006]
+transform = Transform3D(0.9272, 0, 0.3746, 0, 1, 0, -0.3746, 0, 0.9272, 0.27, 0.0015, -0.02)
+material_override = SubResource("mat_hs_drawing_1")
+mesh = SubResource("mesh_hs_page")
+
+
+[node name="Diary" type="StaticBody3D" parent="." unique_id=997300007]
+transform = Transform3D(0.9848, 0, 0.1736, 0, 1, 0, -0.1736, 0, 0.9848, 0.4, 0.7813, 1.4)
+collision_layer = 5
+collision_mask = 0
+script = ExtResource("99_callook")
+prompt_text = "[E] Look"
+look_lines = PackedStringArray("My diary. If he finds it, he'll burn it.")
+line_duration = 4.5
+
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Diary" unique_id=997300008]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, 0)
+shape = SubResource("shape_hs_diary")
+
+
+[node name="Body" type="MeshInstance3D" parent="Diary" unique_id=997300009]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, 0)
+material_override = SubResource("mat_hs_diary")
+mesh = SubResource("mesh_hs_diary")
+
+
+[node name="Clasp" type="MeshInstance3D" parent="Diary" unique_id=997300010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.075, 0.016, 0)
+material_override = SubResource("mat_hs_clasp")
+mesh = SubResource("mesh_hs_clasp")
+
+
+[node name="Desk_PencilCup" parent="." unique_id=997300011 instance=ExtResource("99_sc_cup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.02, 0.7813, 1.58)
+
+[node name="Desk_Pencil" type="MeshInstance3D" parent="." unique_id=997300012]
+transform = Transform3D(0.766, 0, 0.6428, 0, 1, 0, -0.6428, 0, 0.766, 0.58, 0.7888, 1.24)
+material_override = SubResource("mat_hs_pencil")
+mesh = SubResource("mesh_hs_pencil")
+
+
+[node name="Desk_Pencil2" type="MeshInstance3D" parent="." unique_id=997300013]
+transform = Transform3D(0.4695, 0, 0.8829, 0, 1, 0, -0.8829, 0, 0.4695, 0.64, 0.7888, 1.23)
+material_override = SubResource("mat_hs_pencil")
+mesh = SubResource("mesh_hs_pencil")
+
+
+[node name="Desk_OldBook" parent="." unique_id=997300014 instance=ExtResource("99_hs_book")]
+transform = Transform3D(0.1736, 0, 0.9848, 0, 1, 0, -0.9848, 0, 0.1736, 0.32, 0.7813, 1.62)
+
+[node name="Desk_OldBook2" parent="." unique_id=997300015 instance=ExtResource("99_hs_book2")]
+transform = Transform3D(0.3746, 0, 0.9272, 0, 1, 0, -0.9272, 0, 0.3746, 0.33, 0.8253, 1.62)
+
+[node name="Floor_Drawing" type="MeshInstance3D" parent="." unique_id=997300016]
+transform = Transform3D(0.342, 0, 0.9397, 0, 1, 0, -0.9397, 0, 0.342, 0.2, 0.004, 0.85)
+material_override = SubResource("mat_hs_drawing_0")
+mesh = SubResource("mesh_hs_page")
+
+
+[node name="Floor_Drawing2" type="MeshInstance3D" parent="." unique_id=997300017]
+transform = Transform3D(0.866, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866, 0.55, 0.005, 0.78)
+material_override = SubResource("mat_hs_drawing_3")
+mesh = SubResource("mesh_hs_page")
+
+
+[node name="Floor_Drawing3" type="MeshInstance3D" parent="." unique_id=997300018]
+transform = Transform3D(0.9659, 0, 0.2588, 0, 1, 0, -0.2588, 0, 0.9659, 1.05, 0.006, 0.95)
+material_override = SubResource("mat_hs_drawing_1")
+mesh = SubResource("mesh_hs_page")
+
+
+[node name="Floor_OldBook" parent="." unique_id=997300019 instance=ExtResource("99_sc_book3")]
+transform = Transform3D(0.866, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866, 0.12, 0, 1.05)

@@ -8,7 +8,7 @@ extends Node3D
 ## Art = textures/paintings/ (copied from Assets for games/Paintings):
 ##   count_1 scarecrow, count_2 / count_2_b apples (two variants, same lines), count_3 crows / count_3_b / count_3_c birds attacking (three variants), count_4 worms, count_5 rabbits,
 ##   count_6_a eyeballs / count_6_b bride + eyes (one picked at random per launch),
-##   count_7 teeth, count_8 sunflower (petals), count_9 hands,
+##   count_1_b / count_1_c skeleton at a window, count_7 / count_7_b teeth, count_8 sunflower (petals), count_9 hands,
 ##   start_a..start_d (one picked at random per launch) = the START painting (no text on or under it).
 ## Each painting has a pool of Look lines; every [E] Look picks one at random, never the same line
 ## twice in a row (hooked on Interactable.interacted, which fires before Painting._on_interact).
@@ -36,9 +36,15 @@ const ART_DIR := "res://textures/paintings/"
 ## "looks" is parallel to "files": one Look-line pool per variant. A variant without its own pool
 ## (e.g. count_2_b) reuses the last pool listed.
 const COUNT_DEFS := [
-	{"count": 1, "title": "The Scarecrow", "files": ["count_1.jpg"], "looks": [[
+	# count_1_b / count_1_c (2026-10-10, "Painting for One (ver2/ver3)"): one skeleton outside a
+	# lit window, looking in. They share one pool; count_1 (scarecrow) keeps its lines.
+	{"count": 1, "title": "The Scarecrow", "files": ["count_1.jpg", "count_1_b.jpg", "count_1_c.jpg"], "looks": [[
 		"One scarecrow. Stuck on a pole, can't leave the field. Relatable.",
-		"One scarecrow, smiling for nobody. Dad would like him."]]},
+		"One scarecrow, smiling for nobody. Dad would like him."], [
+		"One skeleton at the window, watching a warm house. Nobody lets him in either.",
+		"One skeleton, looking in at the fire. Stay out there long enough and that's you."], [
+		"One skeleton at the window, watching a warm house. Nobody lets him in either.",
+		"One skeleton, looking in at the fire. Stay out there long enough and that's you."]]},
 	{"count": 2, "title": "Two Apples", "files": ["count_2.jpg", "count_2_b.jpg"], "looks": [[
 		"Two apples. One for me, one for Mum. Neither of us gets to eat.",
 		"Two apples, perfect and shiny. Rotten inside, I bet. Like this house."]]},
@@ -62,7 +68,9 @@ const COUNT_DEFS := [
 		"Six eyeballs staring back. Dad's idea of a security system."], [
 		"Six eyes on a girl in white. She never said they could look. They looked anyway.",
 		"A bride, pure in white, and six greedy eyes. Nobody asked her. Nobody ever asks."]]},
-	{"count": 7, "title": "Seven Teeth", "files": ["count_7.jpg"], "looks": [[
+	# count_7_b (2026-10-10 "Painting for Seven"): seven teeth served on a plate of greens.
+	# Same subject (teeth) as count_7, so it reuses the count_7 pool (variant without its own pool).
+	{"count": 7, "title": "Seven Teeth", "files": ["count_7.jpg", "count_7_b.jpg"], "looks": [[
 		"Seven teeth. Pulled out, because someone tried to bite back.",
 		"Seven teeth, no mouth. That's what happens when you bite the hand that hits you."]]},
 	{"count": 8, "title": "Sunflower", "files": ["count_8.jpg"], "looks": [[

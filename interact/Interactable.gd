@@ -5,6 +5,9 @@ extends StaticBody3D
 
 @export var prompt_text: String = "[E] Interact"
 @export var interact_enabled: bool = true
+## > 0: only targetable when the interact ray hit point is within this many metres of the
+## camera (Player checks it). 0 = the player's normal interact_distance.
+@export var max_interact_distance: float = 0.0
 
 signal interacted(player: Node)
 

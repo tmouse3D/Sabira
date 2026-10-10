@@ -113,6 +113,12 @@ func _on_interact(_player: Node) -> void:
 	if GameState == null:
 		get_tree().call_group("subtitle", "show_line", "SABIRA", EMPTY_LINES[randi() % EMPTY_LINES.size()], line_duration)
 		return
+	if GameState.search_site_for_minute_hand(self, _site_armed):
+		return
+	# Armed site now hides Dad's pocket watch (clock puzzle), not tash_room_key.
+	if _site_armed:
+		GameState.find_pocket_watch(self)
+		return
 	if _looted and not GameState.has_inventory_flag("tash_room_key"):
 		_looted = false
 	if _site_armed and not _looted:
