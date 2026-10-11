@@ -1,0 +1,141 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://props/cardboard/cardboard_grimy.png" id="t_card"]
+
+[sub_resource type="StandardMaterial3D" id="card"]
+albedo_texture = ExtResource("t_card")
+albedo_color = Color(0.9, 0.8, 0.66, 1)
+roughness = 1
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="card2"]
+albedo_texture = ExtResource("t_card")
+albedo_color = Color(0.78, 0.68, 0.55, 1)
+roughness = 1
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="tape"]
+albedo_color = Color(0.78, 0.66, 0.45, 1)
+roughness = 0.45
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="seam"]
+albedo_color = Color(0.28, 0.21, 0.14, 1)
+roughness = 1
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="inside"]
+albedo_texture = ExtResource("t_card")
+albedo_color = Color(0.42, 0.35, 0.27, 1)
+roughness = 1
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="m0"]
+material = SubResource("card")
+size = Vector3(0.56, 0.48, 0.64)
+
+[sub_resource type="BoxMesh" id="m1"]
+material = SubResource("tape")
+size = Vector3(0.055, 0.004, 0.644)
+
+[sub_resource type="BoxMesh" id="m2"]
+material = SubResource("tape")
+size = Vector3(0.055, 0.11, 0.004)
+
+[sub_resource type="BoxMesh" id="m3"]
+material = SubResource("seam")
+size = Vector3(0.006, 0.003, 0.64)
+
+[sub_resource type="BoxMesh" id="m4"]
+material = SubResource("seam")
+size = Vector3(0.56, 0.003, 0.006)
+
+[sub_resource type="BoxMesh" id="m5"]
+material = SubResource("seam")
+size = Vector3(0.004, 0.48, 0.004)
+
+[sub_resource type="BoxMesh" id="m6"]
+material = SubResource("card2")
+size = Vector3(0.46, 0.36, 0.5)
+
+[sub_resource type="BoxMesh" id="m7"]
+material = SubResource("inside")
+size = Vector3(0.44, 0.004, 0.48)
+
+[sub_resource type="BoxMesh" id="m8"]
+material = SubResource("card2")
+size = Vector3(0.23, 0.006, 0.5)
+
+[sub_resource type="BoxMesh" id="m9"]
+material = SubResource("card2")
+size = Vector3(0.46, 0.006, 0.16)
+
+[sub_resource type="BoxMesh" id="m10"]
+material = SubResource("seam")
+size = Vector3(0.004, 0.36, 0.004)
+
+[node name="CardboardStack" type="Node3D"]
+
+[node name="Box_Bottom" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.24, 0)
+mesh = SubResource("m0")
+
+[node name="Box_Bottom_Tape" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.482, 0)
+mesh = SubResource("m1")
+
+[node name="Box_Bottom_TapeF" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.425, 0.322)
+mesh = SubResource("m2")
+
+[node name="Box_Bottom_TapeB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.425, -0.322)
+mesh = SubResource("m2")
+
+[node name="Box_Bottom_FoldL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.27, 0.4815, 0)
+mesh = SubResource("m3")
+
+[node name="Box_Bottom_FoldR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.27, 0.4815, 0)
+mesh = SubResource("m3")
+
+[node name="Box_Bottom_FoldF" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4815, 0.31)
+mesh = SubResource("m4")
+
+[node name="Box_Bottom_FoldBk" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4815, -0.31)
+mesh = SubResource("m4")
+
+[node name="Box_Bottom_Edge" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.277, 0.24, 0.321)
+mesh = SubResource("m5")
+
+[node name="Box_Top" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.99027, 0, 0.13917, 0, 1, 0, -0.13917, 0, 0.99027, 0.01, 0.66, -0.02)
+mesh = SubResource("m6")
+
+[node name="Box_Top_Inside" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.99027, 0, 0.13917, 0, 1, 0, -0.13917, 0, 0.99027, 0.01, 0.836, -0.02)
+mesh = SubResource("m7")
+
+[node name="Box_Top_FlapL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.81118, -0.56799, 0.13917, 0.57358, 0.81915, 0, -0.114, 0.079826, 0.99027, -0.28609, 0.92625, 0.021613)
+mesh = SubResource("m8")
+
+[node name="Box_Top_FlapR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.81118, 0.56799, 0.13917, -0.57358, 0.81915, 0, -0.114, -0.079826, 0.99027, 0.30609, 0.92625, -0.061613)
+mesh = SubResource("m8")
+
+[node name="Box_Top_FlapF" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.99027, 0.114, 0.079826, 0, 0.57358, -0.81915, -0.13917, 0.81118, 0.56799, 0.051752, 0.89, 0.27708)
+mesh = SubResource("m9")
+
+[node name="Box_Top_FlapB" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.99027, -0.13078, 0.0476, 0, 0.34202, 0.93969, -0.13917, -0.93055, 0.33869, -0.028968, 0.91, -0.29728)
+mesh = SubResource("m9")
+
+[node name="Box_Top_Edge" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.99027, 0, 0.13917, 0, 1, 0, -0.13917, 0, 0.99027, 0.26972, 0.66, 0.19696)
+mesh = SubResource("m10")

@@ -94,6 +94,10 @@ func _physics_process(delta: float) -> void:
 		_busy = false
 		if not _is_open:
 			_set_leaf_solid(true)
+		elif collision_layer == 0:
+			# Opened by Tash (set_passage_open drops collision): once settled, stay
+			# interactable for the player (layer 4 = interact ray only, not solid).
+			_set_leaf_interact_only()
 		return
 	_busy = true
 	rotation.y = lerp_angle(current, _target_yaw, clampf(open_speed * delta, 0.0, 1.0))
@@ -122,6 +126,14 @@ func is_passage_open() -> bool:
 func set_player_locked(want_locked: bool) -> void:
 	locked = want_locked
 	_update_prompt()
+
+
+func _set_leaf_interact_only() -> void:
+	collision_layer = 4
+	for child in find_children("*", "CollisionShape3D", true, false):
+		var shape := child as CollisionShape3D
+		if shape:
+			shape.disabled = false
 
 
 func _set_leaf_solid(solid: bool) -> void:
@@ -219,6 +231,8 @@ func _on_interact(_player: Node) -> void:
 	_target_yaw = _closed_yaw + deg_to_rad(open_angle_deg) if _is_open else _closed_yaw
 	_play_creak()
 	_update_prompt()
+	if GameState:
+		GameState.note_door_toggle(global_position, String(get_parent().name) if get_parent() else String(name))
 
 
 func _play_jiggle() -> void:

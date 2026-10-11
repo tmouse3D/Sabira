@@ -16,6 +16,14 @@ extends Interactable
 @export var take_stream: AudioStream
 @export var take_volume_db: float = -18.0
 
+## Take lines (random, no immediate repeat across both pills sites). find_line is the fallback.
+const TAKE_LINES: PackedStringArray = [
+	"Sleeping pills... He drinks beer every night. If I put these in his beer, maybe he won't be angry with me. Just for tonight.",
+	"He never misses his beer. A few of these and maybe he'll leave me alone this evening.",
+]
+const TAKE_LINE_SEC := 6.0
+static var _last_take_line: int = -1
+
 const EMPTY_LINES: PackedStringArray = [
 	"Empty.",
 	"Already took those.",
@@ -118,8 +126,18 @@ func _on_interact(_player: Node) -> void:
 		_mesh = get_node_or_null(mesh_path) as Node3D
 	if _mesh:
 		_mesh.visible = false
-	get_tree().call_group("subtitle", "show_line", "SABIRA", find_line, dur)
+	get_tree().call_group("subtitle", "show_line", "SABIRA", _pick_take_line(), maxf(dur, TAKE_LINE_SEC))
 	_refresh_prompt()
+
+
+func _pick_take_line() -> String:
+	if TAKE_LINES.is_empty():
+		return find_line
+	var i := randi() % TAKE_LINES.size()
+	if TAKE_LINES.size() > 1 and i == _last_take_line:
+		i = (i + 1) % TAKE_LINES.size()
+	_last_take_line = i
+	return TAKE_LINES[i]
 
 
 func _return_pills() -> void:

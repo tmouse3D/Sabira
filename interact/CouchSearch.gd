@@ -37,25 +37,39 @@ func _ready() -> void:
 		_looted = true
 
 
-## Shrink interact hit to a thin slab on the seat/front face so back/side rays miss
-## (mirrors CupboardOpen CloseHitFrame thin slab on room-facing face).
+## Seat-only target: a box over the seat cushions (no back, no arms) reaching ~0.15 m past
+## the front edge, used for both the body shape and its InteractHit. Reach is capped at
+## COUCH_REACH and the player must stand on the front side (front = local -Z, toward the room).
+const COUCH_REACH := 1.3
+const SEAT_FRONT_EXTRA_M := 0.15
+
 func _ensure_front_only_collision() -> void:
 	var cs := get_node_or_null("CollisionShape3D") as CollisionShape3D
 	if cs == null:
 		return
 	var src := cs.shape as BoxShape3D
-	var sx := 1.9
-	var sy := 0.7
-	var sz := 0.9
-	if src:
-		sx = src.size.x
-		sy = src.size.y
-		sz = src.size.z
+	var sz3 := src.size if src != null else Vector3(2.0, 0.85, 0.9)
+	var sc := global_transform.basis.get_scale()
+	var c0 := cs.position
+	var arm := 0.17 / maxf(sc.x, 0.01)
+	var extra := SEAT_FRONT_EXTRA_M / maxf(sc.z, 0.01)
+	var z_front := c0.z - sz3.z * 0.5 - extra
+	var z_back := c0.z + sz3.z * 0.1
+	var y_lo := c0.y - sz3.y * 0.3
+	var y_hi := c0.y + sz3.y * 0.12
 	var box := BoxShape3D.new()
-	box.size = Vector3(sx * 0.95, sy * 0.85, 0.12)
+	box.size = Vector3(sz3.x - 2.0 * arm, y_hi - y_lo, z_back - z_front)
+	var ctr := Vector3(c0.x, (y_lo + y_hi) * 0.5, (z_front + z_back) * 0.5)
 	cs.shape = box
-	# Original box centered; front face at local -Z (toward TV / room).
-	cs.position = Vector3(cs.position.x, cs.position.y, -sz * 0.45)
+	cs.position = ctr
+	var hit := get_node_or_null("InteractHit/CollisionShape3D") as CollisionShape3D
+	if hit != null:
+		hit.shape = box
+		hit.transform = Transform3D(Basis(), ctr)
+	max_interact_distance = COUCH_REACH
+	front_only = true
+	front_forward = -global_transform.basis.z
+	front_origin = global_transform * Vector3(c0.x, c0.y, c0.z - sz3.z * 0.5)
 
 
 func arm_bedroom_key_site(armed: bool) -> void:
@@ -105,7 +119,7 @@ func _is_player_in_front(player: Node) -> bool:
 func can_interact(player: Node) -> bool:
 	if not interact_enabled:
 		return false
-	return _is_player_in_front(player)
+	return front_ok(player)
 
 
 func _on_interact(_player: Node) -> void:

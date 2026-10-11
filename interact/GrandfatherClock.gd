@@ -198,6 +198,7 @@ func _on_ui_closed() -> void:
 		return
 	_just_solved = false
 	_play_chime(1.0, -4.0)
+	GameState.report_noise(1.2, global_position, "clock_chime")
 	if GameState.add_inventory_flag("tash_room_key"):
 		GameState.clock_key_waiting = false
 		get_tree().call_group("subtitle", "show_line", "SABIRA", key_line, line_duration)

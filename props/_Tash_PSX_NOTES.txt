@@ -855,3 +855,51 @@ CHAR02 BLOOD ALBEDO (not applied)
 ========================================
 props/Tash_albedo_blood.png is a copy of the 512x512 albedo with a small dark-red blotch on the neck skin strip and the upper hoodie chest only.
 Live mesh material still uses Tash_albedo_256.png. Pixels of that image were not modified (hash unchanged). Do not assign the blood map until the knife hit.
+
+
+CHAR02 CHASE PACK 20261010_133945
+ADDED: ['run_chase', 'turn_left', 'turn_right', 'turn_180', 'yell', 'grab_swing', 'fail_catch', 'idle_2', 'idle_aggressive', 'taunt_flex']
+OLD UNCHANGED: ['walk', 'idle', 'idle_foot', 'idle_looking_down', 'idle_head_nod', 'stand_to_sit', 'sitting_idle', 'sitting_drinking', 'sitting_drunk', 'walk_up_stairs', 'walk_down_stairs', 'look_around', 'open_close_door', 'dying']
+METHOD: bake_tash_dying bone aim+twist, -Y forward, hip XY stripped, hip Z at walk height 0.9736 + source bob. Turn yaw KEPT.
+Backup: props/backups/Tash.glb.bak_pre_chase_20261010_1336
+GLB 4669672 bytes 2026-10-10 13:40:13
+
+
+CHAR02 CHASE PACK 20261010_134041
+ADDED: ['run_chase', 'turn_left', 'turn_right', 'turn_180', 'yell', 'grab_swing', 'fail_catch', 'idle_2', 'idle_aggressive', 'taunt_flex']
+OLD UNCHANGED: ['walk', 'idle', 'idle_foot', 'idle_looking_down', 'idle_head_nod', 'stand_to_sit', 'sitting_idle', 'sitting_drinking', 'sitting_drunk', 'walk_up_stairs', 'walk_down_stairs', 'look_around', 'open_close_door', 'dying']
+METHOD: bake_tash_dying bone aim+twist, -Y forward, hip XY stripped, hip Z at walk height 0.9736 + source bob. Turn yaw KEPT.
+Backup: props/backups/Tash.glb.bak_pre_chase_20261010_1336
+GLB 4675660 bytes 2026-10-10 13:41:06
+
+
+CHAR02 CHASE PACK 20261010_134220
+ADDED: ['run_chase', 'turn_left', 'turn_right', 'turn_180', 'yell', 'grab_swing', 'fail_catch', 'idle_2', 'idle_aggressive', 'taunt_flex']
+OLD UNCHANGED: ['walk', 'idle', 'idle_foot', 'idle_looking_down', 'idle_head_nod', 'stand_to_sit', 'sitting_idle', 'sitting_drinking', 'sitting_drunk', 'walk_up_stairs', 'walk_down_stairs', 'look_around', 'open_close_door', 'dying']
+METHOD: bake_tash_dying bone aim+twist, -Y forward, hip XY stripped, hip Z at walk height 0.9736 + source bob. Turn yaw KEPT.
+Backup: props/backups/Tash.glb.bak_pre_chase_20261010_1336
+GLB 4675660 bytes 2026-10-10 13:42:46
+
+
+CHAR02 LOCO+DRUNK+FALL 20261011_012405
+ADDED: ['turn_in_place_left_90', 'turn_in_place_right_90', 'turn_in_place_left_180', 'turn_in_place_right_180', 'walk_2', 'jog', 'strafe_walk_left', 'strafe_walk_right', 'strafe_run_left', 'strafe_run_right', 'idle_3', 'jump', 'drunk_walk', 'drunk_idle', 'drunk_idle_2', 'drunk_stumble', 'drunk_turn', 'drunk_walk_backwards', 'drunk_run', 'fall_flat']
+OLD UNCHANGED: ['walk', 'idle', 'idle_foot', 'idle_looking_down', 'idle_head_nod', 'stand_to_sit', 'sitting_idle', 'sitting_drinking', 'sitting_drunk', 'walk_up_stairs', 'walk_down_stairs', 'look_around', 'open_close_door', 'dying', 'run_chase', 'turn_left', 'turn_right', 'turn_180', 'yell', 'grab_swing', 'fail_catch', 'idle_2', 'idle_aggressive', 'taunt_flex']
+METHOD: bake_tash_dying bone aim+twist, -Y forward, hip XY stripped, hip Z at walk height 0.9736 + source bob. Turn yaw KEPT.
+Backup: props/backups/Tash.glb.bak_pre_loco_drunk_20261011_0121 (+ Tash.blend.bak_pre_loco_drunk_20261011_0121)
+GLB 7024852 bytes 2026-10-11 01:24:45
+
+
+CHAR02 LIGHT SWITCH 20261011_012640
+ADDED: ['light_switch']
+OLD UNCHANGED: ['walk', 'idle', 'idle_foot', 'idle_looking_down', 'idle_head_nod', 'stand_to_sit', 'sitting_idle', 'sitting_drinking', 'sitting_drunk', 'walk_up_stairs', 'walk_down_stairs', 'look_around', 'open_close_door', 'dying', 'run_chase', 'turn_left', 'turn_right', 'turn_180', 'yell', 'grab_swing', 'fail_catch', 'idle_2', 'idle_aggressive', 'taunt_flex', 'turn_in_place_left_90', 'turn_in_place_right_90', 'turn_in_place_left_180', 'turn_in_place_right_180', 'walk_2', 'jog', 'strafe_walk_left', 'strafe_walk_right', 'strafe_run_left', 'strafe_run_right', 'idle_3', 'jump', 'drunk_walk', 'drunk_idle', 'drunk_idle_2', 'drunk_stumble', 'drunk_turn', 'drunk_walk_backwards', 'drunk_run', 'fall_flat']
+METHOD: bake_tash_dying bone aim+twist, -Y forward, hip XY stripped, hip Z at walk height 0.9736 + source bob. Turn yaw KEPT.
+Backup: props/backups/Tash.glb.bak_pre_light_switch_20261011_0126 (+ Tash.blend)
+GLB 7224928 bytes 2026-10-11 01:26:57
+
+
+CHAR02 SHELF IDLES 20261011_021115
+ADDED: ['shelf_idle_look_away', 'shelf_idle_weight_shift', 'shelf_idle_thoughtful', 'shelf_idle_sigh', 'shelf_idle_head_shake', 'shelf_idle_nod', 'shelf_idle_acknowledge']
+OLD UNCHANGED: ['walk', 'idle', 'idle_foot', 'idle_looking_down', 'idle_head_nod', 'stand_to_sit', 'sitting_idle', 'sitting_drinking', 'sitting_drunk', 'walk_up_stairs', 'walk_down_stairs', 'look_around', 'open_close_door', 'dying', 'run_chase', 'turn_left', 'turn_right', 'turn_180', 'yell', 'grab_swing', 'fail_catch', 'idle_2', 'idle_aggressive', 'taunt_flex', 'turn_in_place_left_90', 'turn_in_place_right_90', 'turn_in_place_left_180', 'turn_in_place_right_180', 'walk_2', 'jog', 'strafe_walk_left', 'strafe_walk_right', 'strafe_run_left', 'strafe_run_right', 'idle_3', 'jump', 'drunk_walk', 'drunk_idle', 'drunk_idle_2', 'drunk_stumble', 'drunk_turn', 'drunk_walk_backwards', 'drunk_run', 'fall_flat', 'light_switch']
+METHOD: bake_tash_dying bone aim+twist, -Y forward, hip XY stripped, hip Z at walk height 0.9736 + source bob. Turn yaw KEPT.
+Backup: props/backups/Tash.glb.bak_pre_shelf_idle_20261011_0210 (+ Tash.blend)
+GLB 8255392 bytes 2026-10-11 02:11:45

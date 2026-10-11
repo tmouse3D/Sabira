@@ -38,6 +38,9 @@ func _on_body_entered(body: Node3D) -> void:
 		_audio.play()
 	if GameState:
 		GameState.report_noise(noise_amount)
+		# Sprinting onto the stairs is loud enough for Tash to hear (positional, 0.6).
+		if Input.is_action_pressed("sprint") and not GameState.is_crouching:
+			GameState.report_noise(0.6, body.global_position, "stairs_sprint")
 
 
 func _on_body_exited(body: Node3D) -> void:

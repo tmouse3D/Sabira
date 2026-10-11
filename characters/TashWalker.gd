@@ -258,10 +258,209 @@ const _STAB_LINES: PackedStringArray = [
 const _STAB_LINE_IN := 0.6
 const _STAB_LINE_HOLD := 3.0
 const _STAB_LINE_OUT := 0.55
+# --- Noise investigation (GameState.noise_reported -> hear_noise). No detection / catch. ---
+const _HEAR_RANGE_M := 12.0
+const _HEAR_OTHER_FLOOR_DY := 1.5
+const _HEAR_OTHER_FLOOR_MUL := 0.5
+const _INV_LOOK_MIN := 6.0
+const _INV_LOOK_MAX := 8.0
+const _INV_LINE := "Who's there?"
+var _inv_pending: bool = false
+var _investigating: bool = false
+var _inv_look: bool = false
+var _inv_target_world: Vector3 = Vector3.ZERO
+# --- Vision + chase (no catch consequences). See the VISION / CHASE section at the end. ---
+const RUN_SPEED := 2.8
+const RUN_ANIM_FALLBACK_SCALE := 2.0
+const VIS_FOV_DEG := 80.0
+const VIS_RANGE_M := 11.0
+const VIS_CROUCH_MUL := 0.7
+const VIS_INTERVAL := 0.1
+const CHASE_LOSE_SEC := 1.5
+const CHASE_REPATH_SEC := 0.5
+const BREATHER_MIN := 12.0
+const BREATHER_MAX := 20.0
+const YELL_SEC := 2.0
+const REACH_M := 1.2
+const GRAB_FALLBACK_SEC := 1.2
+const GRAB_COOLDOWN_SEC := 3.0
+const FAIL_DIST_M := 1.0
+const FAIL_FALLBACK_SEC := 2.5
+const TURN_CLIP_DEG := 100.0
+const _CHASE_YELL_LINES := [
+	"Sabira! Get back to your room, now!",
+	"Who said you could walk around? Who gave you permission?",
+	"You do what I say in this house!",
+	"Come here! You'll be punished for this!",
+	"Back to your room, or I'll make you regret it!",
+	"Don't you dare run from me!",
+]
+var _last_yell_i: int = -1
+# First sight (once per run): one set picked at random, chunks shown in sequence during an
+# extended start yell (chase stays on, vision keeps tracking).
+const FIRST_SIGHT_LINES := [
+	["Done with dinner? Then go to your room and pray.", "Pray for a patient husband one day. Pray you learn to obey.", "Pride is a sin. You don't get to do as you like."],
+	["If you're finished eating, you go to your room. Now.", "Get on your knees. Pray for a husband patient enough to keep you.", "And pray you stop disobeying. A proud girl is a sinful girl."],
+]
+const FIRST_SIGHT_CHUNK_SEC := 2.7
+const FIRST_SIGHT_MAX_SEC := 8.0
+# Fail catch caption by safe zone (GameState.is_safe_zone()).
+const FAIL_CATCH_LINES_PEAS := [
+	"There. Don't you dare run around. Stay and pray, you're behaving like a prideful sinner.",
+	"Kneel. And stay there until you remember your place.",
+	"Pray for forgiveness. You'll need it, the way you're going.",
+]
+const FAIL_CATCH_LINES_CHAIR := [
+	"Stay and eat. And don't forget to clean the dishes afterwards.",
+	"Sit. You wanted to stay longer, so stay. Then wash everything.",
+	"Eat your food. A good daughter doesn't wander. Dishes after.",
+]
+var _first_sight_done: bool = false
+# First-sight WARNING (routine sighting only): stare + lines, then WARN_SEC watching her.
+const WARN_SEC := 8.0
+const WARN_OCCLUDED_SEC := 1.0
+const WARN_FACE_RAD_S := 6.0
+const SABIRA_ROOM_MIN := Vector3(2.5, 2.9, -1.2)
+const SABIRA_ROOM_MAX := Vector3(7.0, 6.0, 2.5)
+var _warn: bool = false
+var _warn_t: float = 0.0
+var _warn_occl_t: float = 0.0
+var _roar_chunks: Array = []
+var _roar_chunk_t: float = 0.0
+var _last_fail_line: String = ""
+## Clip map: the real clip name(s) first; fallbacks are applied in _clip() when they are missing.
+## run -> walk at RUN_ANIM_FALLBACK_SCALE, yell / fail -> look_around, grab -> idle, turns -> skip.
+const _CLIP_MAP := {
+	"run": ["run_chase", "Run_Chase"],
+	"turn_left": ["turn_left", "turn_90_left", "Turn_Left"],
+	"turn_right": ["turn_right", "turn_90_right", "Turn_Right"],
+	"turn_180": ["turn_180", "Turn_180"],
+	"yell": ["yell", "Yell"],
+	"grab": ["grab_swing", "Grab_Swing"],
+	"fail": ["fail_catch", "Fail_Catch"],
+	"idle_2": ["idle_2", "Idle_2"],
+	"idle_aggressive": ["idle_aggressive"],
+	"taunt": ["taunt_flex"],
+	"idle_3": ["idle_3"],
+	"walk_2": ["walk_2"],
+	"jog": ["jog"],
+	"strafe_walk_left": ["strafe_walk_left"],
+	"strafe_walk_right": ["strafe_walk_right"],
+	"strafe_run_left": ["strafe_run_left"],
+	"strafe_run_right": ["strafe_run_right"],
+	"drunk_walk": ["drunk_walk"],
+	"drunk_idle": ["drunk_idle"],
+	"drunk_idle_2": ["drunk_idle_2"],
+	"drunk_run": ["drunk_run"],
+	"drunk_stumble": ["drunk_stumble"],
+	"drunk_turn": ["drunk_turn"],
+	"fall_flat": ["fall_flat"],
+	"turn_l90": ["turn_in_place_left_90"],
+	"turn_r90": ["turn_in_place_right_90"],
+	"turn_l180": ["turn_in_place_left_180"],
+	"turn_r180": ["turn_in_place_right_180"],
+	"light_switch": ["light_switch"],
+}
+## Baked yaw of the in-place turn clips (deg, + = left). drunk_walk_backwards is never used.
+const _TURN_DEG := {"turn_l90": 89.7, "turn_r90": -102.6, "turn_l180": 176.1, "turn_r180": -172.7, "drunk_turn": 91.7}
+## Looping clips (set on the AnimationPlayer's Animation resources at runtime, not BoneMap).
+const _LOOP_KEYS := ["run", "idle_2", "idle_aggressive", "idle_3", "walk_2", "jog", "strafe_walk_left", "strafe_walk_right", "strafe_run_left", "strafe_run_right", "drunk_walk", "drunk_idle", "drunk_idle_2", "drunk_run"]
+var _intro_frozen: bool = false
+var _chasing: bool = false
+var _chase_pending: bool = false
+var _seen: bool = false
+var _last_seen_world: Vector3 = Vector3.ZERO
+var _unseen_t: float = 0.0
+var _repath_t: float = 0.0
+var _breather_t: float = 0.0
+var _vis_t: float = 0.0
+var _chase_hold: bool = false
+var _hold_kind: String = ""
+var _fail_walk: bool = false
+var _fail_done: bool = false
+var _cone_on: bool = false
+var _cone_mi: MeshInstance3D = null
+var _head_bone: int = -2
+var _run_clip: String = ""
+# Lost-chase hold (idle / idle_aggressive, 3-4 s) instead of look_around.
+var _lost_search: bool = false
+const LOST_HOLD_MIN := 3.0
+const LOST_HOLD_MAX := 4.0
+const QUICK_TURN_SEC := 0.3
+# Darkness: vision range x0.45 and 0.8 s of continuous sight before chase; lit 0.1 s.
+const DARK_RANGE_MUL := 0.45
+const DARK_DETECT_SEC := 0.8
+const LIT_DETECT_SEC := 0.1
+const LIT_MIN_ENERGY := 0.055
+var _sight_t: float = 0.0
+var _player_lit: bool = true
+var _lights_cache: Array = []
+# Chase navigation: runtime-baked NavigationRegion3D + NavigationAgent3D (chase only).
+const NAV_AGENT_RADIUS := 0.25
+const NAV_AGENT_HEIGHT := 1.8
+const NAV_CELL := 0.1
+const NAV_CELL_H := 0.05
+var _nav_region: NavigationRegion3D = null
+var _agent: NavigationAgent3D = null
+var _nav_ready: bool = false
+var _doorways_cache: Array = []
+# --- Hungover mode (after a drunk-lock wake, rest of the run) ---
+const HUNG_WALK_SPEED := 0.45
+const HUNG_RUN_SPEED := 2.0
+const STUMBLE_MIN := 12.0
+const STUMBLE_MAX := 25.0
+var _hungover: bool = false
+var _stumble_t: float = 0.0
+# --- Chase fall (2% per chase, 2-6 s in): fall_flat, lie 4.5 s, fall_flat reversed 0.8x ---
+const FALL_CHANCE := 0.02
+const FALL_LIE_SEC := 4.5
+const GETUP_SPEED := 0.8
+var _fall_t: float = -1.0
+var _force_fall: bool = false
+# --- In-place turns (patrol / investigate, > 60 deg) ---
+const INPLACE_TURN_DEG := 60.0
+const TURN_REST_SEC := 0.15
+var _turn_from_yaw: float = 0.0
+var _turn_clip_rad: float = 0.0
+var _turn_total_rad: float = 0.0
+# --- Relight: light_switch noise with its lights off -> walk to the switch, relight, then look ---
+const RELIGHT_AT_SEC := 1.8
+const RELIGHT_FALLBACK_SEC := 1.0
+var _inv_switch: Node3D = null
+var _relight_pending: bool = false
+var _relight_done: bool = false
+var _relight_t: float = 0.0
+var _relight_retry: int = 0
+# Light switch hearing filter (names; floor = switch / Tash height).
+const SWITCH_ALWAYS_IGNORE := ["Switch_DownstairsBath", "Switch_UpperBath", "Switch_SabiraRoom", "Switch_Hidden"]
+const SWITCH_F2_ALLOWED := ["Switch_Landing"]
+# Chase keeps going while line of sight holds: range 16 m, FOV 140 (initial detection: 80).
+const CHASE_RANGE_M := 16.0
+const CHASE_FOV_DEG := 140.0
+var _los: bool = false
+# Chase stairs / watchdog / start roar.
+const CHASE_FACE_RAD_S := 12.0
+const STUCK_SEC := 1.5
+const STUCK_MOVE_M := 0.25
+const ROAR_SEC := 1.7
+var _graph_leg: bool = false
+var _graph_goal: Vector3 = Vector3.INF
+# Bookshelf stops (f1stand / f2stand / office p18): 2-3 shelf_idle clips per stop.
+const SHELF_LOOP_CLIPS := ["shelf_idle_look_away", "shelf_idle_weight_shift", "shelf_idle_thoughtful", "shelf_idle_sigh", "shelf_idle_head_shake", "shelf_idle_acknowledge"]
+const SHELF_NOD_CLIP := "shelf_idle_nod"
+var _shelf_plan: Array = []
+var _shelf_slice: float = 0.0
+var _graph_force_t: float = 0.0
+var _wd_t: float = 0.0
+var _wd_pos: Vector3 = Vector3.ZERO
+var _chase_roar: bool = false
+var _chase_roar_set: bool = false
 
 
 func _ready() -> void:
 	add_to_group("tash")
+	if get_node_or_null("TashMouthCycle") == null:
+		add_child(TashMouthCycle.new())
 	_ensure_drunk_look()
 	collision_layer = 1
 	collision_mask = 1
@@ -275,6 +474,8 @@ func _ready() -> void:
 		_path_follow.rotation_mode = PathFollow3D.ROTATION_NONE
 	_apply_model_yaw_offset()
 	_setup_footsteps()
+	if GameState != null and GameState.has_signal("noise_reported"):
+		GameState.noise_reported.connect(hear_noise)
 	call_deferred("_try_bind_walk_clip")
 	call_deferred("_start_patrol")
 
@@ -292,8 +493,10 @@ func _apply_model_yaw_offset() -> void:
 	if _model == null:
 		return
 	_model.position = Vector3.ZERO
-	_model.rotation_degrees = Vector3(0.0, model_yaw_offset_deg, 0.0)
+	_model.rotation_degrees = Vector3(0.0, model_yaw_offset_deg + _vis_corr_deg, 0.0)
 	_model.scale = Vector3.ONE * model_scale
+	if _vis_corr_pos != Vector3.ZERO:
+		_model.position = global_transform.basis.inverse() * _vis_corr_pos
 
 
 func _apply_couch_visual() -> void:
@@ -301,9 +504,9 @@ func _apply_couch_visual() -> void:
 		_apply_model_yaw_offset()
 	if _model == null:
 		return
-	_model.rotation_degrees = Vector3(couch_model_pitch_deg, model_yaw_offset_deg, 0.0)
+	_model.rotation_degrees = Vector3(couch_model_pitch_deg, model_yaw_offset_deg + _vis_corr_deg, 0.0)
 	_model.scale = Vector3.ONE * model_scale
-	var world_off := Vector3(0.0, couch_model_y_offset, couch_model_z_offset)
+	var world_off := Vector3(0.0, couch_model_y_offset, couch_model_z_offset) + _vis_corr_pos
 	_model.position = global_transform.basis.inverse() * world_off
 
 
@@ -312,9 +515,9 @@ func _apply_office_visual() -> void:
 		_apply_model_yaw_offset()
 	if _model == null:
 		return
-	_model.rotation_degrees = Vector3(office_model_pitch_deg, model_yaw_offset_deg, 0.0)
+	_model.rotation_degrees = Vector3(office_model_pitch_deg, model_yaw_offset_deg + _vis_corr_deg, 0.0)
 	_model.scale = Vector3.ONE * model_scale
-	var world_off := Vector3(0.0, 0.0, office_model_z_offset)
+	var world_off := Vector3(0.0, 0.0, office_model_z_offset) + _vis_corr_pos
 	_model.position = global_transform.basis.inverse() * world_off
 
 
@@ -412,7 +615,7 @@ func _bind_idle_stands() -> void:
 	_idle_stand_clips.clear()
 	if _anim == null:
 		return
-	var names: PackedStringArray = PackedStringArray(["idle", "idle_foot", "idle_looking_down", "idle_head_nod"])
+	var names: PackedStringArray = PackedStringArray(["idle", "idle_foot", "idle_looking_down", "idle_head_nod", "idle_3"])
 	for clip_name in names:
 		var found := _resolve_clip_path(String(clip_name))
 		if found == "":
@@ -431,14 +634,16 @@ func _begin_idle_stand(yaw_deg: float) -> void:
 	_look_left = idle_hold_seconds
 	global_rotation = Vector3(0.0, deg_to_rad(yaw_deg), 0.0)
 	_apply_model_yaw_offset()
+	_shelf_plan = []
+	if _play_hung_idle():
+		return
+	if _start_shelf_idles():
+		return
 	if _anim != null and _idle_stand_clips.size() > 0:
 		var pick := String(_idle_stand_clips[randi() % _idle_stand_clips.size()])
 		_anim.play(pick)
 		return
-	if _look_clip != "" and _anim != null:
-		_force_loop(_look_clip, Animation.LOOP_NONE)
-		_anim.play(_look_clip)
-		return
+	# look_around is reserved for noise investigation; no look fallback on patrol stands.
 	if _anim != null and _anim.is_playing():
 		_anim.pause()
 
@@ -619,7 +824,7 @@ func _play_named(clip_path: String) -> void:
 	if not _anim.has_animation(clip_path):
 		return
 	if _anim.current_animation != clip_path or not _anim.is_playing():
-		_anim.play(clip_path)
+		_anim.play(clip_path, 0.25)
 
 
 func _marker(path: NodePath, fallback_name: String) -> Node3D:
@@ -773,6 +978,7 @@ func _wake_from_drunk() -> void:
 	if GameState != null:
 		GameState.tash_sedated = false
 	print("TashWalker: couch drunk wake")
+	_set_hungover()
 	_begin_stand()
 
 func is_drunk_locked() -> bool:
@@ -1030,10 +1236,11 @@ func _begin_stand() -> void:
 		_finish_stand()
 		return
 	_act = _Act.STAND_UP
-	_anim.play(_sit_clip, -1.0, -1.0, true)
+	_anim.play(_sit_clip, 0.35, -1.0, true)
 
 
 func _finish_stand() -> void:
+	_vis_capture()
 	_restore_couch_props()
 	_couch_drink_phase = _DRINK_OFF
 	_set_tv(false)
@@ -1049,6 +1256,23 @@ func _finish_stand() -> void:
 	rotation = Vector3.ZERO
 	_apply_model_yaw_offset()
 	_choose_next()
+	# Keep the facing the stand ends on (measured on the hips, with the next clip's pose).
+	# Walking: rotate the path yaw by the difference, then the walk eases to the heading.
+	# Anything else (in-place turn, idle): a decaying visual correction.
+	if _model != null and not _tash_dead:
+		var pre_yaw := _vis_pre_yaw
+		var pre_pos := _vis_pre_pos
+		if _anim != null:
+			_anim.advance(0.0)
+		var dy := angle_difference(_vis_yaw_now(), pre_yaw)
+		if _act == _Act.WALK and _path_follow != null:
+			_path_follow.rotation.y += dy
+			_apply_model_yaw_offset()
+			if _anim != null:
+				_anim.advance(0.0)
+		_vis_pre_yaw = pre_yaw
+		_vis_pre_pos = pre_pos
+		_vis_settle(false)
 
 
 func _doorway_for(kind: String) -> Doorway:
@@ -1155,7 +1379,7 @@ func _on_animation_finished(anim_name: StringName) -> void:
 				_drink_missing_warned = true
 				push_warning("TashWalker: sitting_drinking missing. Drink sit stays on sitting_idle.")
 		if _idle_clip != "":
-			_anim.play(_idle_clip)
+			_anim.play(_idle_clip, 0.3)
 		return
 	if _act == _Act.SIT_HOLD and _couch_drink_phase == _DRINK_CLIP and done == _drink_clip:
 		_finish_couch_drink()
@@ -1178,8 +1402,15 @@ func _apply_sit_blend() -> void:
 
 
 func _locomotion_clip() -> String:
+	if _chasing and _run_clip != "":
+		return _run_clip
+	var flat_walk := _clip_path
+	if _hungover:
+		var dw := _real_clip("drunk_walk")
+		if dw != "":
+			flat_walk = dw
 	if _route_i < 0 or _route_i >= _route.size() - 1:
-		return _clip_path
+		return flat_walk
 	var a: Vector3 = _pt[String(_route[_route_i])] as Vector3
 	var b: Vector3 = _pt[String(_route[_route_i + 1])] as Vector3
 	var dy := b.y - a.y
@@ -1189,7 +1420,7 @@ func _locomotion_clip() -> String:
 	elif dy < -0.05:
 		if _down_clip != "":
 			return _down_clip
-	return _clip_path
+	return flat_walk
 
 
 func _play_locomotion() -> void:
@@ -1197,6 +1428,7 @@ func _play_locomotion() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_tick_vis_corr(delta)
 	if _tash_dead:
 		if _act == _Act.SIT_HOLD:
 			global_position = _sit_global
@@ -1206,9 +1438,48 @@ func _physics_process(delta: float) -> void:
 			_tick_dying_speed()
 			_tick_blood_puddle(delta)
 		return
+	if _intro_frozen:
+		return
 	_tick_steps(delta)
+	_tick_vision(delta)
+	_tick_chase(delta)
+	if _hungover and _act == _Act.WALK and not _chasing:
+		_stumble_t -= delta
+	if _chase_pending:
+		_try_begin_chase()
+	if _inv_pending:
+		_try_begin_investigation()
 	if _act == _Act.IDLE:
 		_look_left -= delta
+		if _chase_hold:
+			if _hold_kind == "warn":
+				_tick_warn(delta)
+				return
+			if _hold_kind == "roar":
+				if _roar_chunks.size() > 0:
+					_roar_chunk_t -= delta
+					if _roar_chunk_t <= 0.0:
+						_show_roar_chunk()
+				# Long first-sight hold: when the one-shot yell ends, hold idle_aggressive.
+				if _anim != null and not _anim.is_playing() and _real_clip("idle_aggressive") != "":
+					_force_loop(_real_clip("idle_aggressive"), Animation.LOOP_LINEAR)
+					_anim.play(_real_clip("idle_aggressive"), 0.25)
+			if _hold_kind == "relight":
+				_relight_t += delta
+				if _relight_t >= RELIGHT_AT_SEC and not _relight_done:
+					_relight_now()
+			if _look_left <= 0.0:
+				_end_chase_hold()
+			return
+		if _inv_look:
+			if _look_left <= 0.0:
+				_end_investigation()
+			return
+		if _shelf_plan.size() > 0 and _look_left > 0.0:
+			_shelf_slice -= delta
+			if _shelf_slice <= 0.0:
+				_shelf_plan.pop_front()
+				_play_shelf_slice()
 		if _route_idle:
 			if _look_left <= 0.0:
 				_end_route_idle()
@@ -1284,6 +1555,7 @@ func _start_patrol() -> void:
 		return
 	_patrol_started = true
 	_build_nav()
+	_setup_chase_nav()
 	_here = "p0"
 	if _path_follow != null and _pt.has("p0"):
 		_path_follow.position = _pt["p0"] as Vector3
@@ -1592,6 +1864,13 @@ func _begin_route_idle() -> void:
 	_look_left = randf_range(3.0, 4.0)
 	rotation = Vector3.ZERO
 	_apply_model_yaw_offset()
+	if _play_hung_idle():
+		return
+	var idle2 := _real_clip("idle_2")
+	if idle2 != "" and randi() % (_idle_stand_clips.size() + 1) == 0:
+		_force_loop(idle2, Animation.LOOP_LINEAR)
+		_anim.play(idle2)
+		return
 	if _anim != null and _idle_stand_clips.size() > 0:
 		var pick := String(_idle_stand_clips[randi() % _idle_stand_clips.size()])
 		_anim.play(pick)
@@ -1609,6 +1888,8 @@ func _end_route_idle() -> void:
 
 
 func _maybe_turn_idle(point_id: String) -> bool:
+	if _chasing or _fail_walk:
+		return false
 	if _turn_ids.has(point_id):
 		_turn_count += 1
 	var owed := _turn_count >= 2 or _idle_when_flat
@@ -1666,9 +1947,17 @@ func _start_route(route: Array) -> void:
 	_seg_dist = 0.0
 	_opened_route_i = -1
 	_act = _Act.WALK
+	_maybe_inplace_turn()
 
 
 func _choose_next() -> void:
+	if _chase_pending:
+		_start_chase()
+		return
+	if _inv_pending:
+		# A heard noise interrupted a stop (e.g. stood up from a sit): investigate instead.
+		_start_investigation()
+		return
 	if _pick_depth > 6:
 		_act = _Act.WALK
 		return
@@ -1715,18 +2004,34 @@ func _choose_next() -> void:
 
 
 func _begin_current_stop() -> void:
+	if _active_stop == "chase":
+		# Reached the target point: wait in place for the next re-path.
+		_route = []
+		_route_i = 0
+		_act = _Act.WALK
+		return
+	if _active_stop == "failcatch":
+		_begin_chase_hold("fail")
+		return
+	if _active_stop == "investigate":
+		_begin_inv_look()
+		return
 	_last_stop = _active_stop
 	_route = []
 	_route_i = 0
 	var started := true
+	_vis_capture()
 	if _active_stop == "shelf":
 		_begin_idle_stand(office_idle_body_yaw_deg)
+		_vis_settle(false)
 		return
 	elif _active_stop == "idle_f1":
 		_begin_idle_stand(f1_idle_body_yaw_deg)
+		_vis_settle(false)
 		return
 	elif _active_stop == "idle_f2":
 		_begin_idle_stand(f2_idle_body_yaw_deg)
+		_vis_settle(false)
 		return
 	elif _active_stop == "office":
 		started = _begin_office_sit()
@@ -1742,6 +2047,8 @@ func _begin_current_stop() -> void:
 		return
 	if not started:
 		_choose_next()
+		return
+	_vis_settle(_active_stop == "couch")
 
 
 func _cross_door(a_id: String, b_id: String) -> String:
@@ -1759,7 +2066,13 @@ func _place(pos: Vector3, dir: Vector3) -> void:
 	var flat := dir
 	flat.y = 0.0
 	if flat.length_squared() > 0.0001:
-		_path_follow.rotation = Vector3(0.0, atan2(-flat.x, -flat.z), 0.0)
+		var want := atan2(-flat.x, -flat.z)
+		if _act == _Act.WALK and not _chasing:
+			# Smooth heading at route corners instead of snapping per segment.
+			var cur := _path_follow.rotation.y
+			_path_follow.rotation = Vector3(0.0, rotate_toward(cur, cur + angle_difference(cur, want), WALK_FACE_RAD_S * get_physics_process_delta_time()), 0.0)
+		else:
+			_path_follow.rotation = Vector3(0.0, want, 0.0)
 	_apply_model_yaw_offset()
 
 
@@ -1787,7 +2100,7 @@ func _advance_route(delta: float) -> void:
 		if _route_i >= _route.size() - 1:
 			_begin_current_stop()
 		return
-	_seg_dist += walk_speed * delta
+	_seg_dist += walk_speed * _speed_mul() * delta
 	if _seg_dist >= seg_len:
 		_seg_dist = 0.0
 		_route_i += 1
@@ -1795,6 +2108,10 @@ func _advance_route(delta: float) -> void:
 		_place(b, b - a)
 		if _route_i >= _route.size() - 1:
 			_begin_current_stop()
+			return
+		if _maybe_inplace_turn():
+			return
+		if _maybe_stumble():
 			return
 		if _maybe_turn_idle(b_id):
 			return
@@ -2059,6 +2376,9 @@ func _swap_blood_albedo() -> void:
 	if tex == null:
 		push_warning("TashWalker: blood albedo missing")
 		return
+	var mouth := get_node_or_null("TashMouthCycle") as TashMouthCycle
+	if mouth != null:
+		mouth.set_blood(true)
 	for node in find_children("*", "MeshInstance3D", true, false):
 		var mesh_inst := node as MeshInstance3D
 		if mesh_inst == null or mesh_inst.name == "Stain":
@@ -2067,6 +2387,9 @@ func _swap_blood_albedo() -> void:
 		if mesh == null:
 			continue
 		for s in mesh.get_surface_count():
+			# The face surface belongs to TashMouthCycle (blood_* mouth frames).
+			if mouth != null and mouth.owns(mesh_inst, s):
+				continue
 			var mat := mesh_inst.get_active_material(s) as StandardMaterial3D
 			if mat == null:
 				continue
@@ -2110,3 +2433,1697 @@ func _add_blood_box(skel: Skeleton3D, names: PackedStringArray, att_name: String
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	stain.material_override = mat
 	att.add_child(stain)
+
+
+# --- NOISE INVESTIGATION -------------------------------------------------------------------
+## GameState.noise_reported handler. Range = 12 m * loudness, halved on another floor
+## (|dy| > 1.5 m). Ignored while dead or drunk-locked. Sets a pending investigation that starts
+## as soon as he can safely break off (after a door / sit animation; sits stand up first).
+func hear_noise(pos: Vector3, loudness: float, source: String) -> void:
+	if _chasing or _chase_pending or (_chase_hold and _chasing) or _fail_walk or _intro_frozen or _warn:
+		print("[NOISE] Tash ignores %s (busy: chase/fail/intro/warn)" % source)
+		return
+	if _tash_dead or is_drunk_locked() or not _patrol_started or _path_follow == null:
+		print("[NOISE] Tash ignores %s (%s)" % [source, "dead" if _tash_dead else ("drunk" if is_drunk_locked() else "not ready")])
+		return
+	if source.begins_with("light_switch"):
+		var why := _switch_ignore_reason(source, pos)
+		if why != "":
+			print("[NOISE] Tash ignores %s (%s)" % [source, why])
+			return
+	var dy := absf(pos.y - global_position.y)
+	var hear_range := _HEAR_RANGE_M * loudness
+	if dy > _HEAR_OTHER_FLOOR_DY:
+		hear_range *= _HEAR_OTHER_FLOOR_MUL
+	var dist := global_position.distance_to(pos)
+	if dist > hear_range:
+		print("[NOISE] Tash too far from %s (%.1f m > %.1f m)" % [source, dist, hear_range])
+		return
+	print("[NOISE] Tash hears %s (%.1f m, range %.1f m)" % [source, dist, hear_range])
+	_lost_search = false
+	_inv_target_world = pos
+	_inv_pending = true
+	_relight_pending = false
+	_inv_switch = null
+	if source.begins_with("light_switch"):
+		_inv_switch = _switch_by_source(source, pos)
+		if _inv_switch != null and _inv_switch.has_method("is_on") and not bool(_inv_switch.call("is_on")):
+			# Walk to ~0.5 m in front of the switch on its ROOM side, relight, then the look-around.
+			_inv_target_world = _switch_stand_point(_inv_switch)
+			_relight_pending = true
+			_relight_retry = 0
+			print("[NOISE] Tash will relight ", _inv_switch.name)
+
+
+func is_investigating() -> bool:
+	return _investigating or _inv_pending
+
+
+func _try_begin_investigation() -> void:
+	if _tash_dead or is_drunk_locked():
+		_inv_pending = false
+		return
+	# Let a door open / a sit-down or stand-up animation finish first.
+	if _act == _Act.DOOR or _act == _Act.SIT_DOWN or _act == _Act.STAND_UP:
+		return
+	if _act == _Act.SIT_HOLD:
+		# Stand up with the normal logic: TV off, bottle/glass restored, drink phase reset.
+		# _finish_stand -> _choose_next -> _start_investigation (pending).
+		_couch_drink_this = false
+		if _snap_sit:
+			_finish_stand()
+		else:
+			_begin_stand()
+		return
+	_start_investigation()
+
+
+func _graph_ids() -> Array:
+	var out: Array = []
+	for id_any in _nb.keys():
+		var id := String(id_any)
+		if id.begins_with("nz_"):
+			continue
+		out.append(id)
+	return out
+
+
+func _path_space() -> Node3D:
+	if _path_follow != null and _path_follow.get_parent() is Node3D:
+		return _path_follow.get_parent() as Node3D
+	return null
+
+
+func _line_clear(a_local: Vector3, b_local: Vector3) -> bool:
+	var space := _path_space()
+	if space == null or not is_inside_tree():
+		return false
+	var a := space.to_global(a_local) + Vector3(0, 0.9, 0)
+	var b := space.to_global(b_local) + Vector3(0, 0.9, 0)
+	# Never take a straight cut through Door_DownstairsBath.
+	var bath := _house_root().get_node_or_null("Doors/Door_DownstairsBath") as Node3D if _house_root() != null else null
+	if bath != null:
+		var d := Geometry3D.get_closest_point_to_segment(bath.global_position, a, b)
+		if Vector2(d.x - bath.global_position.x, d.z - bath.global_position.z).length() < 0.7 and absf(d.y - 0.9 - bath.global_position.y) < 2.0:
+			return false
+	# Capsule sweep (r 0.25, 0.25-1.65 m above the floor) against world + couch blockers, so
+	# straight shortcuts never cut through furniture lower than the old 0.9 m ray.
+	var cap := CapsuleShape3D.new()
+	cap.radius = 0.25
+	cap.height = 1.4
+	var sq := PhysicsShapeQueryParameters3D.new()
+	sq.shape = cap
+	sq.transform = Transform3D(Basis.IDENTITY, a + Vector3(0, 0.05, 0))
+	sq.motion = b - a
+	sq.collision_mask = 1 | 8
+	sq.exclude = [get_rid()]
+	var res := get_world_3d().direct_space_state.cast_motion(sq)
+	return res.size() >= 1 and res[0] >= 0.999
+
+
+## Nearest route-graph node, same floor first, preferring one with a clear straight line.
+func _nearest_node(local_pos: Vector3) -> String:
+	var best := ""
+	var best_d := INF
+	var best_any := ""
+	var best_any_d := INF
+	for id_any in _graph_ids():
+		var id := String(id_any)
+		var p: Vector3 = _pt[id] as Vector3
+		var d := Vector2(p.x - local_pos.x, p.z - local_pos.z).length() + absf(p.y - local_pos.y) * 3.0
+		if d < best_any_d:
+			best_any_d = d
+			best_any = id
+		if d < best_d and _line_clear(p, local_pos):
+			best_d = d
+			best = id
+	return best if best != "" else best_any
+
+
+func _clear_inv_links() -> void:
+	var temp: Array = []
+	for k in _nb.keys():
+		if String(k).begins_with("nz_"):
+			temp.append(String(k))
+	for id in temp:
+		if _nb.has(id):
+			for nb_any in (_nb[id] as Array):
+				var nb := String(nb_any)
+				if _nb.has(nb):
+					(_nb[nb] as Array).erase(id)
+			_nb.erase(id)
+
+
+func _start_investigation() -> void:
+	_inv_pending = false
+	_chase_hold = false
+	if not _investigating:
+		_lost_search = false
+	if _path_follow == null or _path_space() == null:
+		return
+	var first := not _investigating
+	_investigating = true
+	_inv_look = false
+	_route_idle = false
+	var here_local: Vector3 = _path_follow.position
+	var goal_local: Vector3 = _path_space().to_local(_inv_target_world)
+	goal_local.y = snappedf(goal_local.y, 0.01)
+	if _here == "nz_goal" or _here == "nz_here":
+		_here = ""
+	_clear_inv_links()
+	var start_id := _nearest_node(here_local)
+	var end_id := _nearest_node(goal_local)
+	var path := _shortest(start_id, end_id)
+	if path.is_empty():
+		push_warning("TashWalker: no route to the noise. Ignored.")
+		_investigating = false
+		_choose_next()
+		return
+	var route: Array = []
+	var start_p: Vector3 = _pt[start_id] as Vector3
+	if here_local.distance_to(start_p) > 0.05:
+		_pt["nz_here"] = here_local
+		route.append("nz_here")
+	route.append_array(path)
+	var end_p: Vector3 = _pt[end_id] as Vector3
+	if Vector2(goal_local.x - end_p.x, goal_local.z - end_p.z).length() > 0.3 and absf(goal_local.y - end_p.y) < 0.3 and _line_clear(end_p, goal_local):
+		goal_local.y = end_p.y
+		_pt["nz_goal"] = goal_local
+		route.append("nz_goal")
+		_link("nz_goal", end_id)
+	_here = start_id
+	_active_stop = "investigate"
+	print("[NOISE] Tash investigates: ", route)
+	if first:
+		get_tree().call_group("subtitle", "show_line", "TASH", _INV_LINE, 2.5)
+		if GameState != null and GameState.has_signal("tash_alert_changed"):
+			GameState.tash_alert_changed.emit("search")
+	if route.size() <= 1:
+		_begin_inv_look()
+		return
+	_start_route(route)
+
+
+func _begin_inv_look() -> void:
+	if _relight_pending and _inv_switch != null and is_instance_valid(_inv_switch):
+		_begin_relight()
+		return
+	_act = _Act.IDLE
+	_route_idle = false
+	_inv_look = true
+	_look_left = randf_range(_INV_LOOK_MIN, _INV_LOOK_MAX)
+	rotation = Vector3.ZERO
+	_apply_model_yaw_offset()
+	_face_world_point(_inv_target_world)
+	if _lost_search:
+		# After a lost chase: brief idle / idle_aggressive hold, never look_around.
+		_look_left = randf_range(LOST_HOLD_MIN, LOST_HOLD_MAX)
+		var hold_clip := _real_clip("idle_aggressive")
+		if hold_clip == "" or randf() < 0.5:
+			hold_clip = String(_idle_stand_clips[randi() % _idle_stand_clips.size()]) if _idle_stand_clips.size() > 0 else hold_clip
+		if hold_clip != "" and _anim != null:
+			_force_loop(hold_clip, Animation.LOOP_LINEAR)
+			_anim.play(hold_clip)
+		print("[CHASE] lost hold %.1f s (%s)" % [_look_left, hold_clip])
+		return
+	if _look_clip != "" and _anim != null:
+		_force_loop(_look_clip, Animation.LOOP_LINEAR)
+		_anim.play(_look_clip)
+	elif _anim != null and _idle_stand_clips.size() > 0:
+		_anim.play(String(_idle_stand_clips[randi() % _idle_stand_clips.size()]))
+	print("[NOISE] Tash searching for %.1f s" % _look_left)
+
+
+func _end_investigation() -> void:
+	_inv_look = false
+	_lost_search = false
+	_investigating = false
+	_act = _Act.WALK
+	rotation = Vector3.ZERO
+	_apply_model_yaw_offset()
+	if _look_clip != "" and _anim != null:
+		_force_loop(_look_clip, Animation.LOOP_NONE)
+	_last_stop = ""
+	_active_stop = ""
+	print("[NOISE] Tash done searching, back to patrol")
+	if GameState != null and GameState.has_signal("tash_alert_changed"):
+		GameState.tash_alert_changed.emit("ambient")
+	_choose_next()
+
+
+# --- VISION / CHASE ----------------------------------------------------------------------
+## Cone from the head bone (fallback model + 1.6 m): FOV 80, range 11 m (x0.7 crouched),
+## checked every 0.1 s, rays (layer 1) to the player's camera and chest. No vision while the
+## player is safe (GameState.is_player_safe()), drunk-locked, dead / stab, intro, or ending.
+## Sight -> CHASE (run RUN_SPEED m/s, re-path 0.5 s, breather yell every 5-8 s). Lost > 1.5 s
+## -> walk to the last seen spot, search look-around (alert 'search'), then patrol/ambient.
+## Reach < 1.2 m -> grab_swing + "[CATCH] debug" print, 3 s cooldown. Safe during chase/search
+## -> fail catch in front of her, then patrol. F11 toggles the cone draw.
+
+func set_intro_frozen(on: bool) -> void:
+	_intro_frozen = on
+
+
+## Intro end: start in the F1 couch TV sit (sit 1 = not a drink sit), then the normal route.
+func begin_intro_couch() -> void:
+	_start_patrol()
+	_intro_frozen = false
+	_inv_pending = false
+	_chase_pending = false
+	_investigating = false
+	_chasing = false
+	_route = []
+	_route_i = 0
+	_seg_dist = 0.0
+	if _anim != null:
+		_anim.speed_scale = 1.0
+	if _path_follow != null and _pt.has("p35"):
+		_path_follow.position = _pt["p35"] as Vector3
+	_here = "p35"
+	position = Vector3.ZERO
+	rotation = Vector3.ZERO
+	_apply_model_yaw_offset()
+	_couch_tv_sits = 0
+	_active_stop = "couch"
+	_note_pick("couch")
+	print("TashWalker: intro start, couch TV sit")
+	_begin_current_stop()
+
+
+func is_chasing() -> bool:
+	return _chasing
+
+
+func _speed_mul() -> float:
+	if walk_speed <= 0.001:
+		return 1.0
+	if _chasing:
+		return _run_speed() / walk_speed
+	if _hungover:
+		return HUNG_WALK_SPEED / walk_speed
+	return 1.0
+
+
+func _run_speed() -> float:
+	return HUNG_RUN_SPEED if _hungover else RUN_SPEED
+
+
+func _clip(key: String) -> String:
+	var real := _real_clip(key)
+	if real != "":
+		return real
+	match key:
+		"run":
+			return ""
+		"yell", "fail", "grab", "idle_2", "idle_aggressive":
+			return String(_idle_stand_clips[0]) if _idle_stand_clips.size() > 0 else ""
+	return ""
+
+
+func _apply_clip_loops() -> void:
+	for k in _LOOP_KEYS:
+		var c := _real_clip(String(k))
+		if c != "":
+			_force_loop(c, Animation.LOOP_LINEAR)
+
+
+func _real_clip(key: String) -> String:
+	if _anim == null or not _CLIP_MAP.has(key):
+		return ""
+	return _first_clip(PackedStringArray(_CLIP_MAP[key]))
+
+
+func _player() -> Node3D:
+	return get_tree().get_first_node_in_group("player") as Node3D
+
+
+func _eye_pos() -> Vector3:
+	var skel := _tash_skeleton()
+	if _head_bone == -2:
+		_head_bone = _find_bone(skel, PackedStringArray(["Head", "head", "mixamorig:Head"]))
+	if skel != null and _head_bone >= 0:
+		return skel.global_transform * skel.get_bone_global_pose(_head_bone).origin
+	return global_position + Vector3(0, 1.6, 0)
+
+
+func _forward_flat() -> Vector3:
+	var f := Vector3.ZERO
+	if _model == null:
+		_model = get_node_or_null(model_node_path) as Node3D
+	if _model != null:
+		f = _model.global_transform.basis.z
+	else:
+		f = -global_transform.basis.z
+	f.y = 0.0
+	return f.normalized() if f.length_squared() > 0.0001 else Vector3.FORWARD
+
+
+func _vision_blocked_reason() -> String:
+	if _tash_dead:
+		return "dead"
+	if _chase_hold and (_hold_kind == "fall" or _hold_kind == "lie" or _hold_kind == "getup"):
+		return "fallen"
+	if is_drunk_locked():
+		return "drunk"
+	if _intro_frozen:
+		return "intro"
+	if GameState != null and GameState.ending_reached != "":
+		return "ending"
+	if GameState != null and GameState.is_player_safe():
+		return "safe"
+	return ""
+
+
+func _can_see_player() -> bool:
+	if _vision_blocked_reason() != "":
+		return false
+	var p := _player()
+	if p == null:
+		return false
+	var eye := _eye_pos()
+	var cam := p.get("_camera") as Camera3D
+	var top: Vector3 = cam.global_position if cam != null else p.global_position + Vector3(0, 1.5, 0)
+	var chest := top - Vector3(0, 0.55, 0)
+	if _chasing:
+		# Active chase: only a real occluder (or > 16 m) breaks sight. FOV 140 for tracking;
+		# _los ignores the cone so turning away never ends the chase.
+		_los = eye.distance_to(chest) <= CHASE_RANGE_M and _rays_clear(eye, top, chest, p)
+		var tc := chest - eye
+		tc.y = 0.0
+		return _los and (tc.length_squared() < 0.0001 or rad_to_deg(_forward_flat().angle_to(tc.normalized())) <= CHASE_FOV_DEG * 0.5)
+	_los = false
+	var rng := VIS_RANGE_M * (VIS_CROUCH_MUL if GameState != null and GameState.is_crouching else 1.0)
+	_player_lit = _is_lit(chest)
+	if not _player_lit:
+		rng *= DARK_RANGE_MUL
+	if eye.distance_to(chest) > rng:
+		return false
+	var to := chest - eye
+	to.y = 0.0
+	if to.length_squared() > 0.0001 and rad_to_deg(_forward_flat().angle_to(to.normalized())) > VIS_FOV_DEG * 0.5:
+		return false
+	var space := get_world_3d().direct_space_state
+	var excl: Array[RID] = [get_rid()]
+	if p is CollisionObject3D:
+		excl.append((p as CollisionObject3D).get_rid())
+	for target in [top, chest]:
+		var q := PhysicsRayQueryParameters3D.create(eye, target)
+		q.collision_mask = 1
+		q.exclude = excl
+		if space.intersect_ray(q).is_empty():
+			return true
+	return false
+
+
+func _tick_vision(delta: float) -> void:
+	_vis_t -= delta
+	if _vis_t > 0.0:
+		return
+	_vis_t = VIS_INTERVAL
+	var safe := GameState != null and GameState.is_player_safe()
+	if not safe:
+		_fail_done = false
+	var was := _seen
+	_seen = _can_see_player()
+	var p := _player()
+	if (_seen or _los) and p != null:
+		_last_seen_world = p.global_position
+		_unseen_t = 0.0
+	if _cone_on:
+		_draw_cone()
+		if was != _seen:
+			print("[VISION] seen=%s (%s) player %s" % [_seen, _vision_blocked_reason(), "lit" if _player_lit else "dark"])
+	# Fail catch: she reached a safe spot while he was chasing or searching.
+	if safe and not _fail_done and not _fail_walk and (_chasing or _investigating or _chase_pending) and _vision_blocked_reason() != "fallen":
+		if _act == _Act.WALK or _act == _Act.IDLE or _act == _Act.PAUSE or _act == _Act.LOOK:
+			_start_fail_catch()
+		return
+	_sight_t = _sight_t + VIS_INTERVAL if _seen else 0.0
+	var need := LIT_DETECT_SEC if _player_lit else DARK_DETECT_SEC
+	if _seen and _sight_t >= need - 0.001 and not _chasing and not _chase_pending and not _fail_walk and not _warn:
+		print("[VISION] Tash sees the player (%s, %.1f s)" % ["lit" if _player_lit else "dark", _sight_t])
+		_chase_pending = true
+
+
+func _try_begin_chase() -> void:
+	if _vision_blocked_reason() != "":
+		_chase_pending = false
+		return
+	if not _chase_roar_set:
+		# Normal routine (patrol / idle / sit) -> roar first; investigating / searching -> run.
+		_chase_roar = not (_investigating or _inv_pending or _lost_search or _fail_walk)
+		_chase_roar_set = true
+	if _act == _Act.DOOR or _act == _Act.SIT_DOWN or _act == _Act.STAND_UP:
+		return
+	if _act == _Act.SIT_HOLD:
+		_couch_drink_this = false
+		_play_huh()
+		if _snap_sit:
+			_finish_stand()
+		else:
+			_begin_stand_fast()
+		return
+	_start_chase()
+
+
+## Spotted her while sitting: startled 'Huh?!' (3D grunt + caption), then a 3x stand.
+const HUH_SFX := "res://audio/sfx/tash_huh.wav"
+const HUH_CAPTION_SEC := 1.2
+const STAND_FAST_SCALE := 3.0
+var _huh_until_ms: int = 0
+var _huh_player: AudioStreamPlayer3D = null
+
+
+func _play_huh() -> void:
+	if _huh_player == null:
+		_huh_player = AudioStreamPlayer3D.new()
+		_huh_player.name = "HuhSfx"
+		_huh_player.stream = load(HUH_SFX) as AudioStream
+		_huh_player.unit_size = 4.0
+		_huh_player.position = Vector3(0, 1.6, 0)
+		add_child(_huh_player)
+	_huh_player.play()
+	get_tree().call_group("subtitle", "show_line", "TASH", "Huh?!", HUH_CAPTION_SEC)
+	_huh_until_ms = Time.get_ticks_msec() + int(HUH_CAPTION_SEC * 1000.0)
+	print("[VISION] Tash startled while sitting: Huh?! (fast stand x%.0f)" % STAND_FAST_SCALE)
+
+
+func _huh_left() -> float:
+	return maxf(0.0, float(_huh_until_ms - Time.get_ticks_msec()) / 1000.0)
+
+
+func _begin_stand_fast() -> void:
+	_set_tv(false)
+	if _anim == null or _sit_clip == "":
+		_finish_stand()
+		return
+	_act = _Act.STAND_UP
+	_anim.play(_sit_clip, 0.2, -STAND_FAST_SCALE, true)
+
+
+func _start_chase() -> void:
+	if not _first_sight_done and _chase_roar and _chase_roar_set:
+		_begin_warn()
+		return
+	_chase_pending = false
+	_inv_pending = false
+	_inv_look = false
+	_investigating = false
+	_route_idle = false
+	_chasing = true
+	_chase_hold = false
+	_unseen_t = 0.0
+	_repath_t = 0.0
+	_breather_t = randf_range(BREATHER_MIN, BREATHER_MAX)
+	_apply_clip_loops()
+	_run_clip = _clip("run")
+	if _hungover and _real_clip("drunk_run") != "":
+		_run_clip = _real_clip("drunk_run")
+	_relight_pending = false
+	_fall_t = -1.0
+	if _force_fall or randf() < FALL_CHANCE:
+		_fall_t = randf_range(2.0, 6.0)
+		print("[CHASE] fall rolled: in %.1f s%s" % [_fall_t, " (forced)" if _force_fall else ""])
+	_force_fall = false
+	print("[CHASE] start (run clip: %s)" % (_run_clip if _run_clip != "" else "walk x%.1f" % RUN_ANIM_FALLBACK_SCALE))
+	if GameState != null and GameState.has_signal("tash_alert_changed"):
+		GameState.tash_alert_changed.emit("chase")
+	_act = _Act.WALK
+	_sight_t = 0.0
+	_graph_leg = false
+	_graph_force_t = 0.0
+	_wd_t = 0.0
+	_wd_pos = global_position
+	var roar := (_chase_roar and _chase_roar_set) or not _first_sight_done
+	_chase_roar_set = false
+	_chase_roar = false
+	if roar:
+		_begin_chase_hold("roar")
+		return
+	_chase_repath()
+
+
+func _tick_chase(delta: float) -> void:
+	if not _chasing:
+		return
+	if _vision_blocked_reason() == "dead" or _vision_blocked_reason() == "drunk":
+		_chasing = false
+		return
+	if _anim != null:
+		_anim.speed_scale = RUN_ANIM_FALLBACK_SCALE if (_act == _Act.WALK and _real_clip("run") == "") else 1.0
+	if _chase_hold or _act != _Act.WALK:
+		return
+	if _fall_t > 0.0:
+		_fall_t -= delta
+		if _fall_t <= 0.0:
+			_begin_chase_hold("fall")
+			return
+	if not (_seen or _los):
+		_unseen_t += delta
+		if _unseen_t > CHASE_LOSE_SEC:
+			_chase_lost()
+			return
+	var p := _player()
+	if p != null:
+		var d := p.global_position - global_position
+		if absf(d.y) < 1.5 and Vector2(d.x, d.z).length() < REACH_M:
+			_begin_chase_hold("grab")
+			return
+	_breather_t -= delta
+	if _breather_t <= 0.0:
+		_begin_chase_hold("yell")
+		return
+	_chase_watchdog(delta)
+	var want_graph := _chase_wants_graph()
+	if want_graph != _graph_leg:
+		_graph_leg = want_graph
+		print("[CHASE] %s leg" % ("route-graph (stairs/floor change)" if want_graph else "navmesh"))
+		_repath_t = 0.0
+		if want_graph:
+			_chase_repath()
+		else:
+			_route = []
+			_route_i = 0
+			_agent.target_position = _last_seen_world
+	if _nav_ready and _agent != null and not _graph_leg:
+		_repath_t -= delta
+		if _repath_t <= 0.0:
+			_repath_t = CHASE_REPATH_SEC
+			_agent.target_position = _last_seen_world
+		_nav_step(delta)
+		return
+	_repath_t -= delta
+	if _repath_t <= 0.0:
+		_repath_t = CHASE_REPATH_SEC
+		# Graph leg: keep the current route unless it ran out or the target moved > 1 m
+		# (re-routing every 0.5 s made him dither at the start node).
+		if not _graph_leg or _route.is_empty() or _route_i >= _route.size() - 1 or _last_seen_world.distance_to(_graph_goal) > 1.0:
+			_chase_repath()
+
+
+func _chase_repath() -> void:
+	if _nav_ready and _agent != null and not _graph_leg:
+		_route = []
+		_route_i = 0
+		_active_stop = "chase"
+		_agent.target_position = _last_seen_world
+		return
+	var route := _route_to(_last_seen_world)
+	if route.is_empty():
+		return
+	_graph_goal = _last_seen_world
+	_active_stop = "chase"
+	_start_route(route)
+
+
+func _route_to(world: Vector3) -> Array:
+	if _path_follow == null or _path_space() == null:
+		return []
+	var here_local: Vector3 = _path_follow.position
+	var goal_local: Vector3 = _path_space().to_local(world)
+	var next_id := ""
+	if _route_i + 1 < _route.size():
+		next_id = String(_route[_route_i + 1])
+	if _here.begins_with("nz_"):
+		_here = ""
+	_clear_inv_links()
+	_pt["nz_here"] = here_local
+	if absf(goal_local.y - here_local.y) < 0.3 and _line_clear(here_local, goal_local):
+		goal_local.y = here_local.y
+		_pt["nz_goal"] = goal_local
+		_link("nz_goal", _nearest_node(goal_local))
+		return ["nz_here", "nz_goal"]
+	var start_id := ""
+	if _nb.has(next_id) and not next_id.begins_with("nz_") and _line_clear(here_local, _pt[next_id] as Vector3):
+		start_id = next_id
+	else:
+		start_id = _nearest_node(here_local)
+	var end_id := _nearest_node(goal_local)
+	var path := _shortest(start_id, end_id)
+	if path.is_empty():
+		return []
+	var route: Array = []
+	if here_local.distance_to(_pt[start_id] as Vector3) > 0.05:
+		route.append("nz_here")
+	route.append_array(path)
+	var end_p: Vector3 = _pt[end_id] as Vector3
+	if Vector2(goal_local.x - end_p.x, goal_local.z - end_p.z).length() > 0.3 and absf(goal_local.y - end_p.y) < 0.3 and _line_clear(end_p, goal_local):
+		goal_local.y = end_p.y
+		_pt["nz_goal"] = goal_local
+		route.append("nz_goal")
+		_link("nz_goal", end_id)
+	_here = start_id
+	return route
+
+
+func _chase_lost() -> void:
+	print("[CHASE] lost sight > %.1f s, searching the last seen spot" % CHASE_LOSE_SEC)
+	_chasing = false
+	_run_clip = ""
+	if _anim != null:
+		_anim.speed_scale = 1.0
+	if GameState != null and GameState.has_signal("tash_alert_changed"):
+		GameState.tash_alert_changed.emit("search")
+	_inv_target_world = _last_seen_world
+	_investigating = true
+	_lost_search = true
+	_start_investigation()
+
+
+func _begin_chase_hold(kind: String, turn_key: String = "") -> void:
+	_chase_hold = true
+	_hold_kind = kind
+	_act = _Act.IDLE
+	_route_idle = false
+	if _anim != null:
+		_anim.speed_scale = 1.0
+	var p := _player()
+	if p != null and kind != "turn" and kind != "fall" and kind != "stumble":
+		rotation = Vector3.ZERO
+		_face_world_point(p.global_position)
+	var clip := ""
+	var sec := 0.0
+	match kind:
+		"roar":
+			# One-shot start yell, cut by the timer (vision keeps tracking).
+			clip = _clip("yell")
+			sec = ROAR_SEC
+			_roar_chunks = []
+			if not _first_sight_done:
+				_first_sight_done = true
+				var set_lines: Array = FIRST_SIGHT_LINES[randi() % FIRST_SIGHT_LINES.size()]
+				_roar_chunks = set_lines.duplicate()
+				sec = minf(FIRST_SIGHT_CHUNK_SEC * _roar_chunks.size() + 0.3, FIRST_SIGHT_MAX_SEC)
+				_show_roar_chunk()
+			else:
+				_show_yell_line()
+		"yell":
+			clip = _clip("yell")
+			sec = YELL_SEC
+			_show_yell_line()
+		"grab":
+			clip = _clip("grab")
+			sec = GRAB_FALLBACK_SEC
+			var d := 0.0
+			if p != null:
+				d = Vector2(p.global_position.x - global_position.x, p.global_position.z - global_position.z).length()
+			print("[CATCH] debug (flat %.2f m)" % d)
+		"cool":
+			clip = _clip("idle_2")
+			sec = GRAB_COOLDOWN_SEC
+		"turn":
+			clip = _real_clip(turn_key)
+			if clip == "":
+				clip = _real_clip("turn_180")
+		"fail":
+			clip = _clip("fail")
+			sec = FAIL_FALLBACK_SEC
+			_show_fail_line()
+		"taunt":
+			clip = _real_clip("taunt")
+			sec = 2.0
+		"fall":
+			clip = _real_clip("fall_flat")
+			sec = 2.9
+		"stumble":
+			clip = _real_clip("drunk_stumble")
+			sec = 1.5
+	if clip != "" and _anim != null:
+		var real := kind == "turn" or _real_clip({"yell": "yell", "roar": "yell", "grab": "grab", "fail": "fail", "cool": "idle_2", "taunt": "taunt", "fall": "fall_flat", "stumble": "drunk_stumble"}.get(kind, "")) != ""
+		_force_loop(clip, Animation.LOOP_NONE if real and kind != "cool" else Animation.LOOP_LINEAR)
+		_anim.play(clip)
+		var a := _anim.get_animation(clip)
+		if real and a != null and kind != "cool" and kind != "roar":
+			sec = a.length
+	_look_left = maxf(sec, 0.2)
+	print("[CHASE] %s %.1f s (clip %s)" % [kind, _look_left, clip if clip != "" else "-"])
+
+
+func _end_chase_hold() -> void:
+	_chase_hold = false
+	var kind := _hold_kind
+	_hold_kind = ""
+	_act = _Act.WALK
+	rotation = Vector3.ZERO
+	_apply_model_yaw_offset()
+	if _look_clip != "":
+		_force_loop(_look_clip, Animation.LOOP_NONE)
+	match kind:
+		"grab":
+			_begin_chase_hold("cool")
+		"cool", "yell", "roar":
+			_breather_t = randf_range(BREATHER_MIN, BREATHER_MAX)
+			if _chasing and (_seen or _los or _unseen_t <= CHASE_LOSE_SEC):
+				_repath_t = 0.0
+				_chase_repath()
+			elif _chasing:
+				_chase_lost()
+		"turn":
+			# Turn clips bake their yaw; the route already faces the new heading, so the
+			# next locomotion pose (reset clip) lines up without a snap.
+			_play_locomotion()
+		"fail":
+			if _hungover and _real_clip("taunt") != "" and randf() < 0.5:
+				_begin_chase_hold("taunt")
+			else:
+				_end_fail_catch()
+		"taunt":
+			_end_fail_catch()
+		"fall":
+			_begin_fall_hold("lie")
+		"lie":
+			_begin_fall_hold("getup")
+		"getup":
+			print("[CHASE] got up")
+			if _chasing and (_seen or _los):
+				_repath_t = 0.0
+				_chase_repath()
+			elif _chasing:
+				_chase_lost()
+		"stumble", "rest":
+			_play_locomotion()
+		"pturn":
+			_finish_inplace_turn()
+		"relight":
+			_relight_now()
+			_begin_inv_look()
+
+
+func _start_fail_catch() -> void:
+	var p := _player()
+	if p == null:
+		return
+	print("[CHASE] fail catch: she is safe")
+	_fail_done = true
+	_chasing = false
+	_chase_pending = false
+	_chase_hold = false
+	_investigating = false
+	_inv_look = false
+	_inv_pending = false
+	_run_clip = ""
+	if _anim != null:
+		_anim.speed_scale = 1.0
+	_fail_walk = true
+	var away := global_position - p.global_position
+	away.y = 0.0
+	away = away.normalized() if away.length_squared() > 0.0001 else Vector3.FORWARD
+	var target := p.global_position + away * FAIL_DIST_M
+	target.y = global_position.y if absf(p.global_position.y - global_position.y) < 1.5 else p.global_position.y
+	var route := _route_to(target)
+	_active_stop = "failcatch"
+	if route.size() <= 1:
+		_begin_chase_hold("fail")
+		return
+	_start_route(route)
+	_play_locomotion()
+
+
+func _end_fail_catch() -> void:
+	_fail_walk = false
+	_last_stop = ""
+	_active_stop = ""
+	print("[CHASE] fail catch done, back to patrol")
+	if GameState != null and GameState.has_signal("tash_alert_changed"):
+		GameState.tash_alert_changed.emit("ambient")
+	_choose_next()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_F11 and (event as InputEventKey).shift_pressed:
+		_force_fall = true
+		print("[CHASE] debug: next chase will fall (2-6 s in)")
+		if _chasing and _fall_t <= 0.0:
+			_fall_t = randf_range(2.0, 6.0)
+			_force_fall = false
+		return
+	if event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_F11:
+		_cone_on = not _cone_on
+		if _cone_mi != null:
+			_cone_mi.visible = _cone_on
+		var pl := _player()
+		if pl != null:
+			_player_lit = _is_lit(pl.global_position + Vector3(0, 1.0, 0))
+		print("[VISION] cone draw %s | seen=%s chasing=%s blocked=%s player %s nav=%s" % [_cone_on, _seen, _chasing, _vision_blocked_reason(), "LIT" if _player_lit else "DARK", _nav_ready])
+		if _cone_on:
+			_draw_cone()
+
+
+func _draw_cone() -> void:
+	if _cone_mi == null:
+		_cone_mi = MeshInstance3D.new()
+		_cone_mi.name = "TashVisionCone"
+		_cone_mi.top_level = true
+		_cone_mi.mesh = ImmediateMesh.new()
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.vertex_color_use_as_albedo = true
+		mat.no_depth_test = true
+		_cone_mi.material_override = mat
+		add_child(_cone_mi)
+	_cone_mi.global_transform = Transform3D.IDENTITY
+	var im := _cone_mi.mesh as ImmediateMesh
+	im.clear_surfaces()
+	var eye := _eye_pos()
+	var fwd := _forward_flat()
+	var rng := VIS_RANGE_M * (VIS_CROUCH_MUL if GameState != null and GameState.is_crouching else 1.0)
+	if not _player_lit:
+		rng *= DARK_RANGE_MUL
+	var col := Color(1, 0.1, 0.1) if _seen else (Color(0.4, 0.4, 0.4) if _vision_blocked_reason() != "" else Color(1, 0.85, 0.2))
+	im.surface_begin(Mesh.PRIMITIVE_LINES)
+	var half := deg_to_rad(VIS_FOV_DEG * 0.5)
+	var steps := 8
+	var prev := Vector3.ZERO
+	for i in steps + 1:
+		var a := -half + (2.0 * half) * float(i) / float(steps)
+		var tip := eye + fwd.rotated(Vector3.UP, a) * rng
+		if i == 0 or i == steps:
+			im.surface_set_color(col)
+			im.surface_add_vertex(eye)
+			im.surface_set_color(col)
+			im.surface_add_vertex(tip)
+		if i > 0:
+			im.surface_set_color(col)
+			im.surface_add_vertex(prev)
+			im.surface_set_color(col)
+			im.surface_add_vertex(tip)
+		prev = tip
+	im.surface_end()
+
+
+# --- CHASE NAVMESH / QUICK TURN / DARKNESS ----------------------------------------------------
+## Bake a NavigationRegion3D at runtime from static colliders (layers 1 | 8: walls, floors,
+## stairs, furniture, couch blockers). Unlocked door leaves are switched off for the parse so
+## doorways stay walkable; locked doors stay solid. Agent radius 0.3, height 1.8. Used for
+## CHASE movement only; patrol / investigation keep the route graph.
+func _setup_chase_nav() -> void:
+	var root := _house_root()
+	if root == null or not is_inside_tree():
+		return
+	var nm := NavigationMesh.new()
+	nm.agent_radius = NAV_AGENT_RADIUS
+	nm.agent_height = NAV_AGENT_HEIGHT
+	nm.agent_max_climb = 0.35
+	nm.agent_max_slope = 50.0
+	nm.cell_size = NAV_CELL
+	nm.cell_height = NAV_CELL_H
+	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
+	nm.geometry_collision_mask = 1 | 8
+	nm.region_min_size = 1.0
+	var map := get_world_3d().navigation_map
+	NavigationServer3D.map_set_cell_size(map, NAV_CELL)
+	NavigationServer3D.map_set_cell_height(map, NAV_CELL_H)
+	var off: Array = []
+	for d in root.find_children("*", "Door", true, false):
+		var door := d as CollisionObject3D
+		if door != null and not bool(door.get("locked")):
+			off.append([door, door.collision_layer])
+			door.collision_layer = 0
+	var src := NavigationMeshSourceGeometryData3D.new()
+	var t0 := Time.get_ticks_msec()
+	NavigationServer3D.parse_source_geometry_data(nm, src, root)
+	for pair in off:
+		(pair[0] as CollisionObject3D).collision_layer = int(pair[1])
+	NavigationServer3D.bake_from_source_geometry_data(nm, src)
+	_nav_region = NavigationRegion3D.new()
+	_nav_region.name = "TashChaseNav"
+	_nav_region.navigation_mesh = nm
+	root.add_child(_nav_region)
+	_agent = NavigationAgent3D.new()
+	_agent.name = "ChaseAgent"
+	_agent.radius = NAV_AGENT_RADIUS
+	_agent.height = NAV_AGENT_HEIGHT
+	_agent.path_desired_distance = 0.3
+	_agent.target_desired_distance = 0.5
+	_agent.avoidance_enabled = false
+	add_child(_agent)
+	_nav_ready = nm.get_polygon_count() > 0
+	print("[NAV] chase navmesh baked: %d polys in %d ms (ready=%s)" % [nm.get_polygon_count(), Time.get_ticks_msec() - t0, _nav_ready])
+	for dw in root.find_children("*", "", true, false):
+		if dw is Doorway:
+			_doorways_cache.append(dw)
+
+
+func _nav_step(delta: float) -> void:
+	if _agent.is_navigation_finished():
+		return
+	var next := _agent.get_next_path_position()
+	var d := next - global_position
+	var flat := Vector3(d.x, 0.0, d.z)
+	if flat.length() < 0.02:
+		return
+	# Face along the nav velocity with a fast smooth turn (no clips, no tween in chase);
+	# slow down while the body is still turning so he never runs sideways/backwards.
+	var cur_y := _path_follow.rotation.y
+	var want_y := atan2(-flat.x, -flat.z)
+	var new_y := rotate_toward(cur_y, cur_y + angle_difference(cur_y, want_y), CHASE_FACE_RAD_S * delta)
+	var align := cos(absf(angle_difference(new_y, want_y)))
+	var step := minf(_run_speed() * delta * clampf(align, 0.25, 1.0), flat.length())
+	var new_w := global_position + flat.normalized() * step
+	# Follow height on stairs only; navmesh sits a few cm above flat floors.
+	if absf(d.y) > 0.12:
+		new_w.y = move_toward(global_position.y, next.y, RUN_SPEED * delta)
+	rotation = Vector3.ZERO
+	_place(_path_space().to_local(new_w), Vector3(-sin(new_y), 0.0, -cos(new_y)))
+	_open_doors_near()
+
+
+## Big heading change (> 100 deg): tween the body yaw in place over 0.3 s, holding the
+## current run / idle pose, then keep running forward. No turn clips, no backwards running.
+func _begin_quick_turn(dir: Vector3) -> void:
+	if _path_follow == null:
+		return
+	var flat := Vector3(dir.x, 0.0, dir.z)
+	if flat.length_squared() < 0.0001:
+		return
+	rotation = Vector3.ZERO
+	var from_y := _path_follow.rotation.y
+	var to_y := from_y + angle_difference(from_y, atan2(-flat.x, -flat.z))
+	_chase_hold = true
+	_hold_kind = "turn"
+	_act = _Act.IDLE
+	_route_idle = false
+	_look_left = QUICK_TURN_SEC
+	var tw := create_tween()
+	tw.tween_property(_path_follow, "rotation:y", to_y, QUICK_TURN_SEC)
+	print("[CHASE] quick turn %.0f deg" % rad_to_deg(to_y - from_y))
+
+
+func _open_doors_near() -> void:
+	for dw_any in _doorways_cache:
+		var dw := dw_any as Doorway
+		if dw == null or not is_instance_valid(dw) or dw.locked:
+			continue
+		var c := dw.global_position + dw.global_transform.basis.z * 0.475
+		if absf(c.y - global_position.y) > 1.5:
+			continue
+		if Vector2(c.x - global_position.x, c.z - global_position.z).length() < 1.1 and not dw.is_passage_open():
+			dw.set_passage_open(true)
+			print("[CHASE] opens ", dw.name)
+
+
+## Lit = any visible Omni/Spot light above residual energy whose range reaches the point
+## with a clear line (walls block). Switch-off leaves lights at 0.03 = dark.
+func _is_lit(point: Vector3) -> bool:
+	var root := _house_root()
+	if root == null:
+		return true
+	if _lights_cache.is_empty():
+		for l in root.find_children("*", "Light3D", true, false):
+			if l is OmniLight3D or l is SpotLight3D:
+				_lights_cache.append(l)
+	var space := get_world_3d().direct_space_state
+	for l_any in _lights_cache:
+		var l := l_any as Light3D
+		if l == null or not is_instance_valid(l) or not l.is_visible_in_tree() or l.light_energy <= LIT_MIN_ENERGY:
+			continue
+		var rng := 0.0
+		if l is OmniLight3D:
+			rng = (l as OmniLight3D).omni_range
+		else:
+			rng = (l as SpotLight3D).spot_range
+		var lp := l.global_position
+		# Same storey only: ceiling lights sit ~1-2.5 m above a standing chest point.
+		if lp.y - point.y < -0.5 or lp.y - point.y > 2.6:
+			continue
+		if lp.distance_to(point) > rng:
+			continue
+		var q := PhysicsRayQueryParameters3D.create(lp, point)
+		q.collision_mask = 1
+		var hit := space.intersect_ray(q)
+		if hit.is_empty() or (hit["position"] as Vector3).distance_to(point) < 0.3:
+			if _cone_on:
+				print("[VISION] lit by ", l.get_path())
+			return true
+	return false
+
+
+# --- HUNGOVER / FALL / IN-PLACE TURNS / RELIGHT ----------------------------------------------
+func _set_hungover() -> void:
+	if _tash_dead or _hungover:
+		return
+	_hungover = true
+	_stumble_t = randf_range(STUMBLE_MIN, STUMBLE_MAX)
+	_apply_clip_loops()
+	print("[HUNG] Tash is hungover: walk %.2f m/s, run %.1f m/s" % [HUNG_WALK_SPEED, HUNG_RUN_SPEED])
+
+
+func is_hungover() -> bool:
+	return _hungover
+
+
+func _play_hung_idle() -> bool:
+	if not _hungover or _anim == null:
+		return false
+	var pool: Array = []
+	for k in ["drunk_idle", "drunk_idle_2"]:
+		var c := _real_clip(String(k))
+		if c != "":
+			pool.append(c)
+	if pool.is_empty():
+		return false
+	var pick := String(pool[randi() % pool.size()])
+	_force_loop(pick, Animation.LOOP_LINEAR)
+	var taunt := _real_clip("taunt")
+	if taunt != "" and randf() < 0.15:
+		# Hungover only: an occasional taunt_flex, then back to the drunk idle.
+		_force_loop(taunt, Animation.LOOP_NONE)
+		_anim.play(taunt, 0.25)
+		_anim.queue(pick)
+		return true
+	_anim.play(pick, 0.25)
+	return true
+
+
+## Hungover walking: a drunk_stumble in place every 12-25 s (checked at route nodes).
+func _maybe_stumble() -> bool:
+	if not _hungover or _chasing or _stumble_t > 0.0:
+		return false
+	if _route_i < _route.size() - 1:
+		var nxt := String(_route[_route_i + 1])
+		if _is_stair_id(String(_route[_route_i])) or _is_stair_id(nxt) or _cross_door(String(_route[_route_i]), nxt) != "":
+			return false
+	_stumble_t = randf_range(STUMBLE_MIN, STUMBLE_MAX)
+	if _real_clip("drunk_stumble") == "":
+		return false
+	_begin_chase_hold("stumble")
+	return true
+
+
+func _begin_fall_hold(kind: String) -> void:
+	_chase_hold = true
+	_hold_kind = kind
+	_act = _Act.IDLE
+	var clip := _real_clip("fall_flat")
+	if kind == "lie":
+		_look_left = FALL_LIE_SEC
+		if _anim != null:
+			_anim.pause()
+	else:
+		var a: Animation = _anim.get_animation(clip) if (_anim != null and clip != "") else null
+		_look_left = (a.length / GETUP_SPEED) if a != null else 1.0
+		if a != null:
+			_anim.play(clip, 0.0, -GETUP_SPEED, true)
+	print("[CHASE] %s %.1f s" % [kind, _look_left])
+
+
+const USE_TURN_CLIPS := false
+const WALK_FACE_RAD_S := 4.5
+const TURN_RATE_RAD_S := 2.6
+const TURN_MIN_SEC := 0.3
+
+
+func _yaw_of(dir: Vector3) -> float:
+	return atan2(-dir.x, -dir.z)
+
+
+## Patrol / investigation heading change > 60 deg at a route node or route start: play the
+## nearest in-place turn clip (90 / 180, by direction; hungover: drunk_turn for left turns),
+## rotate the node by the clip's baked yaw at the end, then tween the remainder (0.15 s).
+func _maybe_inplace_turn() -> bool:
+	if _chasing or _fail_walk or _path_follow == null or _route_i >= _route.size() - 1:
+		return false
+	var a: Vector3 = _pt[String(_route[_route_i])] as Vector3
+	var b: Vector3 = _pt[String(_route[_route_i + 1])] as Vector3
+	var nd := Vector3(b.x - a.x, 0.0, b.z - a.z)
+	if nd.length_squared() < 0.0001:
+		return false
+	var fwd := _forward_flat()
+	var ang := fwd.signed_angle_to(nd.normalized(), Vector3.UP)
+	if absf(rad_to_deg(ang)) <= INPLACE_TURN_DEG:
+		return false
+	var key := ""
+	if _hungover:
+		if ang > 0.0 and rad_to_deg(ang) < 135.0:
+			key = "drunk_turn"
+	elif rad_to_deg(absf(ang)) < 135.0:
+		key = "turn_l90" if ang > 0.0 else "turn_r90"
+	else:
+		key = "turn_l180" if ang > 0.0 else "turn_r180"
+	# Turn clips disabled (F5: start pose / end snap mismatch). Every patrol / investigate /
+	# hungover heading change is a smooth in-place yaw over the normal idle animation.
+	var clip := _real_clip(key) if (key != "" and USE_TURN_CLIPS) else ""
+	_turn_from_yaw = _yaw_of(fwd)
+	_turn_total_rad = ang
+	rotation = Vector3.ZERO
+	_path_follow.rotation.y = _turn_from_yaw
+	_vis_corr_deg = 0.0
+	_vis_corr0_deg = 0.0
+	_apply_model_yaw_offset()
+	_chase_hold = true
+	_act = _Act.IDLE
+	_route_idle = false
+	if clip == "" or _anim == null:
+		_turn_clip_rad = 0.0
+		_hold_kind = "rest"
+		var dur := maxf(TURN_MIN_SEC, absf(ang) / TURN_RATE_RAD_S)
+		_look_left = dur
+		if _anim != null and not _play_hung_idle():
+			var idle := _clip("idle")
+			_force_loop(idle, Animation.LOOP_LINEAR)
+			_anim.play(idle, 0.25)
+		var tw := create_tween()
+		tw.tween_property(_path_follow, "rotation:y", _turn_from_yaw + ang, dur).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tw.tween_callback(_apply_model_yaw_offset)
+		print("[TURN] smooth yaw %.0f deg over %.2f s" % [rad_to_deg(ang), dur])
+		return true
+	_turn_clip_rad = deg_to_rad(float(_TURN_DEG[key]))
+	_hold_kind = "pturn"
+	_force_loop(clip, Animation.LOOP_NONE)
+	_anim.play(clip, 0.0)
+	var anim := _anim.get_animation(clip)
+	_look_left = anim.length if anim != null else 0.9
+	print("[TURN] %s for %.0f deg (clip %.1f)" % [clip, rad_to_deg(ang), _TURN_DEG[key]])
+	return true
+
+
+func _finish_inplace_turn() -> void:
+	# Bake the clip's yaw into the node, reset the pose (walk / idle), tween the rest.
+	_path_follow.rotation.y = _turn_from_yaw + _turn_clip_rad
+	rotation = Vector3.ZERO
+	_apply_model_yaw_offset()
+	var rest := _turn_total_rad - _turn_clip_rad
+	if absf(rad_to_deg(rest)) > 4.0:
+		_chase_hold = true
+		_hold_kind = "rest"
+		_act = _Act.IDLE
+		_look_left = TURN_REST_SEC
+		_play_locomotion()
+		create_tween().tween_property(_path_follow, "rotation:y", _turn_from_yaw + _turn_total_rad, TURN_REST_SEC)
+		return
+	_play_locomotion()
+
+
+func _switch_near(pos: Vector3) -> Node3D:
+	var root := _house_root()
+	if root == null:
+		return null
+	var best: Node3D = null
+	var best_d := 1.0
+	for n in root.find_children("*", "LightSwitch", true, false):
+		var sw := n as Node3D
+		var d := sw.global_position.distance_to(pos)
+		if d < best_d:
+			best_d = d
+			best = sw
+	return best
+
+
+func _begin_relight() -> void:
+	if not _in_switch_room(_inv_switch):
+		if _relight_retry < 2 and _path_via_navmesh(_switch_stand_point(_inv_switch)):
+			_relight_retry += 1
+			print("[NOISE] Tash is on the wrong side of %s, re-pathing (navmesh)" % _inv_switch.name)
+			return
+		print("[NOISE] Tash can't reach the room side of %s; skipping relight" % _inv_switch.name)
+		_relight_pending = false
+		_inv_switch = null
+		_begin_inv_look()
+		return
+	_relight_pending = false
+	_relight_done = false
+	_relight_t = 0.0
+	_route = []
+	_route_i = 0
+	_chase_hold = true
+	_hold_kind = "relight"
+	_act = _Act.IDLE
+	_route_idle = false
+	rotation = Vector3.ZERO
+	_face_world_point(_inv_switch.global_position)
+	var clip := _real_clip("light_switch")
+	if clip != "" and _anim != null:
+		_force_loop(clip, Animation.LOOP_NONE)
+		_anim.play(clip)
+		var anim := _anim.get_animation(clip)
+		_look_left = anim.length if anim != null else 4.4
+	else:
+		_look_left = RELIGHT_FALLBACK_SEC
+		_relight_t = RELIGHT_AT_SEC
+		if _idle_stand_clips.size() > 0 and _anim != null:
+			_anim.play(String(_idle_stand_clips[0]))
+	print("[NOISE] Tash relights %s (clip %s)" % [_inv_switch.name, clip if clip != "" else "fallback idle"])
+
+
+func _relight_now() -> void:
+	if _relight_done:
+		return
+	_relight_done = true
+	if _inv_switch != null and is_instance_valid(_inv_switch) and _inv_switch.has_method("set_lights_on_silent"):
+		_inv_switch.call("set_lights_on_silent", true)
+		print("[NOISE] Tash turned %s back on (silent)" % _inv_switch.name)
+	_inv_switch = null
+
+
+# --- SWITCH FILTER / RELIGHT ROOM SIDE / CHASE LOS ----------------------------------------
+func _rays_clear(eye: Vector3, top: Vector3, chest: Vector3, p: Node3D) -> bool:
+	var space := get_world_3d().direct_space_state
+	var excl: Array[RID] = [get_rid()]
+	if p is CollisionObject3D:
+		excl.append((p as CollisionObject3D).get_rid())
+	for target in [top, chest]:
+		var q := PhysicsRayQueryParameters3D.create(eye, target)
+		q.collision_mask = 1
+		q.exclude = excl
+		if space.intersect_ray(q).is_empty():
+			return true
+	return false
+
+
+func _switch_name_of(source: String) -> String:
+	var i := source.find(":")
+	return source.substr(i + 1) if i >= 0 else ""
+
+
+## "" = react. Always ignore the bathroom / Sabira / hidden switches. Tash on F1: ignore F2
+## switches. Tash on F2: only Switch_Landing.
+func _switch_ignore_reason(source: String, pos: Vector3) -> String:
+	var sw_name := _switch_name_of(source)
+	if sw_name == "":
+		var near := _switch_near(pos)
+		sw_name = String(near.name) if near != null else ""
+	if SWITCH_ALWAYS_IGNORE.has(sw_name):
+		return "%s is always ignored" % sw_name
+	var tash_f2 := global_position.y > 1.5
+	var switch_f2 := pos.y > 2.6
+	if not tash_f2 and switch_f2:
+		return "%s is on F2, Tash on F1" % sw_name
+	if tash_f2 and not SWITCH_F2_ALLOWED.has(sw_name):
+		return "Tash on F2 reacts only to Switch_Landing"
+	return ""
+
+
+func _switch_by_source(source: String, pos: Vector3) -> Node3D:
+	var sw_name := _switch_name_of(source)
+	var root := _house_root()
+	if sw_name != "" and root != null:
+		var n := root.get_node_or_null("LightSwitches/" + sw_name) as Node3D
+		if n != null:
+			return n
+	return _switch_near(pos)
+
+
+## Stand point 0.5 m in front of the plate on the side facing the room it lights (plate's thin
+## axis = wall normal; sign toward the switch's first light), at that floor's height.
+func _switch_stand_point(sw: Node3D) -> Vector3:
+	var n := Vector3.FORWARD
+	var plate := sw.get_node_or_null("Plate") as CSGBox3D
+	if plate != null:
+		var sz := plate.size
+		var axis_i := 0
+		if sz.y < sz[axis_i]:
+			axis_i = 1
+		if sz.z < sz[axis_i]:
+			axis_i = 2
+		n = plate.global_transform.basis[axis_i].normalized()
+	n.y = 0.0
+	n = n.normalized() if n.length_squared() > 0.0001 else Vector3.FORWARD
+	var lights: Array = sw.get("_lights") if sw.get("_lights") != null else []
+	var room_dir := Vector3.ZERO
+	if lights.size() > 0 and is_instance_valid(lights[0]):
+		room_dir = (lights[0] as Node3D).global_position - sw.global_position
+	if room_dir.dot(n) < 0.0:
+		n = -n
+	var floor_y := 3.01 if sw.global_position.y > 2.6 else 0.0
+	var sp := sw.global_position + n * 0.5
+	return Vector3(sp.x, floor_y, sp.z)
+
+
+## In the room: a clear line from his chest to the plate (only the switch itself may be hit)
+## and he is on the room side of the plate.
+func _in_switch_room(sw: Node3D) -> bool:
+	if sw == null:
+		return false
+	var stand := _switch_stand_point(sw)
+	var n := stand - sw.global_position
+	n.y = 0.0
+	var me := global_position - sw.global_position
+	me.y = 0.0
+	if me.dot(n) <= 0.0:
+		return false
+	var q := PhysicsRayQueryParameters3D.create(global_position + Vector3(0, 1.3, 0), sw.global_position)
+	q.collision_mask = 1
+	var ex: Array[RID] = [get_rid()]
+	if sw is CollisionObject3D:
+		ex.append((sw as CollisionObject3D).get_rid())
+	q.exclude = ex
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	return hit.is_empty() or (hit["position"] as Vector3).distance_to(sw.global_position) < 0.15
+
+
+## Walk a navmesh path (walk speed) to world_goal as a temporary route; arrival -> investigate stop.
+func _path_via_navmesh(world_goal: Vector3) -> bool:
+	if not _nav_ready or _path_space() == null:
+		return false
+	var map := get_world_3d().navigation_map
+	var path := NavigationServer3D.map_get_path(map, global_position, world_goal, true)
+	if path.size() < 2:
+		return false
+	_clear_inv_links()
+	var ids: Array = []
+	var sp := _path_space()
+	for i in path.size():
+		var id := "nz_p%d" % i
+		var lp := sp.to_local(path[i])
+		lp.y = global_position.y if absf(path[i].y - global_position.y) < 0.3 else lp.y
+		_pt[id] = lp
+		ids.append(id)
+	_pt["nz_p0"] = _path_follow.position
+	var last_id := String(ids[ids.size() - 1])
+	_link(last_id, _nearest_node(_pt[last_id] as Vector3))
+	_relight_pending = true
+	_active_stop = "investigate"
+	_start_route(ids)
+	return true
+
+
+# --- CHASE STAIRS LEG + STUCK WATCHDOG ---------------------------------------------------
+## Root cause of the stair-top stuck: the baked navmesh has no connection between the stair
+## polys and the F2 landing (stairwell ceiling/lip cuts it), so map paths ended at the stair
+## top. Cross-floor chases (and anything the navmesh can't reach) use the route graph's stair
+## edges (p6..p9) until he is on the target's floor and off the stairs.
+func _chase_wants_graph() -> bool:
+	if not _nav_ready or _agent == null:
+		return true
+	if _graph_force_t > 0.0:
+		return true
+	var y := global_position.y
+	if y > 0.3 and y < 2.7:
+		return true
+	if absf(_last_seen_world.y - y) > 1.0:
+		return true
+	var path := NavigationServer3D.map_get_path(get_world_3d().navigation_map, global_position, _last_seen_world, true)
+	if path.size() == 0:
+		return true
+	var end: Vector3 = path[path.size() - 1]
+	return Vector2(end.x - _last_seen_world.x, end.z - _last_seen_world.z).length() > 0.8 or absf(end.y - _last_seen_world.y) > 0.6
+
+
+func _chase_watchdog(delta: float) -> void:
+	if _graph_force_t > 0.0:
+		_graph_force_t -= delta
+	_wd_t += delta
+	if _wd_t < STUCK_SEC:
+		return
+	var moved := global_position.distance_to(_wd_pos)
+	var far := Vector2(_last_seen_world.x - global_position.x, _last_seen_world.z - global_position.z).length() > REACH_M + 0.3 or absf(_last_seen_world.y - global_position.y) > 1.0
+	if moved < STUCK_MOVE_M and far:
+		print("[CHASE] stuck watchdog at %s (moved %.2f m in %.1f s): re-path on the route graph" % [global_position.snappedf(0.01), moved, _wd_t])
+		_graph_force_t = 3.0
+		_graph_leg = true
+		_chase_repath()
+	_wd_t = 0.0
+	_wd_pos = global_position
+
+# --- BOOKSHELF IDLES ----------------------------------------------------------------------
+## Plan 2-3 random shelf_idle clips across the stop (no back-to-back repeat). Looped clips
+## loop until their slice ends; the one-shot nod plays once fully, only between two others.
+func _start_shelf_idles() -> bool:
+	if _anim == null or _hungover:
+		return false
+	var loops: Array = []
+	for c in SHELF_LOOP_CLIPS:
+		if _anim.has_animation(c):
+			loops.append(c)
+	if loops.size() < 2:
+		return false
+	var count := randi_range(2, 3)
+	var names: Array = []
+	var pool := loops.duplicate()
+	pool.shuffle()
+	for i in mini(count, pool.size()):
+		names.append(pool[i])
+	var nod_len := 0.0
+	if names.size() == 3 and _anim.has_animation(SHELF_NOD_CLIP) and randf() < 0.5:
+		names[1] = SHELF_NOD_CLIP
+		nod_len = _anim.get_animation(SHELF_NOD_CLIP).length
+	var rest := maxf(_look_left - nod_len, 1.0)
+	var loop_n := names.size() - (1 if nod_len > 0.0 else 0)
+	for n in names:
+		_shelf_plan.append([n, nod_len if n == SHELF_NOD_CLIP else rest / float(loop_n)])
+	print("[TASH] shelf idles: ", _shelf_plan)
+	_play_shelf_slice()
+	return true
+
+
+func _play_shelf_slice() -> void:
+	if _shelf_plan.is_empty() or _anim == null:
+		return
+	var clip := String(_shelf_plan[0][0])
+	_shelf_slice = float(_shelf_plan[0][1])
+	_force_loop(clip, Animation.LOOP_NONE if clip == SHELF_NOD_CLIP else Animation.LOOP_LINEAR)
+	_anim.play(clip, 0.25)
+
+
+## Random TASH chase caption, never the same one twice in a row.
+func _show_yell_line() -> void:
+	if _huh_left() > 0.0:
+		get_tree().create_timer(_huh_left()).timeout.connect(_show_yell_line)
+		return
+	var i := randi() % _CHASE_YELL_LINES.size()
+	if i == _last_yell_i:
+		i = (i + 1 + randi() % (_CHASE_YELL_LINES.size() - 1)) % _CHASE_YELL_LINES.size()
+	_last_yell_i = i
+	get_tree().call_group("subtitle", "show_line", "TASH", String(_CHASE_YELL_LINES[i]), 2.6)
+
+
+func _show_roar_chunk() -> void:
+	if _roar_chunks.is_empty():
+		return
+	var line := String(_roar_chunks.pop_front())
+	_roar_chunk_t = FIRST_SIGHT_CHUNK_SEC
+	get_tree().call_group("subtitle", "show_line", "TASH", line, FIRST_SIGHT_CHUNK_SEC - 0.1)
+
+
+func _show_fail_line() -> void:
+	var zone := ""
+	if GameState != null and GameState.has_method("is_safe_zone"):
+		zone = String(GameState.is_safe_zone())
+	var pool: Array = FAIL_CATCH_LINES_PEAS if zone == "peas" else (FAIL_CATCH_LINES_CHAIR if zone == "chair" else [])
+	if pool.is_empty():
+		return
+	var pick := String(pool[randi() % pool.size()])
+	if pick == _last_fail_line and pool.size() > 1:
+		pick = String(pool[(pool.find(pick) + 1 + randi() % (pool.size() - 1)) % pool.size()])
+	_last_fail_line = pick
+	get_tree().call_group("subtitle", "show_line", "TASH", pick, 4.0)
+
+
+# --- FIRST-SIGHT WARNING -------------------------------------------------------------------
+## First routine sighting per run: no chase. He stops, tracks her, yells, then idle_aggressive
+## (drunk idles when hungover) while the FIRST_SIGHT chunks play, then watches WARN_SEC more.
+## Let go (ambient, routine resumes) if she is occluded WARN_OCCLUDED_SEC, enters Sabira's
+## room, or becomes safe. Still visible when the time is up -> normal chase (no second yell).
+func _begin_warn() -> void:
+	_first_sight_done = true
+	_chase_pending = false
+	_chase_roar = false
+	_chase_roar_set = false
+	_inv_pending = false
+	_warn = true
+	_warn_occl_t = 0.0
+	_route_idle = false
+	_chase_hold = true
+	_hold_kind = "warn"
+	_act = _Act.IDLE
+	rotation = Vector3.ZERO
+	var set_lines: Array = FIRST_SIGHT_LINES[randi() % FIRST_SIGHT_LINES.size()]
+	_roar_chunks = set_lines.duplicate()
+	_warn_t = FIRST_SIGHT_CHUNK_SEC * _roar_chunks.size() + WARN_SEC
+	_look_left = 999.0
+	if _anim != null:
+		_anim.speed_scale = 1.0
+		var c := _real_clip("drunk_idle") if _hungover and _real_clip("drunk_idle") != "" else _clip("yell")
+		if _hungover:
+			_force_loop(c, Animation.LOOP_LINEAR)
+		else:
+			_force_loop(c, Animation.LOOP_NONE)
+		_anim.play(c, 0.2)
+	if _huh_left() > 0.0:
+		_roar_chunk_t = _huh_left()
+	else:
+		_show_roar_chunk()
+	if GameState != null and GameState.has_signal("tash_alert_changed"):
+		GameState.tash_alert_changed.emit("search")
+	print("[WARN] first sight: warning %.1f s (lines + %.0f s watch)" % [_warn_t, WARN_SEC])
+
+
+func _tick_warn(delta: float) -> void:
+	var p := _player()
+	if p == null:
+		_end_warn(false, "no player")
+		return
+	# Track her with a smooth yaw.
+	var to := p.global_position - global_position
+	to.y = 0.0
+	if to.length_squared() > 0.0001 and _path_follow != null:
+		var want := atan2(-to.x, -to.z)
+		var cur := _path_follow.rotation.y
+		_path_follow.rotation.y = rotate_toward(cur, cur + angle_difference(cur, want), WARN_FACE_RAD_S * delta)
+		_apply_model_yaw_offset()
+	if _roar_chunks.size() > 0:
+		_roar_chunk_t -= delta
+		if _roar_chunk_t <= 0.0:
+			_show_roar_chunk()
+	if _anim != null and not _anim.is_playing():
+		var idle := _real_clip("idle_aggressive")
+		if idle != "":
+			_force_loop(idle, Animation.LOOP_LINEAR)
+			_anim.play(idle, 0.25)
+	if GameState != null and GameState.is_player_safe():
+		_end_warn(false, "she is safe")
+		return
+	var pp := p.global_position
+	if pp.x > SABIRA_ROOM_MIN.x and pp.x < SABIRA_ROOM_MAX.x and pp.y > SABIRA_ROOM_MIN.y and pp.y < SABIRA_ROOM_MAX.y and pp.z > SABIRA_ROOM_MIN.z and pp.z < SABIRA_ROOM_MAX.z:
+		_end_warn(false, "she went to her room")
+		return
+	var cam := p.get("_camera") as Camera3D
+	var top: Vector3 = cam.global_position if cam != null else pp + Vector3(0, 1.5, 0)
+	var eye := _eye_pos()
+	if _rays_clear(eye, top, top - Vector3(0, 0.55, 0), p):
+		_warn_occl_t = 0.0
+	else:
+		_warn_occl_t += delta
+		if _warn_occl_t >= WARN_OCCLUDED_SEC:
+			_end_warn(false, "out of sight %.1f s" % _warn_occl_t)
+			return
+	_warn_t -= delta
+	if _warn_t <= 0.0:
+		_end_warn(true, "still visible")
+
+
+func _end_warn(chase: bool, why: String) -> void:
+	_warn = false
+	_chase_hold = false
+	_hold_kind = ""
+	_roar_chunks = []
+	rotation = Vector3.ZERO
+	_apply_model_yaw_offset()
+	print("[WARN] end: %s -> %s" % [why, "chase" if chase else "let it go"])
+	if chase:
+		var p := _player()
+		if p != null:
+			_last_seen_world = p.global_position
+		_start_chase()
+		return
+	if GameState != null and GameState.has_signal("tash_alert_changed"):
+		GameState.tash_alert_changed.emit("ambient")
+	_sight_t = 0.0
+	_act = _Act.WALK
+	_choose_next()
+
+
+# --- Sit / stand visual smoothing -------------------------------------------------------
+## Sit and stand set the body yaw/position outright (approved seat facings stay exact). To
+## hide the snap, the Model gets a temporary visual yaw/position correction equal to the
+## jump, eased back to zero: yaw over 0.6-1.0 s, position over SETTLE_POS_SEC. For the F1
+## couch the stand_to_sit clip holds its first frame until the yaw ease is done.
+const SETTLE_POS_SEC := 0.25
+const SETTLE_YAW_MIN_SEC := 0.6
+const SETTLE_YAW_MAX_SEC := 1.0
+var _vis_corr_deg: float = 0.0
+var _vis_corr0_deg: float = 0.0
+var _vis_corr_pos: Vector3 = Vector3.ZERO
+var _vis_corr0_pos: Vector3 = Vector3.ZERO
+var _sv_t: float = 0.0
+var _vis_yaw_dur: float = 0.0
+var _vis_hold_sit: bool = false
+var _vis_pre_yaw: float = 0.0
+var _vis_pre_pos: Vector3 = Vector3.ZERO
+
+
+var _sv_skel: Skeleton3D = null
+var _sv_hips: int = -1
+
+
+## Visible facing = the hips bone forward (so clip poses such as stand_to_sit frame 0 are
+## included), falling back to the Model forward.
+func _vis_yaw_now() -> float:
+	if _model == null:
+		return 0.0
+	if _sv_skel == null:
+		_sv_skel = _model.find_child("*", true, false) as Skeleton3D
+		var sks := _model.find_children("*", "Skeleton3D", true, false)
+		_sv_skel = sks[0] as Skeleton3D if not sks.is_empty() else null
+		if _sv_skel != null:
+			for i in _sv_skel.get_bone_count():
+				if _sv_skel.get_bone_name(i).ends_with("Hips"):
+					_sv_hips = i
+					break
+	if _sv_skel != null and _sv_hips >= 0:
+		var g: Transform3D = _sv_skel.global_transform * _sv_skel.get_bone_global_pose(_sv_hips)
+		return atan2(g.basis.z.x, g.basis.z.z)
+	var f := _model.global_transform.basis.z
+	return atan2(f.x, f.z)
+
+
+func _vis_capture() -> void:
+	if _model == null:
+		_model = get_node_or_null(model_node_path) as Node3D
+	if _model == null:
+		return
+	_vis_pre_yaw = _vis_yaw_now()
+	_vis_pre_pos = _model.global_position
+
+
+func _reapply_visual() -> void:
+	if _model == null or _tash_dead:
+		return
+	if _sit_kind == _SIT_COUCH and (_act == _Act.SIT_DOWN or _act == _Act.SIT_HOLD or _act == _Act.STAND_UP):
+		_apply_couch_visual()
+	elif _sit_kind == _SIT_OFFICE and _act == _Act.SIT_HOLD:
+		_apply_office_visual()
+	else:
+		_apply_model_yaw_offset()
+
+
+func _vis_settle(hold_sit_clip: bool) -> void:
+	if _model == null or _tash_dead:
+		return
+	_vis_corr_deg = 0.0
+	_vis_corr_pos = Vector3.ZERO
+	_reapply_visual()
+	var hold := hold_sit_clip and _anim != null and _anim.is_playing()
+	if _anim != null:
+		if hold:
+			_anim.seek(0.0, true)
+		else:
+			_anim.advance(0.0)
+	var d := rad_to_deg(angle_difference(_vis_yaw_now(), _vis_pre_yaw))
+	var dp := _vis_pre_pos - _model.global_position
+	if dp.length() > 1.5:
+		dp = Vector3.ZERO
+	_vis_corr0_deg = d if absf(d) > 1.0 else 0.0
+	_vis_corr0_pos = dp if dp.length() > 0.01 else Vector3.ZERO
+	_vis_corr_deg = _vis_corr0_deg
+	_vis_corr_pos = _vis_corr0_pos
+	_sv_t = 0.0
+	_vis_yaw_dur = lerpf(SETTLE_YAW_MIN_SEC, SETTLE_YAW_MAX_SEC, clampf(absf(d) / 180.0, 0.0, 1.0)) if _vis_corr0_deg != 0.0 else 0.0
+	_reapply_visual()
+	_vis_hold_sit = false
+	if hold and _vis_corr0_deg != 0.0:
+		_anim.pause()
+		_vis_hold_sit = true
+	if _vis_corr0_deg != 0.0 or _vis_corr0_pos != Vector3.ZERO:
+		print("[SIT] settle %.0f deg over %.2f s, %.2f m over %.2f s" % [d, _vis_yaw_dur, dp.length(), SETTLE_POS_SEC])
+
+
+func _tick_vis_corr(delta: float) -> void:
+	if _vis_corr_deg == 0.0 and _vis_corr_pos == Vector3.ZERO and not _vis_hold_sit:
+		return
+	_sv_t += delta
+	var ky := 0.0
+	if _vis_yaw_dur > 0.0:
+		ky = 1.0 - smoothstep(0.0, 1.0, _sv_t / _vis_yaw_dur)
+	var kp := 1.0 - smoothstep(0.0, 1.0, _sv_t / SETTLE_POS_SEC)
+	_vis_corr_deg = _vis_corr0_deg * ky
+	_vis_corr_pos = _vis_corr0_pos * kp
+	if ky <= 0.0:
+		_vis_corr_deg = 0.0
+	if kp <= 0.0:
+		_vis_corr_pos = Vector3.ZERO
+	_reapply_visual()
+	if _vis_hold_sit and _vis_corr_deg == 0.0:
+		_vis_hold_sit = false
+		if _anim != null and _act == _Act.SIT_DOWN:
+			_anim.play()

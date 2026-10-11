@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://props/laundry/ClothesShelf_swapped.res" id="1_swap"]
+
+[node name="ClothesShelf2" type="Node3D"]
+
+[node name="ClothesShelf_Root" type="Node3D" parent="."]
+
+[node name="ClothesShelf" type="MeshInstance3D" parent="ClothesShelf_Root"]
+mesh = ExtResource("1_swap")

@@ -158,7 +158,10 @@ func _ready() -> void:
 	_label.add_theme_color_override("font_color", Color(0.93, 0.91, 0.86))
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label.modulate.a = 0.0
-	_black.add_child(_label)
+	_label.add_theme_constant_override("outline_size", 6)
+	_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	# Siblings of Black (drawn above it) so they can show over the live street while Black is clear.
+	add_child(_label)
 	_disclaimer = Label.new()
 	_disclaimer.name = "Disclaimer"
 	_disclaimer.text = DISCLAIMER_LINE
@@ -173,7 +176,7 @@ func _ready() -> void:
 	_disclaimer.add_theme_color_override("font_color", Color(0.93, 0.91, 0.86, 0.7))
 	_disclaimer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_disclaimer.modulate.a = 0.0
-	_black.add_child(_disclaimer)
+	add_child(_disclaimer)
 
 
 func play(key: String) -> void:
@@ -181,6 +184,7 @@ func play(key: String) -> void:
 	var tree := get_tree()
 	tree.call_group("player", "set_input_locked", true)
 	tree.call_group("interact_prompt", "suppress_for", 9999.0)
+	MusicManager.fade_out_all(2.0)
 	var t := create_tween()
 	t.tween_property(_black, "modulate:a", 1.0, FADE_TO_BLACK_SEC)
 	await t.finished
@@ -209,4 +213,69 @@ func play(key: String) -> void:
 	_label.text = ""
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	print("[HOUSE] ENDING finished: %s" % key)
+	_show_menu_button()
 	finished.emit()
+
+
+## Escape street variant (world/EscapeStreet.gd): the same lines fade in / hold / fade out as a
+## white overlay ON TOP of the walking street (Black stays clear). Black fades in gradually across
+## the last two lines; then, on black, the disclaimer and the Main Menu button. The tree is paused
+## only at the end, so the street keeps walking under the text.
+func play_over_scene(key: String) -> void:
+	ending_key = key
+	var tree := get_tree()
+	tree.call_group("player", "set_input_locked", true)
+	tree.call_group("interact_prompt", "suppress_for", 9999.0)
+	MusicManager.fade_out_all(2.0)
+	_black.modulate.a = 0.0
+	_black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var lines := lines_for(key)
+	if lines.is_empty():
+		push_warning("EndingCard: no text for %s" % key)
+	var n := lines.size()
+	var per_line := LINE_IN + LINE_HOLD + LINE_OUT
+	for i in n:
+		if i == maxi(n - 2, 0):
+			var dark := create_tween()
+			dark.tween_property(_black, "modulate:a", 1.0, per_line * float(n - i))
+		_label.text = lines[i]
+		_label.modulate.a = 0.0
+		var fade_in := create_tween()
+		fade_in.tween_property(_label, "modulate:a", 1.0, LINE_IN)
+		await fade_in.finished
+		await tree.create_timer(LINE_HOLD).timeout
+		var fade_out := create_tween()
+		fade_out.tween_property(_label, "modulate:a", 0.0, LINE_OUT)
+		await fade_out.finished
+	_black.modulate.a = 1.0
+	_black.mouse_filter = Control.MOUSE_FILTER_STOP
+	tree.paused = true
+	_label.text = ""
+	var dis := create_tween()
+	dis.tween_property(_disclaimer, "modulate:a", 1.0, LINE_IN)
+	await dis.finished
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	print("[HOUSE] ENDING finished (street): %s" % key)
+	_show_menu_button()
+	finished.emit()
+
+
+## End state: scratchy "Main Menu" button (focused). GameState.go_to_main_menu unpauses, resets
+## and frees this card.
+func _show_menu_button() -> void:
+	var b := ScratchButton.new()
+	b.name = "MainMenuButton"
+	b.text = "Main Menu"
+	b.anchor_left = 0.5
+	b.anchor_right = 0.5
+	b.anchor_top = 0.5
+	b.anchor_bottom = 0.5
+	b.offset_left = -130
+	b.offset_right = 130
+	b.offset_top = -28
+	b.offset_bottom = 28
+	b.modulate.a = 0.0
+	b.pressed.connect(func() -> void: GameState.go_to_main_menu())
+	_black.add_child(b)
+	b.grab_focus()
+	create_tween().tween_property(b, "modulate:a", 1.0, LINE_IN)

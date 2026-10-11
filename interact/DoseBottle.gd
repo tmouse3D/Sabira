@@ -4,8 +4,8 @@ extends Interactable
 ## Living wine bottle near F1 couch. With pills: dose bottle, strip pills, set bottle_dosed.
 ## No pills: no prompt. Already dosed: Already done.
 
-@export var dose_prompt: String = "[E] Put pills in the bottle."
-@export var dose_line: String = "Dosed the bottle."
+@export var dose_prompt: String = "[E] Put the pills in his beer."
+@export var dose_line: String = "Dosed his beer."
 @export var already_line: String = "Already done."
 @export var line_duration: float = 2.5
 @export var dose_stream: AudioStream

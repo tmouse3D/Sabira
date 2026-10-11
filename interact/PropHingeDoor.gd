@@ -21,6 +21,14 @@ extends Interactable
 @export var creak_volume_db: float = -16.0
 @export var interior_light_path: NodePath
 @export var interior_light_energy: float = 0.55
+## Hinge pivot: when use_hinge_pivot, a Node3D "<door>_Hinge" is created at hinge_local (in the
+## door's parent space, e.g. Fridge_Root) and the door leaf is reparented under it keeping its
+## global transform; the pivot is what rotates. Works whatever the leaf mesh origin is.
+@export var use_hinge_pivot: bool = false
+@export var hinge_local: Vector3 = Vector3(-0.35, 0.0, 0.35)
+## Added to the leaf's position (door parent space) before pivoting, e.g. to seat the door
+## flush on a rounded body front.
+@export var leaf_offset: Vector3 = Vector3.ZERO
 
 var _door: Node3D
 var _is_open: bool = false
@@ -42,6 +50,8 @@ func _ready() -> void:
 		push_warning("PropHingeDoor '%s': door missing (path=%s name=%s)" % [name, door_path, door_node_name])
 		interact_enabled = false
 		return
+	if use_hinge_pivot:
+		_door = _make_hinge_pivot(_door)
 	_closed_yaw = _door.rotation.y
 	_target_yaw = _closed_yaw
 	_ensure_creak_player()
@@ -50,6 +60,20 @@ func _ready() -> void:
 	_ensure_close_hits()
 	_apply_open_collision()
 	_update_prompt()
+
+
+func _make_hinge_pivot(leaf: Node3D) -> Node3D:
+	var par := leaf.get_parent() as Node3D
+	if par == null:
+		return leaf
+	var pivot := Node3D.new()
+	pivot.name = "%s_Hinge" % leaf.name
+	par.add_child(pivot)
+	pivot.position = hinge_local
+	pivot.rotation = Vector3(0.0, leaf.rotation.y, 0.0)
+	leaf.position += leaf_offset
+	leaf.reparent(pivot, true)
+	return pivot
 
 
 func _resolve_door() -> Node3D:

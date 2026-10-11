@@ -5,6 +5,8 @@ extends Interactable
 ## OFF leaves a tiny residual energy so the player can still navigate (horror near-black, not soft-lock).
 
 @export var light_paths: Array[NodePath] = []
+## False = toggling is silent (no GameState noise for Tash). Off on Switch_Hidden / Switch_Landing.
+@export var makes_noise: bool = true
 
 ## Residual energy when "off" ?- enough to see walls, rooms still feel black.
 const OFF_ENERGY := 0.03
@@ -98,5 +100,22 @@ func _on_interact(_player: Node) -> void:
 		push_warning("LightSwitch '%s': no lights resolved; check light_paths" % name)
 		return
 	_lights_on = not _lights_on
+	_apply_lights()
+	_update_prompt()
+	# Clicking a switch is a noise Tash can hear (GameState.noise_reported -> TashWalker).
+	if GameState and makes_noise:
+		GameState.report_noise(0.8, global_position, "light_switch:" + String(name))
+
+
+func is_on() -> bool:
+	return _lights_on
+
+
+## Used by Tash (relight). No noise, no prompt sound.
+func set_lights_on_silent(on: bool) -> void:
+	if _lights.is_empty():
+		_resolve_lights()
+		_capture_energies()
+	_lights_on = on
 	_apply_lights()
 	_update_prompt()

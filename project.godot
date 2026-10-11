@@ -10,15 +10,18 @@ config_version=5
 
 [application]
 
-config/name="Sabira"
+config/name="The White Scarf"
 config/description="HOUSE / Sabira â€” greybox steps 1â€“2 (floors, doors, stair noise, player walk/crouch/jump/interact)"
-run/main_scene="res://world/House.tscn"
+run/main_scene="res://ui/MainMenu.tscn"
 config/features=PackedStringArray("4.8", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
 GameState="*res://autoload/GameState.gd"
+Settings="*res://autoload/Settings.gd"
+MusicManager="*res://autoload/MusicManager.gd"
+VHS="*res://ui/vhs/VHS.gd"
 
 [display]
 

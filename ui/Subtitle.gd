@@ -73,6 +73,8 @@ func show_line(speaker: String, text: String, duration: float = 3.5) -> void:
 	visible = true
 	_timer = duration
 	set_process(true)
+	if GameState != null and GameState.has_signal("caption_changed"):
+		GameState.caption_changed.emit(speaker, text, duration)
 	# Hide interact prompt while the line is up; Prompt restores after.
 	get_tree().call_group("interact_prompt", "suppress_for", duration)
 
@@ -84,3 +86,5 @@ func _process(delta: float) -> void:
 		if _label:
 			_label.text = ""
 		set_process(false)
+		if GameState != null and GameState.has_signal("caption_changed"):
+			GameState.caption_changed.emit("", "", 0.0)

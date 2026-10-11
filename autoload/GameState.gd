@@ -108,6 +108,8 @@ var carried_flags: Array[String] = []
 
 # Story / progression stubs
 var dinner_started: bool = false
+## Set by reset_for_new_game (Play / Restart); Player._ready consumes it and runs ui/IntroSlides.
+var intro_pending: bool = false
 var bookcase_unlocked: bool = false
 var discovered_photos: bool = false
 ## F2 Landing ala kachuu book - knowledge flags (Catch-1 keeps these; not inventory).
@@ -131,6 +133,15 @@ var carrying_amina: bool = false
 var ending_reached: String = ""
 ## Ending card key ("<mum>/<photos>/<tash>/<door>", see ui/EndingCard.gd) once an exit is used.
 var ending_id: String = ""
+## True while the Esc pause menu (ui/PauseMenu.gd) is open.
+var pause_open: bool = false
+
+## Future Tash detection: emit "ambient" | "search" | "chase". MusicManager listens (set_state).
+## Subtitle line shown (speaker, text, seconds) or cleared ("", "", 0). Used by TashMouthCycle.
+signal caption_changed(speaker: String, text: String, duration: float)
+signal tash_alert_changed(state: String)
+## Positional noise for Tash hearing (see report_noise).
+signal noise_reported(pos: Vector3, loudness: float, source: String)
 ## Set when Tash dies (couch stab). is_tash_dead() also asks the "tash" group live.
 var tash_dead: bool = false
 
@@ -187,6 +198,17 @@ func set_crouching(value: bool) -> void:
 ## Detection / catch code must check this and leave the player alone.
 func is_player_safe() -> bool:
 	return is_safe or is_hiding
+
+
+## Which safe zone the player is in: "peas", "chair" or "" (none). Used by TashWalker fail_catch.
+func is_safe_zone() -> String:
+	for k in _safe_sources.keys():
+		var key := String(k)
+		if key.begins_with("peas"):
+			return "peas"
+		if key.begins_with("chair"):
+			return "chair"
+	return ""
 
 
 func has_safe_source(source: String) -> bool:
@@ -287,6 +309,26 @@ func _reject_carry_full() -> void:
 
 ## Add inventory flag. Carryable items join carried_flags (max 4, pickup order).
 ## Returns false if carry is full (flag not set; Scriptwriter subtitle shown).
+## Soft non-positional ding on every successful carry-slot add (all pickups route here).
+const PICKUP_DING := "res://audio/sfx/pickup_ding.wav"
+const PICKUP_DING_DB := -8.0
+var _ding: AudioStreamPlayer = null
+
+
+func _play_pickup_ding() -> void:
+	if _ding == null:
+		_ding = AudioStreamPlayer.new()
+		_ding.name = "PickupDing"
+		_ding.stream = load(PICKUP_DING) as AudioStream
+		_ding.volume_db = PICKUP_DING_DB
+		_ding.bus = &"Master"
+		_ding.process_mode = Node.PROCESS_MODE_ALWAYS
+		add_child(_ding)
+	if _ding.stream != null:
+		_ding.play()
+	print("[HOUSE] pickup ding")
+
+
 func add_inventory_flag(flag: String) -> bool:
 	var canon := canonicalize_carry_flag(flag)
 
@@ -313,6 +355,7 @@ func add_inventory_flag(flag: String) -> bool:
 		return false
 
 	carried_flags.append(canon)
+	_play_pickup_ding()
 	match canon:
 		"photos":
 			has_photos = true
@@ -389,9 +432,42 @@ func remove_inventory_flag(flag: String) -> bool:
 	return true
 
 
-func report_noise(amount: float = 0.5) -> void:
+## Positional noise (world pos) is broadcast to listeners (TashWalker.hear_noise) via
+## noise_reported. Old callers pass only amount: level/time update, no broadcast.
+func report_noise(amount: float = 0.5, pos: Variant = null, source: String = "") -> void:
 	noise_level = maxf(noise_level, amount)
 	last_noise_time = Time.get_ticks_msec() / 1000.0
+	if pos is Vector3:
+		var p: Vector3 = pos
+		print("[NOISE] %s %.2f (%.2f, %.2f, %.2f)" % [source if source != "" else "noise", amount, p.x, p.y, p.z])
+		noise_reported.emit(p, amount, source)
+
+
+## Doors (interact/Door.gd): a door open/close within DOOR_NOISE_WINDOW s of another
+## open/close (same or another door) is a noise at that door.
+const DOOR_NOISE_WINDOW := 10.0
+const DOOR_NOISE_LOUDNESS := 1.0
+var _last_door_toggle_time: float = -999.0
+
+
+func note_door_toggle(door_pos: Vector3, door_name: String) -> void:
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - _last_door_toggle_time <= DOOR_NOISE_WINDOW:
+		report_noise(DOOR_NOISE_LOUDNESS, door_pos, "door:" + door_name)
+	_last_door_toggle_time = now
+
+
+## DEBUG: F10 reports a test noise (loudness 1.0) at the player's position.
+const DEBUG_F10_NOISE := true
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not DEBUG_F10_NOISE:
+		return
+	if event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_F10:
+		var p := get_tree().get_first_node_in_group("player") as Node3D
+		if p != null:
+			report_noise(1.0, p.global_position, "debug_f10")
 
 
 func is_tash_dead() -> bool:
@@ -422,6 +498,105 @@ func trigger_escape_win(exit_door: String = "front") -> void:
 	if tree == null:
 		return
 	tree.call_group("player", "set_input_locked", true)
+	if not ResourceLoader.exists(ESCAPE_SCENE):
+		escape_finish()
+		return
+	_begin_escape_street(tree)
+
+
+# --- Escape street (between the exit door and the ending card) ----------------------------
+## Fade to black, keep the carried Mum node alive (reparented to the root, hidden), load
+## world/EscapeStreet.tscn. The street auto-walks, then calls escape_finish() for the card.
+const ESCAPE_SCENE := "res://world/EscapeStreet.tscn"
+const ESCAPE_FADE_OUT_SEC := 1.0
+var escape_eye_height: float = 1.45
+var escape_with_mum: bool = false
+var escape_cam_fov: float = 75.0
+var escape_cam_near: float = 0.05
+var _escape_mom: Node3D = null
+var _escape_mom_xf: Transform3D = Transform3D.IDENTITY
+var _escape_fade: CanvasLayer = null
+var _escape_black: ColorRect = null
+
+
+func _begin_escape_street(tree: SceneTree) -> void:
+	escape_with_mum = carrying_amina
+	var pl := tree.get_first_node_in_group("player") as Node3D
+	if pl != null:
+		var cam := pl.get("_camera") as Camera3D
+		if cam != null:
+			escape_eye_height = cam.global_position.y - pl.global_position.y
+			escape_cam_fov = cam.fov
+			escape_cam_near = cam.near
+			if carrying_amina:
+				for c in cam.get_children():
+					if c is Node3D and str(c.name).begins_with("Hidden_Mom"):
+						_escape_mom = c as Node3D
+						_escape_mom_xf = _escape_mom.transform
+						break
+	if MusicManager != null and MusicManager.has_method("fade_out_all"):
+		MusicManager.fade_out_all(2.0)
+	_escape_fade = CanvasLayer.new()
+	_escape_fade.name = "EscapeFade"
+	_escape_fade.layer = 95
+	_escape_fade.process_mode = Node.PROCESS_MODE_ALWAYS
+	_escape_black = ColorRect.new()
+	_escape_black.color = Color(0, 0, 0, 1)
+	_escape_black.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_escape_black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_escape_black.modulate.a = 0.0
+	_escape_fade.add_child(_escape_black)
+	tree.root.add_child(_escape_fade)
+	var tw := _escape_fade.create_tween()
+	tw.tween_property(_escape_black, "modulate:a", 1.0, ESCAPE_FADE_OUT_SEC)
+	await tw.finished
+	if _escape_mom != null and is_instance_valid(_escape_mom):
+		_escape_mom.reparent(tree.root, false)
+		_escape_mom.visible = false
+	tree.paused = false
+	print("[HOUSE] Escape street (%s, eye %.2f m)" % ["with Mum" if escape_with_mum else "alone", escape_eye_height])
+	tree.change_scene_to_file(ESCAPE_SCENE)
+
+
+## Street: take the kept Mum node (null if alone) and its camera-local carry transform.
+func escape_take_mom() -> Node3D:
+	var m := _escape_mom
+	_escape_mom = null
+	if m != null and is_instance_valid(m):
+		m.visible = true
+		return m
+	return null
+
+
+func escape_mom_transform() -> Transform3D:
+	return _escape_mom_xf
+
+
+func escape_fade_in(sec: float) -> void:
+	if _escape_fade == null or not is_instance_valid(_escape_fade):
+		return
+	var f := _escape_fade
+	var tw := f.create_tween()
+	tw.tween_property(_escape_black, "modulate:a", 0.0, sec)
+	tw.tween_callback(f.queue_free)
+	_escape_fade = null
+
+
+## Street: the ending card lines as an overlay on the walking street (EndingCard.play_over_scene).
+func escape_start_card() -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	var card := EndingCardScript.new()
+	tree.root.add_child(card)
+	card.play_over_scene(ending_id)
+
+
+## Street walk done (or no street scene): the existing ending card with the captured flags.
+func escape_finish() -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
 	var card := EndingCardScript.new()
 	tree.root.add_child(card)
 	card.play(ending_id)
@@ -429,6 +604,7 @@ func trigger_escape_win(exit_door: String = "front") -> void:
 
 func reset_for_new_game() -> void:
 	catch_count = 0
+	intro_pending = true
 	is_hiding = false
 	is_crouching = false
 	is_safe = false
@@ -480,11 +656,17 @@ func reset_for_new_game() -> void:
 	sabira_recognized_mom = false
 	mom_needs_blanket_said = false
 	carrying_amina = false
+	escape_with_mum = false
+	if _escape_mom != null and is_instance_valid(_escape_mom):
+		_escape_mom.queue_free()
+	_escape_mom = null
 	ending_reached = ""
 	ending_id = ""
+	pause_open = false
 	tash_dead = false
 	last_noise_time = -999.0
 	noise_level = 0.0
+	_last_door_toggle_time = -999.0
 
 	inventory_changed.emit()
 
@@ -522,6 +704,8 @@ func find_pocket_watch(site: Node3D) -> void:
 		var host: Node = tree.current_scene if tree.current_scene != null else site.get_parent()
 		host.add_child(w)
 		w.global_transform = Transform3D(Basis(Vector3.UP, randf() * TAU), _watch_rest_point(site))
+		if site is Interactable:
+			(w as Interactable).copy_front_gate(site as Interactable)
 	tree.call_group("pocket_watch", "open_zoom", first)
 
 
@@ -696,6 +880,8 @@ func reveal_minute_hand(site: Node3D) -> void:
 	var host: Node = tree.current_scene if tree.current_scene != null else site.get_parent()
 	host.add_child(w)
 	w.global_transform = Transform3D(Basis(Vector3.UP, randf_range(-0.6, 0.6)), _watch_rest_point(site, 0.22 if (watch_found and _site_path(site) == watch_site) else 0.13))
+	if site is Interactable:
+		(w as Interactable).copy_front_gate(site as Interactable)
 	_block_hand_site(site)
 	minute_hand_state = "revealed"
 	print("[HOUSE] ClockPuzzle: minute_hand revealed at %s" % minute_hand_site)
@@ -745,3 +931,62 @@ func place_minute_hand() -> bool:
 	minute_hand_state = "placed"
 	minute_hand_site = ""
 	return true
+
+
+# --- MENUS / PAUSE ---------------------------------------------------------------------------
+const MAIN_MENU_SCENE := "res://ui/MainMenu.tscn"
+const HOUSE_SCENE := "res://world/House.tscn"
+
+
+## True if any player is input-locked (KeypadUI, ClockSetUI, WatchZoomUI, BookPage, photos,
+## stab card and ending card all lock the player while open).
+func is_player_input_locked() -> bool:
+	var tree := get_tree()
+	if tree == null:
+		return false
+	for p in tree.get_nodes_in_group("player"):
+		if p.get("_input_locked") == true:
+			return true
+	return false
+
+
+## The Esc pause menu may open only in free play: no modal UI / card (input lock), no ending,
+## tree not already paused.
+func can_open_pause() -> bool:
+	var tree := get_tree()
+	if tree == null or tree.paused or pause_open:
+		return false
+	if ending_reached != "":
+		return false
+	return not is_player_input_locked()
+
+
+## Free run-only nodes parked on the root (ending card, stab card, modal UIs) before a scene change.
+func _clear_root_leftovers() -> void:
+	var tree := get_tree()
+	for c in tree.root.get_children():
+		if c == tree.current_scene or c == self:
+			continue
+		if c.name in ["GameState", "Settings", "MusicManager"] or c.is_in_group("keep_on_scene_change"):
+			continue
+		c.queue_free()
+
+
+func restart_game() -> void:
+	_change_to(HOUSE_SCENE)
+	MusicManager.set_ducked(false)
+	MusicManager.start_game()
+
+
+func go_to_main_menu() -> void:
+	MusicManager.set_ducked(false)
+	_change_to(MAIN_MENU_SCENE)
+
+
+func _change_to(path: String) -> void:
+	var tree := get_tree()
+	tree.paused = false
+	reset_for_new_game()
+	_clear_root_leftovers()
+	tree.change_scene_to_file(path)
+

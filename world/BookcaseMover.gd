@@ -40,11 +40,19 @@ var _segment_duration: float = 3.0
 var _photo_spill_done: bool = false
 var _photos_floor: PhotosPickup
 var _photos_shelf: PhotosPickup
+## Grinding wood scrape loop while sliding (audio only; no noise report of its own).
+const SCRAPE_LOOP := "res://audio/bookcase_scrape_loop.wav"
+const SCRAPE_DB := -4.0
+const SCRAPE_FADE_IN := 0.12
+const SCRAPE_FADE_OUT := 0.18
+var _scrape_loop: AudioStreamPlayer3D
+var _scrape_tw: Tween
 
 
 func _ready() -> void:
 	add_to_group("photos_world")
 	_home_pos = position
+	_setup_scrape_loop()
 	_open_pos = _home_pos + slide_offset
 	set_physics_process(false)
 	_apply_collision_for_state()
@@ -138,6 +146,8 @@ func _start_toward(target: Vector3, next_state: int) -> void:
 		_segment_duration = open_duration
 	_segment_duration = maxf(_segment_duration, 0.05)
 	_elapsed = 0.0
+	if GameState:
+		GameState.report_noise(1.0, global_position, "bookcase")
 	_state = next_state
 	set_physics_process(true)
 	_play_scrape(true)
@@ -193,7 +203,47 @@ func _apply_collision_for_state() -> void:
 	_body.collision_mask = 0
 
 
+func _setup_scrape_loop() -> void:
+	var st := load(SCRAPE_LOOP) as AudioStreamWAV
+	if st == null:
+		return
+	st = st.duplicate() as AudioStreamWAV
+	st.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	st.loop_begin = 0
+	st.loop_end = st.get_length() * st.mix_rate
+	_scrape_loop = AudioStreamPlayer3D.new()
+	_scrape_loop.name = "ScrapeLoop"
+	_scrape_loop.stream = st
+	_scrape_loop.position = Vector3(0, 0.6, 0)
+	_scrape_loop.max_distance = 16.0
+	_scrape_loop.unit_size = 3.0
+	_scrape_loop.volume_db = -60.0
+	_scrape_loop.bus = &"SFX" if AudioServer.get_bus_index("SFX") >= 0 else &"Master"
+	add_child(_scrape_loop)
+
+
+func _scrape_loop_set(on: bool) -> void:
+	if _scrape_loop == null:
+		return
+	if _scrape_tw and _scrape_tw.is_valid():
+		_scrape_tw.kill()
+	_scrape_tw = create_tween()
+	if on:
+		if not _scrape_loop.playing:
+			_scrape_loop.volume_db = -40.0
+			_scrape_loop.play(randf() * 2.0)
+			print_verbose("[BOOKCASE] scrape loop start")
+		_scrape_tw.tween_property(_scrape_loop, "volume_db", SCRAPE_DB, SCRAPE_FADE_IN)
+	else:
+		if not _scrape_loop.playing:
+			return
+		_scrape_tw.tween_property(_scrape_loop, "volume_db", -60.0, SCRAPE_FADE_OUT)
+		_scrape_tw.tween_callback(_scrape_loop.stop)
+		print_verbose("[BOOKCASE] scrape loop stop")
+
+
 func _play_scrape(on: bool) -> void:
+	_scrape_loop_set(on)
 	if _audio == null or _audio.stream == null:
 		return
 	if on:

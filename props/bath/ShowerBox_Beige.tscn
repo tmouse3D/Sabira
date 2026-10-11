@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://props/bath/ShowerBox.glb" id="1_glb"]
+[ext_resource type="Script" path="res://props/MatOverride.gd" id="2_mo"]
+[ext_resource type="Texture2D" path="res://props/bath/ShowerBox_BeigeTex.png" id="3_tex"]
+
+[sub_resource type="StandardMaterial3D" id="mat_beige"]
+albedo_texture = ExtResource("3_tex")
+roughness = 0.9
+texture_filter = 0
+cull_mode = 2
+
+[node name="ShowerBox" instance=ExtResource("1_glb")]
+script = ExtResource("2_mo")
+mesh_names = PackedStringArray("ShowerBox", "ShowerCurtain")
+material = SubResource("mat_beige")

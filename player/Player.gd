@@ -72,6 +72,16 @@ var _sit_chair: Node = null
 
 func _ready() -> void:
 	add_to_group("player")
+	# Settings autoload (user://settings.cfg) owns mouse sensitivity; Settings.apply() also pushes it live.
+	mouse_sensitivity = Settings.mouse_sensitivity
+	# Esc pause menu (ui/PauseMenu.tscn) lives with the player for this run.
+	var pause_menu := (load("res://ui/PauseMenu.tscn") as PackedScene).instantiate()
+	add_child.call_deferred(pause_menu)
+	# New game (Play / Restart): intro slideshow, then seated at dinner (ui/IntroSlides.gd).
+	if GameState.intro_pending:
+		GameState.intro_pending = false
+		var intro := (load("res://ui/IntroSlides.tscn") as PackedScene).instantiate()
+		get_tree().root.add_child.call_deferred(intro)
 	collision_layer = 2
 	collision_mask = 1 | 8  # world + blocker (couch solids; not in interact ray)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -136,8 +146,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	# Esc is handled by ui/PauseMenu.gd (pause + free the mouse); no Esc mouse release here.
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		_pivot.rotate_x(-event.relative.y * mouse_sensitivity)

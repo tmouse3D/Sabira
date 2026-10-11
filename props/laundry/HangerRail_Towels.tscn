@@ -1,0 +1,81 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://props/ClothesHangerRail.glb" id="1_rail"]
+[ext_resource type="Script" path="res://props/proc/StripSurfaces.gd" id="2_strip"]
+[ext_resource type="Script" path="res://props/proc/HangingTowel.gd" id="3_towel"]
+[ext_resource type="Texture2D" path="res://props/laundry/Towel_Tex_0.png" id="t0"]
+[ext_resource type="Texture2D" path="res://props/laundry/Towel_Tex_1.png" id="t1"]
+[ext_resource type="Texture2D" path="res://props/laundry/Towel_Tex_2.png" id="t2"]
+[ext_resource type="Texture2D" path="res://props/laundry/Towel_Tex_3.png" id="t3"]
+
+[sub_resource type="StandardMaterial3D" id="mat_t0"]
+albedo_texture = ExtResource("t0")
+roughness = 1.0
+cull_mode = 2
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_t1"]
+albedo_texture = ExtResource("t1")
+roughness = 1.0
+cull_mode = 2
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_t2"]
+albedo_texture = ExtResource("t2")
+roughness = 1.0
+cull_mode = 2
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="mat_t3"]
+albedo_texture = ExtResource("t3")
+roughness = 1.0
+cull_mode = 2
+texture_filter = 0
+
+[node name="HangerRail_Towels" type="Node3D"]
+script = ExtResource("2_strip")
+strip_mesh = "HangerRail"
+strip_surfaces = PackedInt32Array(1)
+
+[node name="Rail" parent="." instance=ExtResource("1_rail")]
+
+[node name="Towel_0" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.9999, 0.0018, 0.0157, -0.0018, 1.0000, -0.0000, -0.0157, 0.0000, 0.9999, -0.5500, -0.1250, 0.1150)
+script = ExtResource("3_towel")
+width = 0.29
+front_len = 0.47
+back_len = 0.4
+sag = 0.025
+tilt_seed = 1
+towel_material = SubResource("mat_t0")
+
+[node name="Towel_1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.0000, 0.0042, 0.0078, -0.0042, 1.0000, -0.0000, -0.0078, 0.0000, 1.0000, -0.1800, -0.1250, 0.1150)
+script = ExtResource("3_towel")
+width = 0.3
+front_len = 0.5
+back_len = 0.44
+sag = 0.02
+tilt_seed = 2
+towel_material = SubResource("mat_t1")
+
+[node name="Towel_2" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.9998, -0.0174, -0.0075, 0.0174, 0.9998, -0.0001, 0.0075, 0.0000, 1.0000, 0.1650, -0.1250, 0.1150)
+script = ExtResource("3_towel")
+width = 0.3
+front_len = 0.55
+back_len = 0.47
+sag = 0.03
+tilt_seed = 3
+towel_material = SubResource("mat_t2")
+
+[node name="Towel_3" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.9995, 0.0135, 0.0292, -0.0135, 0.9999, -0.0004, -0.0292, 0.0000, 0.9996, 0.5650, -0.1250, 0.1150)
+script = ExtResource("3_towel")
+width = 0.32
+front_len = 0.46
+back_len = 0.42
+sag = 0.022
+tilt_seed = 4
+towel_material = SubResource("mat_t3")
+

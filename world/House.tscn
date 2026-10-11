@@ -10,16 +10,16 @@
 [ext_resource type="PackedScene" path="res://ui/PhotosLookthrough.tscn" id="7c_photolt"]
 [ext_resource type="PackedScene" path="res://ui/BookPage.tscn" id="7d_bookpage"]
 [ext_resource type="PackedScene" path="res://ui/Subtitle.tscn" id="7_subtitle"]
-[ext_resource type="PackedScene" uid="uid://37ddfli5e3pt" path="res://props/Couch_DarkRed.glb" id="8b_couch_dark"]
-[ext_resource type="PackedScene" uid="uid://bh5yrv8biyy5t" path="res://props/Couch.glb" id="8_couch"]
+[ext_resource type="PackedScene" uid="uid://81om581k52e1" path="res://props/couch/Couch_Red.glb" id="8b_couch_dark"]
+[ext_resource type="PackedScene" uid="uid://dsvtna7y357c1" path="res://props/couch/Couch_Green.glb" id="8_couch"]
 [ext_resource type="PackedScene" uid="uid://cg0rwl7t0my8" path="res://props/TV_Stand.glb" id="9_tvstand"]
 [ext_resource type="PackedScene" uid="uid://beksp17heba6d" path="res://props/Kitchen_Table.glb" id="10_ktable"]
 [ext_resource type="PackedScene" uid="uid://dn8g6prlhxq3o" path="res://props/Kitchen_Chair.glb" id="11_kchair"]
-[ext_resource type="PackedScene" uid="uid://d3jiw64jld7el" path="res://props/Fridge_Openable.glb" id="12_fridge"]
-[ext_resource type="PackedScene" uid="uid://c644q63tscgoy" path="res://props/Stove.glb" id="13_stove"]
+[ext_resource type="PackedScene" uid="uid://dr0b75fx7lcne" path="res://props/kitchen/Fridge.glb" id="12_fridge"]
+[ext_resource type="PackedScene" uid="uid://cdkl3g0lu848s" path="res://props/kitchen/Stove.glb" id="13_stove"]
 [ext_resource type="PackedScene" uid="uid://3c37a8kpitry" path="res://props/Kitchen_Shelf.glb" id="14_kshelf"]
-[ext_resource type="PackedScene" uid="uid://1aw8pb3weq3" path="res://props/Toilet.glb" id="15_toilet"]
-[ext_resource type="PackedScene" uid="uid://dqc1tymru3qwe" path="res://props/Sink.glb" id="16_sink"]
+[ext_resource type="PackedScene" uid="uid://b16t5812ffe0m" path="res://props/bath/Toilet.glb" id="15_toilet"]
+[ext_resource type="PackedScene" path="res://props/bath/BathSink_Muted.tscn" id="16_sink"]
 [ext_resource type="PackedScene" uid="uid://bv5br517ck7va" path="res://props/Bed.glb" id="17_bed"]
 [ext_resource type="PackedScene" uid="uid://j6pduxjsoonc" path="res://props/Cupboard_Openable.glb" id="18_cupboard"]
 [ext_resource type="PackedScene" uid="uid://2roi6okgctxl" path="res://props/Bookcase.glb" id="19_bookcase"]
@@ -30,23 +30,22 @@
 [ext_resource type="Texture2D" uid="uid://c1jhro6yu7xwk" path="res://textures/floor_tile_bath_64.png" id="24_bathfloor"]
 [ext_resource type="PackedScene" path="res://interact/Painting.tscn" id="28_painting"]
 [ext_resource type="PackedScene" path="res://props/WashingMachine.tscn" id="29_washer"]
-[ext_resource type="PackedScene" uid="uid://cqr4euoqlj72i" path="res://props/Shower.glb" id="30_shower"]
+[ext_resource type="PackedScene" path="res://props/bath/ShowerBox_Beige.tscn" id="30_shower"]
 [ext_resource type="PackedScene" uid="uid://bgsaxvk0uytca" path="res://props/Desk.glb" id="31_desk"]
 [ext_resource type="PackedScene" uid="uid://bgnpew28l5c2k" path="res://props/OfficeChair.glb" id="32_ochair"]
 [ext_resource type="PackedScene" uid="uid://ckbbd8nx0ekrx" path="res://props/WindowBlinds.glb" id="33_blinds"]
 [ext_resource type="Texture2D" uid="uid://d3ko8qt16pgy" path="res://textures/window_sill_dark_64.png" id="34_sill"]
 [ext_resource type="PackedScene" uid="uid://cp6g5ftim0bb0" path="res://props/PlantPot.glb" id="38_plant"]
-[ext_resource type="PackedScene" uid="uid://by63qmju03n35" path="res://props/BoxStack.glb" id="39_boxstack"]
+[ext_resource type="PackedScene" path="res://props/cardboard/CardboardStack.tscn" id="39_boxstack"]
 [ext_resource type="PackedScene" uid="uid://bccns7ovnc0p4" path="res://props/HallChair.glb" id="40_hchair"]
 [ext_resource type="PackedScene" uid="uid://cphtouwhe8ror" path="res://props/CoatRack.glb" id="41_coatrack"]
 [ext_resource type="PackedScene" uid="uid://ddl4j27krxq7x" path="res://props/FloorDrawers.glb" id="42_fdrawers"]
 [ext_resource type="Script" uid="uid://cnlmxsvi8vuc6" path="res://interact/DrawerCheck.gd" id="43_drawercheck"]
-[ext_resource type="PackedScene" uid="uid://dg3kejjf476mr" path="res://props/RoomCarpet.glb" id="44_carpet"]
 [ext_resource type="PackedScene" uid="uid://dydo3cbsnroof" path="res://props/PeasCorner.glb" id="45_peas"]
 [ext_resource type="PackedScene" uid="uid://dpqnbx8qu8oc" path="res://props/Counter.glb" id="46_counter"]
-[ext_resource type="PackedScene" uid="uid://hk6xv026dm1o" path="res://props/KitchenSink.glb" id="47_ksink"]
-[ext_resource type="PackedScene" uid="uid://bqwvlqtlgj822" path="res://props/ClothesShelf.glb" id="48_cshelf"]
-[ext_resource type="PackedScene" uid="uid://p5nqwaf7wrni" path="res://props/ClothesHangerRail.glb" id="49_hrail"]
+[ext_resource type="PackedScene" path="res://props/kitchen/Sink_Dirty.tscn" id="47_ksink"]
+[ext_resource type="PackedScene" path="res://props/laundry/ClothesShelf_Swapped.tscn" id="48_cshelf"]
+[ext_resource type="PackedScene" path="res://props/laundry/HangerRail_Towels.tscn" id="49_hrail"]
 [ext_resource type="PackedScene" uid="uid://ceqd6pquq454f" path="res://props/ClothesBox.glb" id="50_cbox"]
 [ext_resource type="PackedScene" uid="uid://djtcgt0lmi484" path="res://props/Broom.glb" id="51_broom"]
 [ext_resource type="PackedScene" uid="uid://bfmi0fqxmrkv2" path="res://props/Bucket.glb" id="52_bucket"]
@@ -63,7 +62,6 @@
 [ext_resource type="PackedScene" uid="uid://276khiffbvtc" path="res://props/LivingPlant.glb" id="70_livingplant"]
 [ext_resource type="Script" uid="uid://b65wbqhbk2h4a" path="res://interact/KnifePickup.gd" id="71_knifepick"]
 [ext_resource type="Script" uid="uid://bqvwx1xh2c67n" path="res://interact/UseKnifeOnTash.gd" id="72_usetash"]
-[ext_resource type="PackedScene" uid="uid://dywlop2flym42" path="res://props/WallRug.glb" id="73_wallrug"]
 [ext_resource type="PackedScene" uid="uid://cxptpsw2wa0h" path="res://props/ToyBox.glb" id="74_toybox"]
 [ext_resource type="PackedScene" uid="uid://dy1h6n3kw7ibd" path="res://props/Bottle.glb" id="76_bottle"]
 [ext_resource type="Script" uid="uid://yu7ucb56ksiw" path="res://interact/CoatCheck.gd" id="77_coatcheck"]
@@ -112,6 +110,22 @@
 [ext_resource type="Texture2D" uid="uid://boyhbt47fpald" path="res://props/keypad/metal_grunge_panel_01.png" id="204_kp_metal"]
 [ext_resource type="PackedScene" path="res://props/closet/ClosetClutter.tscn" id="205_closetclutter"]
 [ext_resource type="PackedScene" path="res://props/grandfather_clock/GrandfatherClock.tscn" id="206_gfclock"]
+[ext_resource type="Script" uid="uid://brv3ivhirqvmn" path="res://world/FlickerLight.gd" id="207_flicker"]
+[ext_resource type="AudioStream" uid="uid://b2kdnp6mq1527" path="res://audio/sfx/laundry_hum.wav" id="208_hum"]
+[ext_resource type="PackedScene" uid="uid://pf4m6k1ojk5f" path="res://props/living_table/tableSmall3.glb" id="210_ctable"]
+[ext_resource type="PackedScene" uid="uid://2rvdknbsprug" path="res://props/living_table/cup.glb" id="211_ccup"]
+[ext_resource type="PackedScene" path="res://props/shed_tools/ToolBoard.tscn" id="214_toolboard"]
+[ext_resource type="PackedScene" path="res://props/laundry/LaundryCorner.tscn" id="215_lcorner"]
+[ext_resource type="PackedScene" uid="uid://dkpry4b1xssm3" path="res://props/bath/Bathtub.glb" id="215_bathtub"]
+[ext_resource type="PackedScene" path="res://props/bath/WasteBin.tscn" id="216_wastebin"]
+[ext_resource type="Texture2D" uid="uid://g13xyqik24fx" path="res://textures/rugs/rug_living_3.png" id="rug_tex_0"]
+[ext_resource type="Texture2D" uid="uid://dre50tpmto2w1" path="res://textures/rugs/rug_kitchen_5.png" id="rug_tex_1"]
+[ext_resource type="Texture2D" uid="uid://c1t6u53u0iwyw" path="res://textures/rugs/rug_landing_6.png" id="rug_tex_2"]
+[ext_resource type="Texture2D" uid="uid://b758d1wtrstn0" path="res://textures/rugs/rug_sabira_7.png" id="rug_tex_3"]
+[ext_resource type="Texture2D" uid="uid://c37d23x4py0li" path="res://textures/rugs/rug_office.png" id="rug_tex_4"]
+[ext_resource type="Texture2D" uid="uid://cw07xwi7bijqx" path="res://textures/rugs/rug_tash_wall_2.png" id="rug_tex_5"]
+[ext_resource type="Texture2D" uid="uid://bycvixv55sbsa" path="res://textures/rugs/rug_wall_4.png" id="rug_tex_6"]
+[ext_resource type="Texture2D" uid="uid://bl4rakcseg8dd" path="res://textures/rugs/rug_wall_1.png" id="rug_tex_7"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -200,19 +214,19 @@ size = Vector3(0.42, 0.9, 0.4)
 size = Vector3(0.25, 0.8, 1.2)
 
 [sub_resource type="BoxShape3D" id="BoxShape_ksink"]
-size = Vector3(0.6, 0.84, 0.55)
+size = Vector3(0.6, 0.84, 0.587)
 
 [sub_resource type="BoxShape3D" id="BoxShape_pillsjar"]
 size = Vector3(0.11, 0.13, 0.11)
 
 [sub_resource type="BoxShape3D" id="BoxShape_fridge"]
-size = Vector3(0.7, 1.8, 0.7)
+size = Vector3(0.707, 1.8, 0.7)
 
 [sub_resource type="BoxShape3D" id="BoxShape_hit_3"]
-size = Vector3(0.7, 1.94, 0.78)
+size = Vector3(0.75, 1.94, 0.86)
 
 [sub_resource type="BoxShape3D" id="BoxShape_stove"]
-size = Vector3(0.7, 0.9, 0.65)
+size = Vector3(0.6, 0.915, 0.664)
 
 [sub_resource type="BoxShape3D" id="BoxShape_kitchen_drawer"]
 size = Vector3(0.06, 0.14, 0.55)
@@ -230,13 +244,16 @@ uv1_scale = Vector3(4, 4, 4)
 texture_filter = 0
 
 [sub_resource type="BoxShape3D" id="BoxShape_toilet"]
-size = Vector3(0.45, 0.8, 0.65)
+size = Vector3(0.42, 0.8, 0.62)
 
 [sub_resource type="BoxShape3D" id="BoxShape_bathsink"]
-size = Vector3(0.5, 0.85, 0.4)
+size = Vector3(0.52, 0.85, 0.4)
 
 [sub_resource type="BoxShape3D" id="BoxShape_shower"]
 size = Vector3(0.9, 2.1, 0.9)
+
+[sub_resource type="BoxShape3D" id="BoxShape_bathtub"]
+size = Vector3(1.6, 0.65, 0.75)
 
 [sub_resource type="BoxShape3D" id="BoxShape_washer"]
 size = Vector3(0.64, 0.87, 0.7)
@@ -454,6 +471,9 @@ size = Vector3(0.2, 0.28, 0.2)
 [sub_resource type="BoxShape3D" id="BoxShape_broom"]
 size = Vector3(0.14, 1.4, 0.14)
 
+[sub_resource type="BoxShape3D" id="ctable_shape"]
+size = Vector3(0.45, 0.4, 0.7)
+
 [sub_resource type="StandardMaterial3D" id="mat_lightswitch"]
 albedo_color = Color(0.75, 0.72, 0.65, 1)
 
@@ -471,6 +491,86 @@ point_count = 39
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_tash"]
 radius = 0.24
 height = 1.75
+
+[sub_resource type="StandardMaterial3D" id="rug_mat_0"]
+cull_mode = 2
+albedo_color = Color(0.8, 0.76, 0.7, 1)
+albedo_texture = ExtResource("rug_tex_0")
+texture_filter = 0
+
+[sub_resource type="PlaneMesh" id="rug_mesh_0"]
+material = SubResource("rug_mat_0")
+size = Vector2(2.6, 1.72)
+
+[sub_resource type="StandardMaterial3D" id="rug_mat_1"]
+cull_mode = 2
+albedo_color = Color(0.8, 0.76, 0.7, 1)
+albedo_texture = ExtResource("rug_tex_1")
+texture_filter = 0
+
+[sub_resource type="PlaneMesh" id="rug_mesh_1"]
+material = SubResource("rug_mat_1")
+size = Vector2(2.1, 1.4)
+
+[sub_resource type="StandardMaterial3D" id="rug_mat_2"]
+cull_mode = 2
+albedo_color = Color(0.8, 0.76, 0.7, 1)
+albedo_texture = ExtResource("rug_tex_2")
+texture_filter = 0
+
+[sub_resource type="PlaneMesh" id="rug_mesh_2"]
+material = SubResource("rug_mat_2")
+size = Vector2(2.4, 1.51)
+
+[sub_resource type="StandardMaterial3D" id="rug_mat_3"]
+cull_mode = 2
+albedo_color = Color(0.8, 0.76, 0.7, 1)
+albedo_texture = ExtResource("rug_tex_3")
+texture_filter = 0
+
+[sub_resource type="PlaneMesh" id="rug_mesh_3"]
+material = SubResource("rug_mat_3")
+size = Vector2(2.3, 1.43)
+
+[sub_resource type="StandardMaterial3D" id="rug_mat_4"]
+cull_mode = 2
+albedo_color = Color(0.8, 0.76, 0.7, 1)
+albedo_texture = ExtResource("rug_tex_4")
+texture_filter = 0
+
+[sub_resource type="PlaneMesh" id="rug_mesh_4"]
+material = SubResource("rug_mat_4")
+size = Vector2(2.2, 1.47)
+
+[sub_resource type="StandardMaterial3D" id="rug_mat_5"]
+cull_mode = 2
+albedo_color = Color(0.8, 0.76, 0.7, 1)
+albedo_texture = ExtResource("rug_tex_5")
+texture_filter = 0
+
+[sub_resource type="PlaneMesh" id="rug_mesh_5"]
+material = SubResource("rug_mat_5")
+size = Vector2(1.7, 1.07)
+
+[sub_resource type="StandardMaterial3D" id="rug_mat_6"]
+cull_mode = 2
+albedo_color = Color(0.8, 0.76, 0.7, 1)
+albedo_texture = ExtResource("rug_tex_6")
+texture_filter = 0
+
+[sub_resource type="PlaneMesh" id="rug_mesh_6"]
+material = SubResource("rug_mat_6")
+size = Vector2(1.5, 0.98)
+
+[sub_resource type="StandardMaterial3D" id="rug_mat_7"]
+cull_mode = 2
+albedo_color = Color(0.8, 0.76, 0.7, 1)
+albedo_texture = ExtResource("rug_tex_7")
+texture_filter = 0
+
+[sub_resource type="PlaneMesh" id="rug_mesh_7"]
+material = SubResource("rug_mat_7")
+size = Vector2(1.4, 0.88)
 
 [node name="House" type="Node3D" unique_id=417873040]
 
@@ -612,9 +712,9 @@ size = Vector3(1.1, 2.8108642, 0.2)
 material = SubResource("mat_wall_dark")
 
 [node name="Wall_Storage_Div_E" type="CSGBox3D" parent="Structure" unique_id=2031643056]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.475, 1.3951172, 2.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 1.3951172, 2.8)
 use_collision = true
-size = Vector3(0.55, 2.7902343, 0.2)
+size = Vector3(0.6, 2.7902343, 0.2)
 material = SubResource("mat_wall_dark")
 
 [node name="BookcaseMover" type="Node3D" parent="Structure" unique_id=2120614285]
@@ -717,10 +817,10 @@ material = SubResource("mat_window")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0.05, 0.5)
 
 [node name="Living_Couch" parent="Structure/Living" unique_id=432771514 instance=ExtResource("8_couch")]
-transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 0, 0, 1.2)
+transform = Transform3D(-1, 0, 8.742278e-08, 0, 1.24, 0, -8.742278e-08, 0, -1, 0, 0, 1.2)
 
 [node name="Living_CouchBody" type="StaticBody3D" parent="Structure/Living" unique_id=160739621 groups=["minute_hand_sites"]]
-transform = Transform3D(1, 0, 0, 0, 1.1147072, 0, 0, 0, 1.0931994, 0, 0.425, 1.2)
+transform = Transform3D(1, 0, 0, 0, 1.24, 0, 0, 0, 1.0931994, 0, 0.527, 1.2)
 collision_layer = 5
 collision_mask = 0
 script = ExtResource("96_couchsearch")
@@ -739,7 +839,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.405)
 shape = SubResource("BoxShape_hit_1")
 
 [node name="Living_CouchSolid" type="StaticBody3D" parent="Structure/Living" unique_id=970000910]
-transform = Transform3D(1, 0, 0, 0, 1.1147072, 0, 0, 0, 1.0931994, 0, 0.425, 1.2)
+transform = Transform3D(1, 0, 0, 0, 1.24, 0, 0, 0, 1.0931994, 0, 0.527, 1.2)
 collision_layer = 8
 collision_mask = 0
 
@@ -886,15 +986,17 @@ shape = SubResource("BoxShape_kshelf")
 
 [node name="Kitchen_Sink" parent="Structure/KitchenDining" unique_id=384455715 instance=ExtResource("47_ksink")]
 transform = Transform3D(-8.742278e-08, 0, -1, 0, 1, 0, 1, 0, -8.742278e-08, 2.1, -3.7252903e-09, -0.75619626)
+strip_surfaces = PackedInt32Array()
 
 [node name="Kitchen_SinkBody" type="StaticBody3D" parent="Structure/KitchenDining" unique_id=384455716]
 transform = Transform3D(-8.742278e-08, 0, -1, 0, 1, 0, 1, 0, -8.742278e-08, 2.1, 0.42, -0.75619626)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/KitchenDining/Kitchen_SinkBody" unique_id=384455717]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.018)
 shape = SubResource("BoxShape_ksink")
 
 [node name="Kitchen_Fridge" parent="Structure/KitchenDining" unique_id=958588911 instance=ExtResource("12_fridge")]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.1, 0, 2.3)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.066104, 0, 2.3)
 
 [node name="Fridge_Bread_1" parent="Structure/KitchenDining/Kitchen_Fridge" unique_id=970600001 instance=ExtResource("84_bread")]
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.1, 0.28, -0.05)
@@ -930,9 +1032,12 @@ transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.1,
 collision_layer = 5
 collision_mask = 0
 script = ExtResource("78_propdoor")
-door_path = NodePath("../Kitchen_Fridge/FridgeDoor")
+door_path = NodePath("../Kitchen_Fridge/Fridge_Root/FridgeDoor")
 peek_once = false
 interior_light_path = NodePath("FridgeInteriorLight")
+use_hinge_pivot = true
+hinge_local = Vector3(-0.31, 0, 0.311)
+leaf_offset = Vector3(0, 0, -0.039)
 
 [node name="FridgeInteriorLight" type="OmniLight3D" parent="Structure/KitchenDining/Kitchen_FridgeBody" unique_id=970500001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.230896, 0.51827174, -0.1500001)
@@ -951,16 +1056,17 @@ collision_mask = 0
 script = ExtResource("99_interacthit")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/KitchenDining/Kitchen_FridgeBody/InteractHit" unique_id=996300008]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0.05)
 shape = SubResource("BoxShape_hit_3")
 
 [node name="Kitchen_Stove" parent="Structure/KitchenDining" unique_id=875423714 instance=ExtResource("13_stove")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.1, 0, 2.978509)
 
 [node name="Kitchen_StoveBody" type="StaticBody3D" parent="Structure/KitchenDining" unique_id=930138840]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.1, 0.45, 2.978509)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.1, 0.4575, 2.978509)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/KitchenDining/Kitchen_StoveBody" unique_id=998055713]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.032)
 shape = SubResource("BoxShape_stove")
 
 [node name="Kitchen_Counter_A" parent="Structure/KitchenDining" unique_id=714921332 instance=ExtResource("46_counter")]
@@ -1066,10 +1172,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.79956436, 0.4, -1.2149358)
 shape = SubResource("BoxShape_toilet")
 
 [node name="DownstairsBath_Sink" parent="Structure/DownstairsBathroom" unique_id=1357747716 instance=ExtResource("16_sink")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0, -1.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.19999981, 0, -1.3057303)
+mesh_names = []
 
 [node name="DownstairsBath_SinkBody" type="StaticBody3D" parent="Structure/DownstairsBathroom" unique_id=642270854]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.425, -1.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.19999981, 0.425, -1.3186212)
 collision_layer = 5
 collision_mask = 0
 script = ExtResource("105_sinkwash")
@@ -1079,12 +1186,25 @@ shape = SubResource("BoxShape_bathsink")
 
 [node name="DownstairsBath_Shower" parent="Structure/DownstairsBathroom" unique_id=960000201 instance=ExtResource("30_shower")]
 transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 1.1999998, 0, 1.1000001)
+mesh_names = []
 
 [node name="DownstairsBath_ShowerBody" type="StaticBody3D" parent="Structure/DownstairsBathroom" unique_id=960000202]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 1.05, 1.1)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/DownstairsBathroom/DownstairsBath_ShowerBody" unique_id=960000203]
 shape = SubResource("BoxShape_shower")
+
+[node name="DownstairsBath_WasteBin" parent="Structure/DownstairsBathroom" unique_id=1209447757 instance=ExtResource("216_wastebin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.33, 0, -1.4)
+
+[node name="DownstairsBath_Bathtub" parent="Structure/DownstairsBathroom" unique_id=2122043754 instance=ExtResource("215_bathtub")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8299999, 0, 1.1163547)
+
+[node name="DownstairsBath_BathtubBody" type="StaticBody3D" parent="Structure/DownstairsBathroom" unique_id=919331673]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.83, 0.325, 1.1163547)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/DownstairsBathroom/DownstairsBath_BathtubBody" unique_id=654418817]
+shape = SubResource("BoxShape_bathtub")
 
 [node name="Laundry" type="Node3D" parent="Structure" unique_id=558859900]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.3, 0.05, 2.8)
@@ -1112,18 +1232,20 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -1.5500002, 0, -1.3496628)
 
 [node name="Laundry_ClothesShelfBody" type="StaticBody3D" parent="Structure/Laundry" unique_id=1361725123]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -1.3745313, 0.8, -1.3496628)
+collision_layer = 8
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/Laundry/Laundry_ClothesShelfBody" unique_id=1361725124]
 shape = SubResource("BoxShape_clothesshelf")
 
 [node name="Laundry_HangerRail" parent="Structure/Laundry" unique_id=1361725125 instance=ExtResource("49_hrail")]
 transform = Transform3D(1, 0, -4.371139e-08, 0, 1, 0, 4.371139e-08, 0, 1, 0.08163071, 1.75, -2.5877824)
+hide_meshes = PackedStringArray()
 
 [node name="Laundry_ClothesPile_2" parent="Structure/Laundry" unique_id=970400023 instance=ExtResource("81_clothespile")]
-transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -1.3804717, 1.5890651, -0.99553204)
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -1.3804717, 0.8890651, -0.99553204)
 
 [node name="Laundry_ClothesPile_2Body" type="StaticBody3D" parent="Structure/Laundry" unique_id=970400024 groups=["minute_hand_sites"]]
-transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -1.3804717, 1.6690651, -0.99553204)
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -1.3804717, 0.9690651, -0.99553204)
 collision_layer = 5
 collision_mask = 0
 script = ExtResource("77_coatcheck")
@@ -1144,11 +1266,14 @@ script = ExtResource("99_interacthit")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
 shape = SubResource("BoxShape_hit_5")
 
+[node name="RevealPoint" type="Marker3D" parent="Structure/Laundry/Laundry_ClothesPile_2Body" unique_id=752612260]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
+
 [node name="Laundry_ClothesPile_3" parent="Structure/Laundry" unique_id=970400026 instance=ExtResource("81_clothespile")]
-transform = Transform3D(0.70710677, 0, -0.70710677, 0, 1, 0, 0.70710677, 0, 0.70710677, -1.3610926, 1.6078459, -1.5767553)
+transform = Transform3D(0.70710677, 0, -0.70710677, 0, 1, 0, 0.70710677, 0, 0.70710677, -1.3610926, 0.9078459, -1.5767553)
 
 [node name="Laundry_ClothesPile_3Body" type="StaticBody3D" parent="Structure/Laundry" unique_id=970400027 groups=["minute_hand_sites"]]
-transform = Transform3D(0.70710677, 0, -0.70710677, 0, 1, 0, 0.70710677, 0, 0.70710677, -1.3610926, 1.687846, -1.5767553)
+transform = Transform3D(0.70710677, 0, -0.70710677, 0, 1, 0, 0.70710677, 0, 0.70710677, -1.3610926, 0.987846, -1.5767553)
 collision_layer = 5
 collision_mask = 0
 script = ExtResource("77_coatcheck")
@@ -1169,11 +1294,17 @@ script = ExtResource("99_interacthit")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
 shape = SubResource("BoxShape_hit_6")
 
+[node name="RevealPoint" type="Marker3D" parent="Structure/Laundry/Laundry_ClothesPile_3Body" unique_id=164233884]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
+
+[node name="Laundry_Corner" parent="Structure/Laundry" instance=ExtResource("215_lcorner")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.62, 0, -2.25)
+
 [node name="HiddenRoom" type="Node3D" parent="Structure" unique_id=2130837819]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.4, 0.05, -2.8)
 
 [node name="HiddenRoomVolume" type="CSGBox3D" parent="Structure/HiddenRoom" unique_id=1340994918]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00051116943, 1.201585, 5.1498413e-05)
 size = Vector3(2.6, 2.4, 4.2)
 material = SubResource("mat_hidden")
 
@@ -1234,6 +1365,9 @@ prompt_text = "[E] Wrap Mum in the blanket."
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/HiddenRoom/Mom_WrapBody" unique_id=970800021]
 transform = Transform3D(1, 0, 0, 0, 0.670719, 0, 0, 0, 1, -0.048974514, -0.14172411, 0)
 shape = SubResource("BoxShape_momwrap")
+
+[node name="Hidden_ToolBoard" parent="Structure/HiddenRoom" unique_id=570134434 instance=ExtResource("214_toolboard")]
+transform = Transform3D(-1.3620871, 0, 8.742278e-08, 0, 1.1855049, 0, -1.19077434e-07, 0, -1, 0.03459072, 1.45, 2.0951278)
 
 [node name="Hidden_ClothesBox_1" parent="Structure/HiddenRoom" unique_id=1902379575 instance=ExtResource("50_cbox")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.95, 0, 1.55)
@@ -1452,7 +1586,7 @@ size = Vector3(0.25, 0.06, 0.25)
 material = SubResource("mat_lamp")
 
 [node name="OmniLight3D" type="OmniLight3D" parent="Structure/Ceiling_F2/Fixture" unique_id=2053502265]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.5267992)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35712826, 0.62685156, -2.5267992)
 light_color = Color(1, 0.85, 0.65, 1)
 light_energy = 7.741
 light_indirect_energy = 0.0
@@ -1645,9 +1779,6 @@ material = SubResource("mat_wall_dark")
 [node name="Landing" type="Node3D" parent="Structure" unique_id=1622170217]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 3.05, 2.5)
 
-[node name="Landing_RoomCarpet" parent="Structure/Landing" unique_id=677346720 instance=ExtResource("44_carpet")]
-transform = Transform3D(1.3, 0, 0, 0, 1, 0, 0, 0, 1.2, 0.40108722, 0.00999999, 1.6068134)
-
 [node name="Landing_BoxStack" parent="Structure/Landing" unique_id=960000604 instance=ExtResource("39_boxstack")]
 transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -2.518499, 0, 1.0541883)
 
@@ -1694,13 +1825,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.1713257, 0.3599999, -3.4260
 shape = SubResource("BoxShape_plant")
 
 [node name="Landing_Couch" parent="Structure/Landing" unique_id=970000901 instance=ExtResource("8b_couch_dark")]
-transform = Transform3D(5.9604645e-08, 0, 0.99999994, 0, 1, 0, -0.99999994, 0, 5.9604645e-08, -0.8430836, -0.1510508, -0.60939246)
+transform = Transform3D(5.9604645e-08, 0, 0.99999994, 0, 1.12, 0, -0.99999994, 0, 5.9604645e-08, -0.8430836, -0.04, -0.60939246)
 
 [node name="Landing_Book" parent="Structure/Landing" unique_id=970600020 instance=ExtResource("86_book")]
-transform = Transform3D(1.7320508, -1, -4.371139e-08, 0, -8.742278e-08, 2, -1, -1.7320508, -7.5710346e-08, -0.7304325, 0.29999995, -0.54999995)
+transform = Transform3D(1.7320508, -1, -4.371139e-08, 0, -8.742278e-08, 2, -1, -1.7320508, -7.5710346e-08, -0.7304325, 0.49518037, -0.54999995)
 
 [node name="Landing_BookBody" type="StaticBody3D" parent="Structure/Landing" unique_id=970600021]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7304325, 0.38, -0.54999995)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7304325, 0.51, -0.54999995)
 collision_layer = 5
 collision_mask = 0
 script = ExtResource("99_bookread")
@@ -1710,7 +1841,7 @@ prompt_text = "[E] Read the book."
 shape = SubResource("BoxShape_bookprop")
 
 [node name="Landing_CouchBody" type="StaticBody3D" parent="Structure/Landing" unique_id=970000902 groups=["minute_hand_sites"]]
-transform = Transform3D(2.9802322e-08, 0, -1, 0, 1, 0, 1, 0, 2.9802322e-08, -0.8430836, 0.2739492, -0.60939246)
+transform = Transform3D(2.9802322e-08, 0, -1, 0, 1.12, 0, 1, 0, 2.9802322e-08, -0.8430836, 0.436, -0.60939246)
 collision_layer = 5
 collision_mask = 0
 script = ExtResource("96_couchsearch")
@@ -1729,7 +1860,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.405)
 shape = SubResource("BoxShape_hit_7")
 
 [node name="Landing_CouchSolid" type="StaticBody3D" parent="Structure/Landing" unique_id=970000912]
-transform = Transform3D(2.9802322e-08, 0, -1, 0, 1, 0, 1, 0, 2.9802322e-08, -0.8430836, 0.2739492, -0.60939246)
+transform = Transform3D(2.9802322e-08, 0, -1, 0, 1.12, 0, 1, 0, 2.9802322e-08, -0.8430836, 0.436, -0.60939246)
 collision_layer = 8
 collision_mask = 0
 
@@ -1753,8 +1884,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.97404575, 0.4000001, -1.30
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/UpperBathroom/UpperBath_ToiletBody" unique_id=530928650]
 shape = SubResource("BoxShape_toilet")
 
+[node name="UpperBath_WasteBin" parent="Structure/UpperBathroom" unique_id=1478325635 instance=ExtResource("216_wastebin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.37, 0, -1.55)
+
 [node name="UpperBath_Sink" parent="Structure/UpperBathroom" unique_id=622882776 instance=ExtResource("16_sink")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.29999995, 0, -1.4480603)
+mesh_names = []
 
 [node name="PillsJar_Bath" parent="Structure/UpperBathroom" unique_id=970600030 instance=ExtResource("87_pillsjar")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5368087, 0.7957387, -1.4684336)
@@ -1781,6 +1916,7 @@ shape = SubResource("BoxShape_bathsink")
 
 [node name="UpperBath_Shower" parent="Structure/UpperBathroom" unique_id=960000211 instance=ExtResource("30_shower")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.64, 0, 0.54999995)
+mesh_names = []
 
 [node name="UpperBath_ShowerBody" type="StaticBody3D" parent="Structure/UpperBathroom" unique_id=960000212]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.64, 1.05, 0.54999995)
@@ -1790,12 +1926,6 @@ shape = SubResource("BoxShape_shower")
 
 [node name="TashRoom" type="Node3D" parent="Structure" unique_id=1051744355]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.1, 3.05, -3.4)
-
-[node name="Tash_RoomCarpet" parent="Structure/TashRoom" unique_id=1610414820 instance=ExtResource("44_carpet")]
-transform = Transform3D(1.2, 0, 0, 0, 1, 0, 0, 0, 1.15, -0.7770853, 0.00999999, 0.34205294)
-
-[node name="Tash_WallRug" parent="Structure/TashRoom" unique_id=970200001 instance=ExtResource("73_wallrug")]
-transform = Transform3D(-8.1644956e-08, 2.4524746, 0, 1.867819, 1.0720106e-07, -5.125451e-08, -8.1644956e-08, -4.6859074e-15, -1.1725665, 0.19999981, 1.1499999, 1.9974813)
 
 [node name="UseKnifeOnTash" type="StaticBody3D" parent="Structure/TashRoom" unique_id=970100040]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.6, 0.1)
@@ -2015,9 +2145,6 @@ shape = SubResource("BoxShape_kp_cabinet")
 [node name="SabiraRoom" type="Node3D" parent="Structure" unique_id=2008899128]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.75, 3.05, 0.65)
 
-[node name="Sabira_RoomCarpet" parent="Structure/SabiraRoom" unique_id=456077766 instance=ExtResource("44_carpet")]
-transform = Transform3D(1.15, 0, 0, 0, 1, 0, 0, 0, 1.1, -0.76978207, 0.00999999, 0)
-
 [node name="Sabira_Bed" parent="Structure/SabiraRoom" unique_id=838946031 instance=ExtResource("17_bed")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -0.9)
 
@@ -2181,9 +2308,6 @@ shape = SubResource("BoxShape_peas_safe")
 
 [node name="TashOffice" type="Node3D" parent="Structure" unique_id=2081358709]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.75, 3.05, 4.05)
-
-[node name="TashOffice_RoomCarpet" parent="Structure/TashOffice" unique_id=1170361896 instance=ExtResource("44_carpet")]
-transform = Transform3D(1.1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 0.01, 0.15)
 
 [node name="TashOffice_Bookcase" parent="Structure/TashOffice" unique_id=960000741 instance=ExtResource("19_bookcase")]
 transform = Transform3D(1.3113416e-07, 0, -1, 0, 1, 0, 1, 0, 1.3113416e-07, 1.9290175, 0, -0.5)
@@ -2404,6 +2528,19 @@ frame_size = Vector2(1.1, 1)
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 3.388, 1.55, 0.6)
 look_lines = []
 
+[node name="Landing_CoffeeTable" parent="Structure" unique_id=273153630 instance=ExtResource("210_ctable")]
+transform = Transform3D(0, 0, -1.094, 0, 1.15, 0, 0.978, 0, 0, -0.3, 3.01, 1.9)
+
+[node name="Landing_CoffeeTableBody" type="StaticBody3D" parent="Structure" unique_id=290492296]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 3.21, 1.9)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/Landing_CoffeeTableBody" unique_id=1676334991]
+shape = SubResource("ctable_shape")
+
+[node name="Landing_CoffeeTableCup" parent="Structure" unique_id=1215714183 instance=ExtResource("211_ccup")]
+transform = Transform3D(0.5, 0, 0.866, 0, 1, 0, -0.866, 0, 0.5, -0.28, 3.41, 2.05)
+
 [node name="Lighting" type="Node3D" parent="." unique_id=920000000]
 
 [node name="ClosetLight" type="OmniLight3D" parent="Lighting" unique_id=996000003]
@@ -2475,18 +2612,61 @@ omni_range = 3.5
 omni_attenuation = 2.0
 
 [node name="LaundryStorage" type="Node3D" parent="Lighting" unique_id=920000004]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.3, 2.35, 2.8)
-
-[node name="Fixture" type="CSGBox3D" parent="Lighting/LaundryStorage" unique_id=920000041]
-size = Vector3(0.4, 0.08, 0.2)
-material = SubResource("mat_lamp")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.3, 2.35, 2.6577308)
 
 [node name="OmniLight3D" type="OmniLight3D" parent="Lighting/LaundryStorage" unique_id=920000042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.30915546, 0.048855066, -1.1622565)
 light_color = Color(1, 0.85, 0.65, 1)
-light_energy = 3.3
+light_energy = 0.584
 shadow_enabled = true
 omni_range = 4.0
 omni_attenuation = 2.0
+
+[node name="BareBulbLight" type="OmniLight3D" parent="Lighting/LaundryStorage" unique_id=921410175]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2560091, 0.12653065, 1.387923)
+light_color = Color(1, 0.93, 0.8, 1)
+light_energy = 1.05
+omni_range = 2.161
+omni_attenuation = 1.6
+script = ExtResource("207_flicker")
+
+[node name="Hum" type="AudioStreamPlayer3D" parent="Lighting/LaundryStorage/BareBulbLight" unique_id=1858878598]
+stream = ExtResource("208_hum")
+volume_db = -30.743
+unit_size = 1.5
+max_distance = 7.0
+
+[node name="Cord" type="CSGCylinder3D" parent="Lighting/LaundryStorage/BareBulbLight" unique_id=969743775]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.26, 0)
+radius = 0.008
+height = 0.42
+material = SubResource("mat_lamp")
+
+[node name="Bulb" type="CSGSphere3D" parent="Lighting/LaundryStorage/BareBulbLight" unique_id=548503207]
+radius = 0.045
+radial_segments = 8
+rings = 4
+material = SubResource("mat_lamp")
+
+[node name="StorageBareBulbLight" type="OmniLight3D" parent="Lighting/LaundryStorage" unique_id=704707297]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.0516, -1.1827)
+light_color = Color(1, 0.93, 0.8, 1)
+light_energy = 1.05
+omni_range = 2.161
+omni_attenuation = 1.6
+script = ExtResource("207_flicker")
+
+[node name="Cord" type="CSGCylinder3D" parent="Lighting/LaundryStorage/StorageBareBulbLight" unique_id=2122786657]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.26, 0)
+radius = 0.008
+height = 0.42
+material = SubResource("mat_lamp")
+
+[node name="Bulb" type="CSGSphere3D" parent="Lighting/LaundryStorage/StorageBareBulbLight" unique_id=81205541]
+radius = 0.045
+radial_segments = 8
+rings = 4
+material = SubResource("mat_lamp")
 
 [node name="Hall" type="Node3D" parent="Lighting" unique_id=920000005]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 2.4, 4.2)
@@ -2723,7 +2903,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.05, 1.25, 3.75)
 collision_layer = 5
 collision_mask = 0
 script = ExtResource("53_lightswitch")
-light_paths = Array[NodePath]([NodePath("../../Lighting/LaundryStorage/OmniLight3D")])
+light_paths = Array[NodePath]([NodePath("../../Lighting/LaundryStorage/OmniLight3D"), NodePath("../../Lighting/LaundryStorage/BareBulbLight"), NodePath("../../Lighting/LaundryStorage/StorageBareBulbLight")])
 prompt_text = "[E] Turn lights off"
 
 [node name="Plate" type="CSGBox3D" parent="LightSwitches/Switch_Laundry" unique_id=980000103]
@@ -2758,6 +2938,7 @@ collision_layer = 5
 collision_mask = 0
 script = ExtResource("53_lightswitch")
 light_paths = Array[NodePath]([NodePath("../../Lighting/HiddenRoom/OmniLight3D")])
+makes_noise = false
 prompt_text = "[E] Turn lights off"
 
 [node name="Plate" type="CSGBox3D" parent="LightSwitches/Switch_Hidden" unique_id=980000105]
@@ -2916,7 +3097,7 @@ transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 2.9701743, 0.009479653, -4.4
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 3.1344075, 0.6, -4.439135)
 
 [node name="KitchenShelfPantryBody#CollisionShape3D" type="CollisionShape3D" parent="." unique_id=996263159]
-transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 3.106448, 0.5256882, -4.3824615)
+transform = Transform3D(-1, 0, 9.3677585e-08, 0, 0.848997, 0, -8.742278e-08, 0, -1.0715467, 3.106448, 0.36299825, -4.3824615)
 shape = SubResource("BoxShape_kshelf")
 
 [node name="Bath1_West" type="CSGBox3D" parent="." unique_id=1582191570]
@@ -2957,6 +3138,48 @@ transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 0.85, 1.6, -5.34)
 
 [node name="F1_Run_4" type="Marker3D" parent="PaintingPuzzle" unique_id=993000015]
 transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 2, 1.6, -5.34)
+
+[node name="Rugs" type="Node3D" parent="." unique_id=126046312]
+
+[node name="Rug_Living" type="MeshInstance3D" parent="Rugs" unique_id=867018593]
+transform = Transform3D(1.6, 0, 0, 0, 1.6, 0, 0, 0, 1.6, -0.2, 0.058, -0.75)
+cast_shadow = 0
+mesh = SubResource("rug_mesh_0")
+
+[node name="Rug_Kitchen" type="MeshInstance3D" parent="Rugs" unique_id=1194627409]
+transform = Transform3D(0, 0, -1.3, 0, 1.3, 0, 1.3, 0, 0, 5.0035086, 0.058, -1.3673241)
+cast_shadow = 0
+mesh = SubResource("rug_mesh_1")
+
+[node name="Rug_Landing" type="MeshInstance3D" parent="Rugs" unique_id=149208677]
+transform = Transform3D(-6.6485015e-08, 0, -1.43, 0, 1, 0, 1.5209998, 0, -6.250728e-08, -0.16270053, 3.058, 1.7211199)
+cast_shadow = 0
+mesh = SubResource("rug_mesh_2")
+
+[node name="Rug_Sabira" type="MeshInstance3D" parent="Rugs" unique_id=1353055591]
+transform = Transform3D(1.1, 0, 0, 0, 1.1, 0, 0, 0, 1.1, 4.3084106, 3.058, 0.45748723)
+cast_shadow = 0
+mesh = SubResource("rug_mesh_3")
+
+[node name="Rug_Office" type="MeshInstance3D" parent="Rugs" unique_id=1307814425]
+transform = Transform3D(1.1, 0, 0, 0, 1.1, 0, 0, 0, 1.1, 5, 3.058, 4.2)
+cast_shadow = 0
+mesh = SubResource("rug_mesh_4")
+
+[node name="WallRug_Tash" type="MeshInstance3D" parent="Rugs" unique_id=1133238982]
+transform = Transform3D(-1.6800001, 0, 0, 0, 0, -1.5600001, 0, -1.2, 0, 3.992118, 4.25, -1.362)
+cast_shadow = 0
+mesh = SubResource("rug_mesh_5")
+
+[node name="Rug_TashBedside" type="MeshInstance3D" parent="Rugs" unique_id=1825764410]
+transform = Transform3D(-2, 0, 8.742278e-08, 0, 2, 0, -8.742278e-08, 0, -2, 3.9197326, 3.058, -3.1968257)
+cast_shadow = 0
+mesh = SubResource("rug_mesh_6")
+
+[node name="WallRug_Living" type="MeshInstance3D" parent="Rugs" unique_id=1518305794]
+transform = Transform3D(-1, 0, 0, 0, 0, -1, 0, -1, 0, 0, 1.5, 5.388)
+cast_shadow = 0
+mesh = SubResource("rug_mesh_7")
 
 [editable path="Structure/HiddenRoom/Hidden_Mom_Amina"]
 [editable path="Structure/HiddenRoom/Hidden_Mom_Restraint"]

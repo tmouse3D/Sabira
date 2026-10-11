@@ -99,7 +99,7 @@ func _ui_open() -> bool:
 
 
 func can_interact(_player: Node) -> bool:
-	return interact_enabled and not _ui_open()
+	return interact_enabled and not _ui_open() and front_ok(_player)
 
 
 func _on_interact(_player: Node) -> void:

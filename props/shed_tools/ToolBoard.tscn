@@ -1,0 +1,141 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://interact/LookExamine.gd" id="s_look"]
+
+[ext_resource type="Texture2D" path="res://props/shed_tools/pegboard.png" id="t_peg"]
+[ext_resource type="Texture2D" path="res://props/shed_tools/wood_handle.png" id="t_wood"]
+[ext_resource type="Texture2D" path="res://props/shed_tools/steel_grimy.png" id="t_steel"]
+
+[sub_resource type="StandardMaterial3D" id="peg"]
+albedo_texture = ExtResource("t_peg")
+albedo_color = Color(0.85, 0.85, 0.85, 1)
+roughness = 1
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="wood"]
+albedo_texture = ExtResource("t_wood")
+albedo_color = Color(0.8, 0.75, 0.7, 1)
+roughness = 1
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="steel"]
+albedo_texture = ExtResource("t_steel")
+albedo_color = Color(0.75, 0.75, 0.75, 1)
+roughness = 0.6
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="dark"]
+albedo_texture = ExtResource("t_steel")
+albedo_color = Color(0.35, 0.33, 0.32, 1)
+roughness = 0.7
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="peg_pin"]
+albedo_color = Color(0.2, 0.2, 0.2, 1)
+roughness = 0.8
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="m0"]
+material = SubResource("peg")
+size = Vector3(1, 0.62, 0.018)
+
+[sub_resource type="BoxMesh" id="m1"]
+material = SubResource("wood")
+size = Vector3(1.04, 0.04, 0.03)
+
+[sub_resource type="BoxMesh" id="m2"]
+material = SubResource("peg_pin")
+size = Vector3(0.012, 0.012, 0.05)
+
+[sub_resource type="BoxMesh" id="m3"]
+material = SubResource("wood")
+size = Vector3(0.03, 0.34, 0.022)
+
+[sub_resource type="BoxMesh" id="m4"]
+material = SubResource("steel")
+size = Vector3(0.13, 0.035, 0.03)
+
+[sub_resource type="BoxMesh" id="m5"]
+material = SubResource("steel")
+size = Vector3(0.05, 0.02, 0.025)
+
+[sub_resource type="BoxMesh" id="m6"]
+material = SubResource("steel")
+size = Vector3(0.13, 0.4, 0.004)
+
+[sub_resource type="BoxMesh" id="m7"]
+material = SubResource("steel")
+size = Vector3(0.08, 0.06, 0.004)
+
+[sub_resource type="BoxMesh" id="m8"]
+material = SubResource("wood")
+size = Vector3(0.15, 0.1, 0.025)
+
+[sub_resource type="BoxMesh" id="m9"]
+material = SubResource("dark")
+size = Vector3(0.08, 0.045, 0.027)
+
+[sub_resource type="BoxShape3D" id="shape_look"]
+size = Vector3(1.0, 0.72, 0.08)
+
+[node name="ToolBoard" type="Node3D"]
+
+[node name="Pegboard" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.009)
+mesh = SubResource("m0")
+
+[node name="Batten_T" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.33, 0.015)
+mesh = SubResource("m1")
+
+[node name="Batten_B" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.33, 0.015)
+mesh = SubResource("m1")
+
+[node name="Pin_Hammer" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.36, 0.2, 0.035)
+mesh = SubResource("m2")
+
+[node name="Hammer_Handle" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.99756, -0.069756, 0, 0.069756, 0.99756, 0, 0, 0, 1, -0.36, 0.02, 0.042)
+mesh = SubResource("m3")
+
+[node name="Hammer_Head" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.99756, -0.069756, 0, 0.069756, 0.99756, 0, 0, 0, 1, -0.373, 0.19, 0.045)
+mesh = SubResource("m4")
+
+[node name="Hammer_Claw" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.93969, 0.34202, 0, -0.34202, 0.93969, 0, 0, 0, 1, -0.3, 0.205, 0.045)
+mesh = SubResource("m5")
+
+[node name="Pin_Saw" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.24, 0.035)
+mesh = SubResource("m2")
+
+[node name="Saw_Blade" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.99939, -0.034899, 0, 0.034899, 0.99939, 0, 0, 0, 1, -0.05, 0, 0.034)
+mesh = SubResource("m6")
+
+[node name="Saw_Tip" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06, -0.21, 0.034)
+mesh = SubResource("m7")
+
+[node name="Saw_Handle" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.99939, -0.034899, 0, 0.034899, 0.99939, 0, 0, 0, 1, -0.045, 0.23, 0.042)
+mesh = SubResource("m8")
+
+[node name="Saw_Grip" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.99939, -0.034899, 0, 0.034899, 0.99939, 0, 0, 0, 1, -0.045, 0.23, 0.043)
+mesh = SubResource("m9")
+
+[node name="LookBody" type="StaticBody3D" parent="."]
+collision_layer = 5
+collision_mask = 0
+script = ExtResource("s_look")
+prompt_text = "[E] Look"
+look_lines = PackedStringArray("I didn't know Dad had those tools. I don't want to think about what he was using them for. They're no use to me... he'd punch my teeth out if he saw me with his tools.")
+line_duration = 9.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LookBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.04)
+shape = SubResource("shape_look")
