@@ -27,6 +27,10 @@ var _loud_caption: bool = false
 var _frame: String = ""
 var _next_t: float = 0.0
 var _walker: Node
+## Voice blip sync (autoload Voices): mouth opens on each TASH blip, closes between them.
+var _voices: Node
+var _blip_until_ms: int = 0
+var _blip_loud: bool = false
 
 
 func _ready() -> void:
@@ -36,7 +40,21 @@ func _ready() -> void:
 		_tex[k] = load(DIR + "Tash_albedo_%s.png" % k) as Texture2D
 	if GameState != null and GameState.has_signal("caption_changed"):
 		GameState.caption_changed.connect(_on_caption)
+	_voices = get_node_or_null("/root/Voices")
+	if _voices != null and is_instance_valid(_voices) and _voices.has_signal("blip") and not _voices.blip.is_connected(_on_blip):
+		_voices.blip.connect(_on_blip)
 	call_deferred("_bind")
+
+
+func _on_blip(speaker: String, loud: bool, sec: float) -> void:
+	if speaker != "TASH" or _mat == null or _dead():
+		return
+	_blip_until_ms = Time.get_ticks_msec() + int(sec * 900.0)
+	_blip_loud = loud
+	if loud:
+		_set_frame("open" if randf() < 0.8 else "half")
+	else:
+		_set_frame("half" if randf() < 0.8 else "open")
 
 
 func _bind() -> void:
@@ -76,6 +94,8 @@ func _on_caption(speaker: String, text: String, duration: float) -> void:
 
 
 func _is_loud_text(text: String) -> bool:
+	if is_instance_valid(_voices) and _voices.has_method("is_loud_tash"):
+		return _voices.is_loud_tash(text)
 	if text.contains("!"):
 		return true
 	var fs = _walker.get("FIRST_SIGHT_LINES") if _walker else null
@@ -111,6 +131,15 @@ func _process(delta: float) -> void:
 		_set_frame("closed")
 		return
 	var speaking := Time.get_ticks_msec() < _speaking_until_ms
+	# Voice-driven: while TASH blips play, the mouth follows them exactly.
+	if is_instance_valid(_voices) and speaking and _voices.current_speaker() == "TASH":
+		if Time.get_ticks_msec() >= _blip_until_ms:
+			_set_frame("closed")
+		return
+	if is_instance_valid(_voices) and speaking and not _clip_loud():
+		# Caption still up but the voice has finished: keep the mouth shut.
+		_set_frame("closed")
+		return
 	var loud := _clip_loud() or (speaking and _loud_caption)
 	if not speaking and not loud:
 		_set_frame("closed")
@@ -142,3 +171,8 @@ func _set_frame(f: String, force: bool = false) -> void:
 
 func current_key() -> String:
 	return ("blood_" + _frame) if _blood else _frame
+
+
+func _exit_tree() -> void:
+	if is_instance_valid(_voices) and _voices.has_signal("blip") and _voices.blip.is_connected(_on_blip):
+		_voices.blip.disconnect(_on_blip)

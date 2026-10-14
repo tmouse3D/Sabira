@@ -31,6 +31,7 @@ func _ready() -> void:
 	interact_enabled = true
 	prompt_text = search_prompt
 	add_to_group("bedroom_key_sites")
+	add_to_group("search_sites")  # catch-1 key re-hide (GameState.take_hidden_key)
 	_ensure_front_only_collision()
 	_ensure_sfx()
 	if GameState != null and GameState.has_inventory_flag("tash_room_key"):
@@ -126,6 +127,8 @@ func _on_interact(_player: Node) -> void:
 	_play_sfx()
 	if GameState == null:
 		get_tree().call_group("subtitle", "show_line", "SABIRA", EMPTY_LINES[randi() % EMPTY_LINES.size()], line_duration)
+		return
+	if GameState.take_hidden_key(self):
 		return
 	if GameState.search_site_for_minute_hand(self, _site_armed):
 		return

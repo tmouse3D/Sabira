@@ -41,6 +41,7 @@ func _ready() -> void:
 	interact_enabled = true
 	_ensure_check_player()
 	_apply_prompt()
+	add_to_group("search_sites")  # catch-1 key re-hide (GameState.take_hidden_key)
 	if is_pills_site:
 		add_to_group("pills_sites")
 		if GameState != null and GameState.has_pills:
@@ -146,6 +147,8 @@ func _on_interact(_player: Node) -> void:
 	if GameState == null:
 		get_tree().call_group("subtitle", "show_line", "SABIRA", _empty_caption(), dur)
 		return
+	if GameState.take_hidden_key(self):
+		return
 	var key_flag := _key_flag()
 	if GameState.search_site_for_minute_hand(self, is_bedroom_key_site and _key_armed):
 		return
@@ -163,6 +166,9 @@ func _on_interact(_player: Node) -> void:
 			return
 		_looted = true
 		get_tree().call_group("subtitle", "show_line", "SABIRA", _key_find_caption(), dur)
+		return
+	if is_pills_site and GameState.dose_disabled and _site_armed and not _looted:
+		get_tree().call_group("subtitle", "show_line", "SABIRA", String(GameState.STORY_LINES["dose_disabled"]), 3.5)
 		return
 	if is_pills_site:
 		if _looted or not _site_armed:

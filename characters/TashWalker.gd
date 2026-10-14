@@ -203,6 +203,8 @@ var _turn_ids: Dictionary = {}
 var _cf_n: int = 0
 ## Recent destination picks. Force toilet only when none of the last N was toilet.
 const _TOILET_QUOTA_WINDOW := 8
+## Easy: toilet forced after a shorter dry spell (more F2 bathroom visits).
+const _EASY_TOILET_QUOTA_WINDOW := 4
 var _recent_picks: Array = []
 var _toilet_owed: bool = false
 ## F1 living-couch TV sits this run. Counted when the sit starts. 2, 4, 6 drink.
@@ -341,6 +343,7 @@ const _CLIP_MAP := {
 	"idle_2": ["idle_2", "Idle_2"],
 	"idle_aggressive": ["idle_aggressive"],
 	"taunt": ["taunt_flex"],
+	"angry_point": ["angry_point"],
 	"idle_3": ["idle_3"],
 	"walk_2": ["walk_2"],
 	"jog": ["jog"],
@@ -355,6 +358,7 @@ const _CLIP_MAP := {
 	"drunk_stumble": ["drunk_stumble"],
 	"drunk_turn": ["drunk_turn"],
 	"fall_flat": ["fall_flat"],
+	"getting_up": ["getting_up"],
 	"turn_l90": ["turn_in_place_left_90"],
 	"turn_r90": ["turn_in_place_right_90"],
 	"turn_l180": ["turn_in_place_left_180"],
@@ -364,7 +368,7 @@ const _CLIP_MAP := {
 ## Baked yaw of the in-place turn clips (deg, + = left). drunk_walk_backwards is never used.
 const _TURN_DEG := {"turn_l90": 89.7, "turn_r90": -102.6, "turn_l180": 176.1, "turn_r180": -172.7, "drunk_turn": 91.7}
 ## Looping clips (set on the AnimationPlayer's Animation resources at runtime, not BoneMap).
-const _LOOP_KEYS := ["run", "idle_2", "idle_aggressive", "idle_3", "walk_2", "jog", "strafe_walk_left", "strafe_walk_right", "strafe_run_left", "strafe_run_right", "drunk_walk", "drunk_idle", "drunk_idle_2", "drunk_run"]
+const _LOOP_KEYS := ["run", "idle_2", "idle_aggressive", "angry_point", "idle_3", "walk_2", "jog", "strafe_walk_left", "strafe_walk_right", "strafe_run_left", "strafe_run_right", "drunk_walk", "drunk_idle", "drunk_idle_2", "drunk_run"]
 var _intro_frozen: bool = false
 var _chasing: bool = false
 var _chase_pending: bool = false
@@ -388,8 +392,17 @@ const LOST_HOLD_MIN := 3.0
 const LOST_HOLD_MAX := 4.0
 const QUICK_TURN_SEC := 0.3
 # Darkness: vision range x0.45 and 0.8 s of continuous sight before chase; lit 0.1 s.
-const DARK_RANGE_MUL := 0.45
+const DARK_RANGE_MUL := 0.45      # legacy (cone draw); vision uses DARK_SIGHT_MULT
 const DARK_DETECT_SEC := 0.8
+## Dark vision (radio_dark 2026-10-14, _is_dark_between): sight range x DARK_SIGHT_MULT, spot
+## time DARK_DETECT_SEC x DARK_DETECT_MULT. Chase: she is dark and > DARK_LOSE_DIST away ->
+## sight rays failing DARK_LOSE_TIME, or DARK_LOSE_CLEAR_TIME even with a clear ray -> search
+## her last known spot. Proximity hearing unchanged.
+const DARK_SIGHT_MULT := 0.4
+const DARK_DETECT_MULT := 2.0
+const DARK_LOSE_DIST := 3.0
+const DARK_LOSE_TIME := 1.5
+const DARK_LOSE_CLEAR_TIME := 2.5
 const LIT_DETECT_SEC := 0.1
 const LIT_MIN_ENERGY := 0.055
 var _sight_t: float = 0.0
@@ -413,10 +426,47 @@ var _hungover: bool = false
 var _stumble_t: float = 0.0
 # --- Chase fall (2% per chase, 2-6 s in): fall_flat, lie 4.5 s, fall_flat reversed 0.8x ---
 const FALL_CHANCE := 0.02
+## Prologue choice cat_scratch (GameState.flag): chase fall chance rises to this.
+const FALL_CHANCE_CAT := 0.10
+## Easy + cat_scratch: clearly higher fall chance per chase window (Realistic keeps FALL_CHANCE_CAT).
+const EASY_FALL_CHANCE_CAT := 0.20
+# --- Difficulty "easy" (GameState.difficulty). Realistic = all of the above unchanged. ---
+# Drunk from the start (same as hungover), slower, shorter sight/hearing, sits in the office more.
+const EASY_WALK_SPEED := 0.38      # hungover walk is 0.45
+const EASY_RUN_SPEED := 1.6        # hungover run is 2.0
+const EASY_SIGHT_MUL := 0.7        # VIS_RANGE_M 11 -> 7.7 m, CHASE_RANGE_M 16 -> 11.2 m
+const EASY_HEAR_MUL := 0.6         # _HEAR_RANGE_M 12 -> 7.2 m (x loudness)
+const EASY_OFFICE_SIT_SEC := 70.0  # office sit (normal sit_hold_seconds = 24)
+const EASY_STOP_WEIGHTS := {"office": 14, "toilet": 4, "idle_f1": 3, "idle_f2": 3, "shelf": 3, "wander_living": 0, "wander_kitchen": 0, "wander_hall": 0}
+var _easy: bool = false
 const FALL_LIE_SEC := 4.5
 const GETUP_SPEED := 0.8
+## Fall recovery uses the baked getting_up clip (forward) at this speed; falls back to reversed fall_flat.
+const GETUP_CLIP_SPEED := 1.25
 var _fall_t: float = -1.0
 var _force_fall: bool = false
+# --- Chase fall v2 (fall_chase 2026-10-13) ---
+# The old roll ran ONCE per _start_chase (Easy + cat 20%); one long chase never re-rolled.
+# Now: a roll every FALL_ROLL_SEC of running chase (first one 2-6 s in), chance per roll by
+# mode (x FALL_DRUNK_MUL while hungover), plus a pity timer on continuous chase time.
+const FALL_ROLL_SEC := 6.0
+const FALL_ROLL_BASE := 0.03          # Realistic, no cat
+const FALL_ROLL_CAT := 0.06           # Realistic + cat_scratch
+const FALL_ROLL_EASY := 0.07          # Easy, no cat
+const FALL_ROLL_EASY_CAT := 0.16      # Easy + cat_scratch (highest)
+const FALL_DRUNK_MUL := 1.5
+## Pity: a fall is forced after this much continuous chase (s). 0 = off.
+const FALL_PITY_EASY_CAT := 45.0
+const FALL_PITY_EASY := 75.0
+const FALL_PITY_CAT := 100.0
+const FALL_PITY_BASE := 0.0
+## A chase restarted within this many ms of the last one counts as the same continuous chase.
+const FALL_CONTINUE_MS := 10000
+## No new roll for this long after getting up.
+const FALL_COOLDOWN_SEC := 10.0
+var _fall_roll_t: float = -1.0
+var _fall_chase_t: float = 0.0
+var _fall_last_ms: int = -1000000
 # --- In-place turns (patrol / investigate, > 60 deg) ---
 const INPLACE_TURN_DEG := 60.0
 const TURN_REST_SEC := 0.15
@@ -446,7 +496,9 @@ const ROAR_SEC := 1.7
 var _graph_leg: bool = false
 var _graph_goal: Vector3 = Vector3.INF
 # Bookshelf stops (f1stand / f2stand / office p18): 2-3 shelf_idle clips per stop.
-const SHELF_LOOP_CLIPS := ["shelf_idle_look_away", "shelf_idle_weight_shift", "shelf_idle_thoughtful", "shelf_idle_sigh", "shelf_idle_head_shake", "shelf_idle_acknowledge"]
+## Checking book shelves (baked 2026-10-13) alternates with the others (~50% of shelf stops).
+const SHELF_BOOKS_CLIP := "shelf_idle_checking_books"
+const SHELF_LOOP_CLIPS := ["shelf_idle_checking_books", "shelf_idle_look_away", "shelf_idle_weight_shift", "shelf_idle_thoughtful", "shelf_idle_sigh", "shelf_idle_head_shake", "shelf_idle_acknowledge"]
 const SHELF_NOD_CLIP := "shelf_idle_nod"
 var _shelf_plan: Array = []
 var _shelf_slice: float = 0.0
@@ -459,6 +511,7 @@ var _chase_roar_set: bool = false
 
 func _ready() -> void:
 	add_to_group("tash")
+	call_deferred("_apply_difficulty")
 	if get_node_or_null("TashMouthCycle") == null:
 		add_child(TashMouthCycle.new())
 	_ensure_drunk_look()
@@ -929,7 +982,7 @@ func _start_couch_drink() -> void:
 
 func _finish_couch_drink() -> void:
 	# Dose is read when the drink clip ends, not when the sit starts.
-	var dosed := GameState != null and GameState.bottle_dosed
+	var dosed := GameState != null and GameState.bottle_dosed and not GameState.dose_disabled
 	if dosed:
 		if _drunk_clip == "":
 			_bind_drink_clips()
@@ -1144,7 +1197,8 @@ func _begin_couch() -> bool:
 	if _sit_clip == "" or _idle_clip == "" or _anim == null:
 		return false
 	_couch_tv_sits += 1
-	_couch_drink_this = (_couch_tv_sits % 2) == 0
+	# After the first catch he no longer drinks on the couch (normal sitting idle / TV).
+	_couch_drink_this = (_couch_tv_sits % 2) == 0 and not (GameState != null and GameState.dose_disabled)
 	_couch_drink_phase = _DRINK_OFF
 	var marker := _marker(sit_marker_path, "TashCouchSit")
 	_act = _Act.SIT_DOWN
@@ -1174,7 +1228,7 @@ func _begin_office_sit() -> bool:
 	global_position = _sit_global
 	_apply_office_yaw()
 	_apply_office_visual()
-	_hold_left = sit_hold_seconds
+	_hold_left = EASY_OFFICE_SIT_SEC if _is_easy() else sit_hold_seconds
 	_force_loop(_idle_clip, Animation.LOOP_LINEAR)
 	_anim.play(_idle_clip)
 	return true
@@ -1404,6 +1458,10 @@ func _apply_sit_blend() -> void:
 func _locomotion_clip() -> String:
 	if _chasing and _run_clip != "":
 		return _run_clip
+	if _bc_phase == _BC_RUN:
+		var rc := _real_clip("drunk_run") if _hungover and _real_clip("drunk_run") != "" else _clip("run")
+		if rc != "":
+			return rc
 	var flat_walk := _clip_path
 	if _hungover:
 		var dw := _real_clip("drunk_walk")
@@ -1441,8 +1499,17 @@ func _physics_process(delta: float) -> void:
 	if _intro_frozen:
 		return
 	_tick_steps(delta)
+	if _yield_nc != null:
+		_yield_try_restore_collision()
+	if _catch_grace_t > 0.0:
+		_catch_grace_t -= delta
 	_tick_vision(delta)
+	_tick_proximity(delta)
 	_tick_chase(delta)
+	_tick_sabira_door_check()
+	_bc_tick_watch(delta)
+	_tick_radio_pending()
+	_tick_dark_room(delta)
 	if _hungover and _act == _Act.WALK and not _chasing:
 		_stumble_t -= delta
 	if _chase_pending:
@@ -1452,18 +1519,27 @@ func _physics_process(delta: float) -> void:
 	if _act == _Act.IDLE:
 		_look_left -= delta
 		if _chase_hold:
+			if _hold_kind == "bang":
+				_tick_bang(delta)
+				return
 			if _hold_kind == "warn":
 				_tick_warn(delta)
 				return
 			if _hold_kind == "roar":
+				if _hold_first_sight:
+					var yp := _player()
+					if yp != null:
+						_tick_warn_yield(delta, yp)
 				if _roar_chunks.size() > 0:
 					_roar_chunk_t -= delta
 					if _roar_chunk_t <= 0.0:
 						_show_roar_chunk()
-				# Long first-sight hold: when the one-shot yell ends, hold idle_aggressive.
-				if _anim != null and not _anim.is_playing() and _real_clip("idle_aggressive") != "":
-					_force_loop(_real_clip("idle_aggressive"), Animation.LOOP_LINEAR)
-					_anim.play(_real_clip("idle_aggressive"), 0.25)
+				# Long first-sight hold: when the one-shot yell ends, hold idle_aggressive
+				# (Realistic: angry_point during the first-sight speech).
+				var hold_idle := _speech_idle_clip() if _hold_first_sight else _real_clip("idle_aggressive")
+				if _anim != null and not _anim.is_playing() and hold_idle != "":
+					_force_loop(hold_idle, Animation.LOOP_LINEAR)
+					_anim.play(hold_idle, 0.25)
 			if _hold_kind == "relight":
 				_relight_t += delta
 				if _relight_t >= RELIGHT_AT_SEC and not _relight_done:
@@ -1472,6 +1548,9 @@ func _physics_process(delta: float) -> void:
 				_end_chase_hold()
 			return
 		if _inv_look:
+			if _bc_phase == _BC_CLOSING:
+				_bc_tick_closing(delta)
+				return
 			if _look_left <= 0.0:
 				_end_investigation()
 			return
@@ -1692,6 +1771,9 @@ func _build_nav() -> void:
 		"wander_kitchen": 1,
 		"wander_hall": 1,
 	}
+	if _is_easy():
+		for k in EASY_STOP_WEIGHTS:
+			_stop_weight[k] = int(EASY_STOP_WEIGHTS[k])
 
 
 func _add_pt(id: String, x: float, y: float, z: float) -> void:
@@ -1919,7 +2001,7 @@ func _toilet_quota_due() -> bool:
 	if _toilet_owed:
 		return true
 	# Force only after a long dry spell (about every 8-10 picks), not every third.
-	if _recent_picks.size() < _TOILET_QUOTA_WINDOW:
+	if _recent_picks.size() < _toilet_window():
 		return false
 	for prev_any in _recent_picks:
 		if String(prev_any) == "toilet":
@@ -1929,10 +2011,14 @@ func _toilet_quota_due() -> bool:
 
 func _note_pick(id: String) -> void:
 	_recent_picks.append(id)
-	while _recent_picks.size() > _TOILET_QUOTA_WINDOW:
+	while _recent_picks.size() > _toilet_window():
 		_recent_picks.pop_front()
 	if id == "toilet":
 		_toilet_owed = false
+
+
+func _toilet_window() -> int:
+	return _EASY_TOILET_QUOTA_WINDOW if _is_easy() else _TOILET_QUOTA_WINDOW
 
 
 func _start_route(route: Array) -> void:
@@ -1960,6 +2046,8 @@ func _choose_next() -> void:
 		return
 	if _pick_depth > 6:
 		_act = _Act.WALK
+		return
+	if _forced_next != "" and _start_forced_next():
 		return
 	_pick_depth += 1
 	var banned: Array = []
@@ -2042,6 +2130,9 @@ func _begin_current_stop() -> void:
 		started = _begin_red_couch()
 	elif _active_stop == "toilet":
 		started = _begin_toilet_sit()
+	elif _active_stop == "fridge":
+		_begin_fridge_look()
+		return
 	else:
 		_begin_pause()
 		return
@@ -2440,6 +2531,9 @@ func _add_blood_box(skel: Skeleton3D, names: PackedStringArray, att_name: String
 ## (|dy| > 1.5 m). Ignored while dead or drunk-locked. Sets a pending investigation that starts
 ## as soon as he can safely break off (after a door / sit animation; sits stand up first).
 func hear_noise(pos: Vector3, loudness: float, source: String) -> void:
+	if _bc_phase != _BC_NONE:
+		print("[NOISE] Tash ignores %s (bookcase check)" % source)
+		return
 	if _chasing or _chase_pending or (_chase_hold and _chasing) or _fail_walk or _intro_frozen or _warn:
 		print("[NOISE] Tash ignores %s (busy: chase/fail/intro/warn)" % source)
 		return
@@ -2452,7 +2546,7 @@ func hear_noise(pos: Vector3, loudness: float, source: String) -> void:
 			print("[NOISE] Tash ignores %s (%s)" % [source, why])
 			return
 	var dy := absf(pos.y - global_position.y)
-	var hear_range := _HEAR_RANGE_M * loudness
+	var hear_range := _HEAR_RANGE_M * loudness * (EASY_HEAR_MUL if _is_easy() else 1.0)
 	if dy > _HEAR_OTHER_FLOOR_DY:
 		hear_range *= _HEAR_OTHER_FLOOR_MUL
 	var dist := global_position.distance_to(pos)
@@ -2461,6 +2555,7 @@ func hear_noise(pos: Vector3, loudness: float, source: String) -> void:
 		return
 	print("[NOISE] Tash hears %s (%.1f m, range %.1f m)" % [source, dist, hear_range])
 	_lost_search = false
+	_inv_quiet = false
 	_inv_target_world = pos
 	_inv_pending = true
 	_relight_pending = false
@@ -2581,7 +2676,7 @@ func _start_investigation() -> void:
 		_lost_search = false
 	if _path_follow == null or _path_space() == null:
 		return
-	var first := not _investigating
+	var first := not _investigating and _bc_phase == _BC_NONE
 	_investigating = true
 	_inv_look = false
 	_route_idle = false
@@ -2597,6 +2692,9 @@ func _start_investigation() -> void:
 	if path.is_empty():
 		push_warning("TashWalker: no route to the noise. Ignored.")
 		_investigating = false
+		if _bc_phase != _BC_NONE:
+			print("[BOOKCASE] no route, giving up")
+			_bc_phase = _BC_NONE
 		_choose_next()
 		return
 	var route: Array = []
@@ -2614,8 +2712,8 @@ func _start_investigation() -> void:
 	_here = start_id
 	_active_stop = "investigate"
 	print("[NOISE] Tash investigates: ", route)
-	if first:
-		get_tree().call_group("subtitle", "show_line", "TASH", _INV_LINE, 2.5)
+	if first and not _inv_quiet:
+		_say(_INV_LINE, 2.5, false)
 		if GameState != null and GameState.has_signal("tash_alert_changed"):
 			GameState.tash_alert_changed.emit("search")
 	if route.size() <= 1:
@@ -2625,6 +2723,9 @@ func _start_investigation() -> void:
 
 
 func _begin_inv_look() -> void:
+	if _bc_phase == _BC_RUN or _bc_phase == _BC_TO_ROOM:
+		_bc_arrived()
+		return
 	if _relight_pending and _inv_switch != null and is_instance_valid(_inv_switch):
 		_begin_relight()
 		return
@@ -2655,6 +2756,12 @@ func _begin_inv_look() -> void:
 
 
 func _end_investigation() -> void:
+	if _bc_phase == _BC_LOOK:
+		_bc_close()
+		return
+	if _bc_phase == _BC_SPEAK:
+		_bc_phase = _BC_NONE
+		print("[BOOKCASE] Tash done, back to patrol")
 	_inv_look = false
 	_lost_search = false
 	_investigating = false
@@ -2717,15 +2824,34 @@ func is_chasing() -> bool:
 func _speed_mul() -> float:
 	if walk_speed <= 0.001:
 		return 1.0
-	if _chasing:
+	if _chasing or _bc_phase == _BC_RUN:
 		return _run_speed() / walk_speed
 	if _hungover:
-		return HUNG_WALK_SPEED / walk_speed
+		return (EASY_WALK_SPEED if _is_easy() else HUNG_WALK_SPEED) / walk_speed
 	return 1.0
 
 
 func _run_speed() -> float:
-	return HUNG_RUN_SPEED if _hungover else RUN_SPEED
+	if _hungover and _is_easy():
+		return EASY_RUN_SPEED
+	return (HUNG_RUN_SPEED if _hungover else RUN_SPEED) * (HUNT_SPEED_MUL if _hunting else 1.0)
+
+
+func _is_easy() -> bool:
+	return _easy or (GameState != null and String(GameState.get("difficulty")) == "easy")
+
+
+func _sight_mul() -> float:
+	return EASY_SIGHT_MUL if _is_easy() else 1.0
+
+
+## Easy mode: drunk (hungover) from the first frame. Called deferred from _ready.
+func _apply_difficulty() -> void:
+	_easy = GameState != null and String(GameState.get("difficulty")) == "easy"
+	if not _easy:
+		return
+	_set_hungover()
+	print("[EASY] drunk run: walk %.2f, run %.1f, sight x%.1f, hear x%.1f, office sit %.0f s, office weight %d" % [EASY_WALK_SPEED, EASY_RUN_SPEED, EASY_SIGHT_MUL, EASY_HEAR_MUL, EASY_OFFICE_SIT_SEC, int(EASY_STOP_WEIGHTS["office"])])
 
 
 func _clip(key: String) -> String:
@@ -2751,6 +2877,34 @@ func _real_clip(key: String) -> String:
 	if _anim == null or not _CLIP_MAP.has(key):
 		return ""
 	return _first_clip(PackedStringArray(_CLIP_MAP[key]))
+
+
+# --- Chase target on the ground (fall_chase 2026-10-13) --------------------------------------
+## Jumping put her (and the chase target) up to ~1 m in the air: _chase_wants_graph saw a > 0.6 m
+## navmesh end mismatch / > 1 m height gap and flipped to the stairs route graph mid-jump, so he
+## ran off in wrong directions. Targets now use her last grounded height (XZ live), snapped onto
+## the navmesh with NavigationServer3D.map_get_closest_point when it is within 1 m.
+var _p_ground_y: float = NAN
+
+
+func _player_airborne() -> bool:
+	var cb := _player() as CharacterBody3D
+	return cb != null and not cb.is_on_floor()
+
+
+func _chase_target_of(p: Node3D) -> Vector3:
+	var pos := p.global_position
+	var cb := p as CharacterBody3D
+	if cb != null and cb.is_on_floor():
+		_p_ground_y = pos.y
+	elif not is_nan(_p_ground_y) and absf(pos.y - _p_ground_y) < 2.0:
+		pos.y = _p_ground_y
+	if _nav_ready and is_inside_tree():
+		var map := get_world_3d().navigation_map
+		var snap := NavigationServer3D.map_get_closest_point(map, pos)
+		if snap.distance_to(pos) < 1.0:
+			pos = snap
+	return pos
 
 
 func _player() -> Node3D:
@@ -2787,6 +2941,8 @@ func _vision_blocked_reason() -> String:
 		return "drunk"
 	if _intro_frozen:
 		return "intro"
+	if _catch_grace_t > 0.0:
+		return "catch_grace"
 	if GameState != null and GameState.ending_reached != "":
 		return "ending"
 	if GameState != null and GameState.is_player_safe():
@@ -2807,32 +2963,25 @@ func _can_see_player() -> bool:
 	if _chasing:
 		# Active chase: only a real occluder (or > 16 m) breaks sight. FOV 140 for tracking;
 		# _los ignores the cone so turning away never ends the chase.
-		_los = eye.distance_to(chest) <= CHASE_RANGE_M and _rays_clear(eye, top, chest, p)
+		_los = eye.distance_to(chest) <= CHASE_RANGE_M * _sight_mul() and _rays_clear(eye, top, chest, p)
 		var tc := chest - eye
 		tc.y = 0.0
 		return _los and (tc.length_squared() < 0.0001 or rad_to_deg(_forward_flat().angle_to(tc.normalized())) <= CHASE_FOV_DEG * 0.5)
 	_los = false
-	var rng := VIS_RANGE_M * (VIS_CROUCH_MUL if GameState != null and GameState.is_crouching else 1.0)
-	_player_lit = _is_lit(chest)
+	var rng := VIS_RANGE_M * _sight_mul() * (VIS_CROUCH_MUL if GameState != null and GameState.is_crouching else 1.0)
+	var lit_now := not _is_dark_between(p)
+	if lit_now != _player_lit:
+		print("[DARK] player now %s (sight x%.1f, spot %.1f s)" % ["lit" if lit_now else "DARK", 1.0 if lit_now else DARK_SIGHT_MULT, LIT_DETECT_SEC if lit_now else DARK_DETECT_SEC * DARK_DETECT_MULT])
+	_player_lit = lit_now
 	if not _player_lit:
-		rng *= DARK_RANGE_MUL
+		rng *= DARK_SIGHT_MULT
 	if eye.distance_to(chest) > rng:
 		return false
 	var to := chest - eye
 	to.y = 0.0
 	if to.length_squared() > 0.0001 and rad_to_deg(_forward_flat().angle_to(to.normalized())) > VIS_FOV_DEG * 0.5:
 		return false
-	var space := get_world_3d().direct_space_state
-	var excl: Array[RID] = [get_rid()]
-	if p is CollisionObject3D:
-		excl.append((p as CollisionObject3D).get_rid())
-	for target in [top, chest]:
-		var q := PhysicsRayQueryParameters3D.create(eye, target)
-		q.collision_mask = 1
-		q.exclude = excl
-		if space.intersect_ray(q).is_empty():
-			return true
-	return false
+	return _sight_rays_clear(eye, p)
 
 
 func _tick_vision(delta: float) -> void:
@@ -2843,11 +2992,19 @@ func _tick_vision(delta: float) -> void:
 	var safe := GameState != null and GameState.is_player_safe()
 	if not safe:
 		_fail_done = false
+		if _fail_walk:
+			# She stood up / left the zone: the walk-away must not keep blocking sight and hearing.
+			print("[CHASE] she left the safe spot: fail walk released, vision/hearing back on")
+			if _chase_hold and (_hold_kind == "fail" or _hold_kind == "taunt"):
+				_chase_hold = false
+				_hold_kind = ""
+			_act = _Act.WALK
+			_end_fail_catch()
 	var was := _seen
 	_seen = _can_see_player()
 	var p := _player()
 	if (_seen or _los) and p != null:
-		_last_seen_world = p.global_position
+		_last_seen_world = _chase_target_of(p)
 		_unseen_t = 0.0
 	if _cone_on:
 		_draw_cone()
@@ -2859,7 +3016,7 @@ func _tick_vision(delta: float) -> void:
 			_start_fail_catch()
 		return
 	_sight_t = _sight_t + VIS_INTERVAL if _seen else 0.0
-	var need := LIT_DETECT_SEC if _player_lit else DARK_DETECT_SEC
+	var need := LIT_DETECT_SEC if _player_lit else DARK_DETECT_SEC * DARK_DETECT_MULT
 	if _seen and _sight_t >= need - 0.001 and not _chasing and not _chase_pending and not _fail_walk and not _warn:
 		print("[VISION] Tash sees the player (%s, %.1f s)" % ["lit" if _player_lit else "dark", _sight_t])
 		_chase_pending = true
@@ -2892,6 +3049,9 @@ const HUH_CAPTION_SEC := 1.2
 const STAND_FAST_SCALE := 3.0
 var _huh_until_ms: int = 0
 var _huh_player: AudioStreamPlayer3D = null
+## Last HUH play; _spot_huh skips if one played within HUH_DEDUPE_MS (sit-startle, same spot).
+var _huh_last_ms: int = -100000
+const HUH_DEDUPE_MS := 3000
 
 
 func _play_huh() -> void:
@@ -2903,9 +3063,16 @@ func _play_huh() -> void:
 		_huh_player.position = Vector3(0, 1.6, 0)
 		add_child(_huh_player)
 	_huh_player.play()
-	get_tree().call_group("subtitle", "show_line", "TASH", "Huh?!", HUH_CAPTION_SEC)
+	_huh_last_ms = Time.get_ticks_msec()
+	_say("Huh?!", HUH_CAPTION_SEC, false)
 	_huh_until_ms = Time.get_ticks_msec() + int(HUH_CAPTION_SEC * 1000.0)
 	print("[VISION] Tash startled while sitting: Huh?! (fast stand x%.0f)" % STAND_FAST_SCALE)
+
+
+func _spot_huh() -> void:
+	if Time.get_ticks_msec() - _huh_last_ms < HUH_DEDUPE_MS:
+		return
+	_play_huh()
 
 
 func _huh_left() -> float:
@@ -2922,9 +3089,17 @@ func _begin_stand_fast() -> void:
 
 
 func _start_chase() -> void:
-	if not _first_sight_done and _chase_roar and _chase_roar_set:
+	# Every spot (first-sight warning or chase start): HUH first, once.
+	_spot_huh()
+	_bc_cancel("chase")
+	if not _first_sight_done and _chase_roar and _chase_roar_set and not _knife_out() and _spot_line == "":
 		_begin_warn()
 		return
+	_banged_sabira = false
+	_hunting = false
+	_hunt_live = false
+	_bath_giveup = false
+	_bang_giveup = false
 	_chase_pending = false
 	_inv_pending = false
 	_inv_look = false
@@ -2940,11 +3115,17 @@ func _start_chase() -> void:
 	if _hungover and _real_clip("drunk_run") != "":
 		_run_clip = _real_clip("drunk_run")
 	_relight_pending = false
+	_radio_cancel("chase")
+	_dark_lose_reset()
 	_fall_t = -1.0
-	if _force_fall or randf() < FALL_CHANCE:
+	if _force_fall:
 		_fall_t = randf_range(2.0, 6.0)
-		print("[CHASE] fall rolled: in %.1f s%s" % [_fall_t, " (forced)" if _force_fall else ""])
+		print("[CHASE] fall forced: in %.1f s" % _fall_t)
 	_force_fall = false
+	# Periodic fall rolls (see _tick_fall_roll); the pity clock survives quick re-sightings.
+	_fall_roll_t = randf_range(2.0, 6.0)
+	if Time.get_ticks_msec() - _fall_last_ms > FALL_CONTINUE_MS:
+		_fall_chase_t = 0.0
 	print("[CHASE] start (run clip: %s)" % (_run_clip if _run_clip != "" else "walk x%.1f" % RUN_ANIM_FALLBACK_SCALE))
 	if GameState != null and GameState.has_signal("tash_alert_changed"):
 		GameState.tash_alert_changed.emit("chase")
@@ -2960,6 +3141,10 @@ func _start_chase() -> void:
 	if roar:
 		_begin_chase_hold("roar")
 		return
+	if _spot_line != "":
+		_show_spot_line()
+	elif _knife_out():
+		_show_knife_line()
 	_chase_repath()
 
 
@@ -2971,22 +3156,38 @@ func _tick_chase(delta: float) -> void:
 		return
 	if _anim != null:
 		_anim.speed_scale = RUN_ANIM_FALLBACK_SCALE if (_act == _Act.WALK and _real_clip("run") == "") else 1.0
+	_fall_last_ms = Time.get_ticks_msec()
+	if not (_chase_hold and (_hold_kind == "fall" or _hold_kind == "lie" or _hold_kind == "getup")):
+		_fall_chase_t += delta
 	if _chase_hold or _act != _Act.WALK:
 		return
 	if _fall_t > 0.0:
 		_fall_t -= delta
 		if _fall_t <= 0.0:
-			_begin_chase_hold("fall")
+			_begin_chase_fall()
 			return
-	if not (_seen or _los):
+	if _tick_fall_roll(delta):
+		return
+	if _tick_bath_giveup():
+		if _chase_hold:
+			return
+	elif not (_seen or _los):
 		_unseen_t += delta
 		if _unseen_t > CHASE_LOSE_SEC:
-			_chase_lost()
-			return
+			if _hunt_mode():
+				_tick_hunt(delta)
+			else:
+				_chase_lost()
+				return
+	elif _hunting:
+		_hunting = false
+		print("[HUNT] sight regained")
+	if _tick_dark_lose(delta):
+		return
 	var p := _player()
 	if p != null:
 		var d := p.global_position - global_position
-		if absf(d.y) < 1.5 and Vector2(d.x, d.z).length() < REACH_M:
+		if absf(d.y) < 1.5 and Vector2(d.x, d.z).length() < REACH_M and not _speech_guard_on():
 			_begin_chase_hold("grab")
 			return
 	_breather_t -= delta
@@ -2994,7 +3195,9 @@ func _tick_chase(delta: float) -> void:
 		_begin_chase_hold("yell")
 		return
 	_chase_watchdog(delta)
-	var want_graph := _chase_wants_graph()
+	# While she is airborne keep the current leg (re-evaluating mid-jump flipped navmesh/graph
+	# legs and re-pathed every frame).
+	var want_graph := _graph_leg if _player_airborne() else _chase_wants_graph()
 	if want_graph != _graph_leg:
 		_graph_leg = want_graph
 		print("[CHASE] %s leg" % ("route-graph (stairs/floor change)" if want_graph else "navmesh"))
@@ -3085,12 +3288,71 @@ func _chase_lost() -> void:
 	if GameState != null and GameState.has_signal("tash_alert_changed"):
 		GameState.tash_alert_changed.emit("search")
 	_inv_target_world = _last_seen_world
+	var sdw := _sabira_door()
+	if sdw != null and _player_in_sabira_room() and not sdw.is_passage_open():
+		# She shut herself in: search at her door (bang check fires there), not where she was last seen.
+		_inv_target_world = Vector3(sdw.global_position.x - 0.6, sdw.global_position.y + 0.01, sdw.global_position.z + 0.475)
+		print("[CHASE] lost her behind Door_Sabira: searching at her door")
 	_investigating = true
 	_lost_search = true
 	_start_investigation()
 
 
+func _fall_roll_chance() -> float:
+	var cat := GameState != null and GameState.flag("cat_scratch")
+	var c := FALL_ROLL_BASE
+	if _is_easy():
+		c = FALL_ROLL_EASY_CAT if cat else FALL_ROLL_EASY
+	elif cat:
+		c = FALL_ROLL_CAT
+	if _hungover:
+		c *= FALL_DRUNK_MUL
+	return c
+
+
+func _fall_pity_sec() -> float:
+	var cat := GameState != null and GameState.flag("cat_scratch")
+	if _is_easy():
+		return FALL_PITY_EASY_CAT if cat else FALL_PITY_EASY
+	return FALL_PITY_CAT if cat else FALL_PITY_BASE
+
+
+## Running-chase fall check (called from _tick_chase while WALKing). True if a fall began.
+func _tick_fall_roll(delta: float) -> bool:
+	var cat := GameState != null and GameState.flag("cat_scratch")
+	var pity := _fall_pity_sec()
+	if pity > 0.0 and _fall_chase_t >= pity:
+		print("[FALL] pity after %.1f s of chase (easy=%s cat=%s drunk=%s)" % [_fall_chase_t, _is_easy(), cat, _hungover])
+		_begin_chase_fall()
+		return true
+	if _fall_roll_t < 0.0:
+		_fall_roll_t = randf_range(2.0, 6.0)
+	_fall_roll_t -= delta
+	if _fall_roll_t > 0.0:
+		return false
+	_fall_roll_t = FALL_ROLL_SEC
+	var c := _fall_roll_chance()
+	var r := randf()
+	var ok := r < c
+	print("[FALL] roll chance=", c, " rolled=", r, " fell=", ok, " easy=", _is_easy(), " cat=", cat, " drunk=", _hungover)
+	if ok:
+		_begin_chase_fall()
+	return ok
+
+
+## Trip: the existing "fall" hold (fall_flat -> "lie" -> "getup"), same _hold_kind CuffTash checks.
+func _begin_chase_fall() -> void:
+	_fall_t = -1.0
+	_fall_chase_t = 0.0
+	_fall_roll_t = FALL_ROLL_SEC + FALL_COOLDOWN_SEC
+	_begin_chase_hold("fall")
+	_cat_fall_lines()
+
+
 func _begin_chase_hold(kind: String, turn_key: String = "") -> void:
+	_hold_first_sight = kind == "roar" and not _first_sight_done
+	if _hold_first_sight:
+		_yield_reset()
 	_chase_hold = true
 	_hold_kind = kind
 	_act = _Act.IDLE
@@ -3112,9 +3374,17 @@ func _begin_chase_hold(kind: String, turn_key: String = "") -> void:
 			if not _first_sight_done:
 				_first_sight_done = true
 				var set_lines: Array = FIRST_SIGHT_LINES[randi() % FIRST_SIGHT_LINES.size()]
-				_roar_chunks = set_lines.duplicate()
+				_roar_chunks = _first_sight_chunks(set_lines)
 				sec = minf(FIRST_SIGHT_CHUNK_SEC * _roar_chunks.size() + 0.3, FIRST_SIGHT_MAX_SEC)
+				# No grab / chase run for SPEECH_GUARD_SEC from speech start.
+				sec = maxf(sec, SPEECH_GUARD_SEC)
+				_speech_guard_until_ms = Time.get_ticks_msec() + int(SPEECH_GUARD_SEC * 1000.0)
 				_show_roar_chunk()
+				_start_face_lock()
+			elif _spot_line != "":
+				_show_spot_line()
+			elif _knife_out():
+				_show_knife_line()
 			else:
 				_show_yell_line()
 		"yell":
@@ -3127,7 +3397,9 @@ func _begin_chase_hold(kind: String, turn_key: String = "") -> void:
 			var d := 0.0
 			if p != null:
 				d = Vector2(p.global_position.x - global_position.x, p.global_position.z - global_position.z).length()
-			print("[CATCH] debug (flat %.2f m)" % d)
+			print("[CATCH] grab (flat %.2f m)" % d)
+			if GameState != null and not GameState.is_player_safe() and d < REACH_M + 0.4:
+				GameState.begin_catch(self)
 		"cool":
 			clip = _clip("idle_2")
 			sec = GRAB_COOLDOWN_SEC
@@ -3160,6 +3432,9 @@ func _begin_chase_hold(kind: String, turn_key: String = "") -> void:
 
 
 func _end_chase_hold() -> void:
+	if _hold_first_sight:
+		_hold_first_sight = false
+		_yield_finish("first-sight hold end")
 	_chase_hold = false
 	var kind := _hold_kind
 	_hold_kind = ""
@@ -3173,7 +3448,7 @@ func _end_chase_hold() -> void:
 			_begin_chase_hold("cool")
 		"cool", "yell", "roar":
 			_breather_t = randf_range(BREATHER_MIN, BREATHER_MAX)
-			if _chasing and (_seen or _los or _unseen_t <= CHASE_LOSE_SEC):
+			if _chasing and (_seen or _los or _unseen_t <= CHASE_LOSE_SEC or _hunt_mode()):
 				_repath_t = 0.0
 				_chase_repath()
 			elif _chasing:
@@ -3195,7 +3470,7 @@ func _end_chase_hold() -> void:
 			_begin_fall_hold("getup")
 		"getup":
 			print("[CHASE] got up")
-			if _chasing and (_seen or _los):
+			if _chasing and (_seen or _los or _hunt_mode()):
 				_repath_t = 0.0
 				_chase_repath()
 			elif _chasing:
@@ -3215,6 +3490,13 @@ func _start_fail_catch() -> void:
 		return
 	print("[CHASE] fail catch: she is safe")
 	_fail_done = true
+	_lost_search = false
+	_hunting = false
+	_bath_giveup = false
+	_bang_giveup = false
+	if _hold_kind == "bang":
+		_hold_kind = ""
+		_bang_door = null
 	_chasing = false
 	_chase_pending = false
 	_chase_hold = false
@@ -3246,6 +3528,7 @@ func _end_fail_catch() -> void:
 	print("[CHASE] fail catch done, back to patrol")
 	if GameState != null and GameState.has_signal("tash_alert_changed"):
 		GameState.tash_alert_changed.emit("ambient")
+	_plan_floor_switch()
 	_choose_next()
 
 
@@ -3286,9 +3569,9 @@ func _draw_cone() -> void:
 	im.clear_surfaces()
 	var eye := _eye_pos()
 	var fwd := _forward_flat()
-	var rng := VIS_RANGE_M * (VIS_CROUCH_MUL if GameState != null and GameState.is_crouching else 1.0)
+	var rng := VIS_RANGE_M * _sight_mul() * (VIS_CROUCH_MUL if GameState != null and GameState.is_crouching else 1.0)
 	if not _player_lit:
-		rng *= DARK_RANGE_MUL
+		rng *= DARK_SIGHT_MULT
 	var col := Color(1, 0.1, 0.1) if _seen else (Color(0.4, 0.4, 0.4) if _vision_blocked_reason() != "" else Color(1, 0.85, 0.2))
 	im.surface_begin(Mesh.PRIMITIVE_LINES)
 	var half := deg_to_rad(VIS_FOV_DEG * 0.5)
@@ -3418,6 +3701,11 @@ func _open_doors_near() -> void:
 		if absf(c.y - global_position.y) > 1.5:
 			continue
 		if Vector2(c.x - global_position.x, c.z - global_position.z).length() < 1.1 and not dw.is_passage_open():
+			if String(dw.name) == "Door_Sabira" and _sabira_bang_wanted(dw):
+				_begin_bang(dw)
+				return
+			if String(dw.name) == BATH_DOOR_NAME and _bath_end_wanted():
+				continue
 			dw.set_passage_open(true)
 			print("[CHASE] opens ", dw.name)
 
@@ -3520,10 +3808,17 @@ func _begin_fall_hold(kind: String) -> void:
 		if _anim != null:
 			_anim.pause()
 	else:
-		var a: Animation = _anim.get_animation(clip) if (_anim != null and clip != "") else null
-		_look_left = (a.length / GETUP_SPEED) if a != null else 1.0
-		if a != null:
-			_anim.play(clip, 0.0, -GETUP_SPEED, true)
+		var up := _real_clip("getting_up") if kind == "getup" else ""
+		if up != "" and _anim != null and _anim.get_animation(up) != null:
+			var ua: Animation = _anim.get_animation(up)
+			ua.loop_mode = Animation.LOOP_NONE
+			_look_left = ua.length / GETUP_CLIP_SPEED
+			_anim.play(up, 0.15, GETUP_CLIP_SPEED)
+		else:
+			var a: Animation = _anim.get_animation(clip) if (_anim != null and clip != "") else null
+			_look_left = (a.length / GETUP_SPEED) if a != null else 1.0
+			if a != null:
+				_anim.play(clip, 0.0, -GETUP_SPEED, true)
 	print("[CHASE] %s %.1f s" % [kind, _look_left])
 
 
@@ -3629,13 +3924,333 @@ func _switch_near(pos: Vector3) -> Node3D:
 	return best
 
 
+# --- RADIO (radio_dark 2026-10-14) ----------------------------------------------------------
+## interact/RadioToggle.gd always plays when on and calls radio_noise(). No cooldown / use cap.
+## Sees her -> normal chase. Unable (dead / ending / sedated / cuffed / drunk couch lock) ->
+## ignored, it keeps playing. Busy (chase / hold / catch / intro / bookcase / another relight)
+## -> _radio_pending, handled by _tick_radio_pending once he is back on patrol or search.
+## Otherwise he walks to its stand_point() (light-switch arrival rule), reaches, switches it off,
+## one loud STORY_LINES["radio_off"] line, look-around, routine. A chase start parks it pending.
+var _radio: Node3D = null
+var _radio_pending: Node3D = null
+## Investigation without the "Who's there?" line (radio / dark-room relight walks).
+var _inv_quiet: bool = false
+
+
+func _radio_unable_reason() -> String:
+	if _tash_dead:
+		return "dead"
+	if GameState != null and GameState.ending_reached != "":
+		return "ending"
+	if GameState != null and GameState.tash_sedated:
+		return "sedated"
+	if GameState != null and GameState.tash_cuffed:
+		return "cuffed"
+	if is_drunk_locked():
+		return "drunk couch lock"
+	return ""
+
+
+func _radio_busy_reason() -> String:
+	if _chasing or _chase_pending:
+		return "chasing"
+	if _fail_walk or _warn or _chase_hold:
+		return "hold (%s)" % (_hold_kind if _hold_kind != "" else ("warn" if _warn else "fail walk"))
+	if _catch_grace_t > 0.0 or (GameState != null and bool(GameState.get("_catch_running"))):
+		return "catch"
+	if _intro_frozen or not _patrol_started or _path_follow == null:
+		return "not on patrol yet"
+	if _bc_phase != _BC_NONE:
+		return "bookcase check"
+	if _relight_pending or (_inv_switch != null and _inv_switch != _radio):
+		return "another switch"
+	return ""
+
+
+## Returns what he does: "chase", "ignored:<why>", "pending:<why>", "coming".
+func radio_noise(radio: Node3D) -> String:
+	var unable := _radio_unable_reason()
+	print("[RADIO] heard: unable='%s' busy='%s' chasing=%s intro=%s patrol=%s" % [unable, _radio_busy_reason(), _chasing, _intro_frozen, _patrol_started])
+	if unable != "":
+		print("[RADIO] ignored (%s), it keeps playing" % unable)
+		return "ignored:" + unable
+	if not _chasing and _can_see_player():
+		print("[RADIO] he can see her: normal chase")
+		_chase_pending = true
+		return "chase"
+	var busy := _radio_busy_reason()
+	_radio_pending = radio
+	if busy != "":
+		print("[RADIO] pending (%s)" % busy)
+		return "pending:" + busy
+	# Fresh dark-room scan first so a dark room right here competes with the radio.
+	_dark_room_t = 0.0
+	_tick_dark_room(0.0)
+	return "coming" if _radio == radio else "queued"
+
+
+func _radio_go(radio: Node3D) -> void:
+	_radio_pending = null
+	_radio = radio
+	_lost_search = false
+	_inv_quiet = true
+	_inv_switch = radio
+	_inv_target_world = _switch_stand_point(radio)
+	_relight_pending = true
+	_relight_retry = 0
+	_inv_pending = true
+	print("[RADIO] Tash heads to the radio stand spot %s" % _inv_target_world)
+
+
+## Pending radio is only dropped here; _tick_tasks picks it (closest task first).
+func _tick_radio_pending() -> void:
+	if _radio_pending == null:
+		return
+	if not is_instance_valid(_radio_pending):
+		_radio_pending = null
+		return
+	var unable := _radio_unable_reason()
+	if unable != "":
+		print("[RADIO] pending dropped (%s)" % unable)
+		_radio_pending = null
+
+func _radio_cancel(why: String) -> void:
+	if _radio == null:
+		return
+	if _inv_switch == _radio:
+		_inv_switch = null
+		_relight_pending = false
+	_radio_pending = _radio
+	_radio = null
+	print("[RADIO] lure parked (%s): pending until he is back on patrol / search" % why)
+
+
+# --- DARK ROOM RELIGHT (radio_dark 2026-10-14, both modes) ----------------------------------
+## Root cause of the old gap: switches were only relit from a heard click (hear_noise
+## "light_switch:*", range / floor filtered). Walking (or idling) into a room whose switch is
+## off did nothing. Now every DARK_ROOM_CHECK_SEC: off switch whose light reaches his chest with a
+## clear line -> walk to its stand point (RELIGHT_REACH_M rule) and switch it on. Not in a chase
+## (resumes after), not sedated / cuffed / dead / drunk couch lock, not while sitting.
+const DARK_ROOM_CHECK_SEC := 0.5
+const DARK_ROOM_RETRY_SEC := 30.0
+const DARK_ROOM_IGNORE := ["Switch_SabiraRoom", "Switch_Hidden"]
+var _dark_room_t: float = 0.0
+var _dark_room_skip: Dictionary = {}
+var _switch_cache: Array = []
+
+
+func _tick_dark_room(delta: float) -> void:
+	_dark_room_t -= delta
+	if _dark_room_t > 0.0:
+		return
+	_dark_room_t = DARK_ROOM_CHECK_SEC
+	if _radio_unable_reason() != "":
+		return
+	# Detection always runs (chase / catch too): the dark room is queued, done after.
+	var sw := _dark_room_switch()
+	if sw != null and not _dark_pending.has(String(sw.name)) and _inv_switch != sw:
+		_dark_pending[String(sw.name)] = sw
+		print("[DARK] dark room queued: %s off (%s)" % [sw.name, "busy: " + _radio_busy_reason() if _radio_busy_reason() != "" else "free"])
+	_tick_tasks()
+
+
+# --- TASK PICKER (tash_priorities 2026-10-14) -------------------------------------------------
+## Pending chores: the radio (_radio_pending) and dark-room switches (_dark_pending). Only while
+## free (patrol / search, no chase, catch, hold, other relight): the one with the shortest
+## walk wins (same floor: navmesh path length; cross floor: route graph + TASK_STAIR_COST per
+## metre of height), then the next pick waits until that one is done.
+const TASK_STAIR_COST := 4.0
+var _dark_pending: Dictionary = {}
+
+
+func _tick_tasks() -> void:
+	# A relight / radio walk that something else interrupted (fail walk, stumble, catch...) left
+	# _inv_switch set with nothing running: clear it and re-queue that task.
+	if _inv_switch != null and not _inv_pending and not _investigating and not _chase_hold and not _chasing and not _chase_pending:
+		var stale := _inv_switch
+		_inv_switch = null
+		_relight_pending = false
+		if is_instance_valid(stale):
+			if stale == _radio:
+				_radio_pending = _radio
+				_radio = null
+			else:
+				_dark_room_skip.erase(String(stale.name))
+			print("[TASKS] interrupted task %s re-queued" % stale.name)
+	if _radio_pending == null and _dark_pending.is_empty():
+		return
+	if _radio_unable_reason() != "" or _radio_busy_reason() != "" or _inv_pending or _radio != null or _inv_switch != null:
+		return
+	if not (_act == _Act.WALK or _act == _Act.IDLE or _act == _Act.PAUSE or _act == _Act.LOOK or _act == _Act.SIT_HOLD):
+		return
+	var cands: Array = []
+	if _radio_pending != null and is_instance_valid(_radio_pending):
+		cands.append(["radio", _radio_pending])
+	for k in _dark_pending.keys():
+		var sw := _dark_pending[k] as Node3D
+		if sw == null or not is_instance_valid(sw) or not sw.has_method("is_on") or bool(sw.call("is_on")):
+			_dark_pending.erase(k)
+			continue
+		cands.append(["switch", sw])
+	if cands.is_empty():
+		return
+	var best: Array = []
+	var best_d := INF
+	var info := PackedStringArray()
+	for c in cands:
+		var d := _task_cost(_switch_stand_point(c[1] as Node3D))
+		info.append("%s %.1f m" % [(c[1] as Node).name, d])
+		if d < best_d:
+			best_d = d
+			best = c
+	print("[TASKS] candidates: %s -> %s" % [", ".join(info), (best[1] as Node).name])
+	if String(best[0]) == "radio":
+		_radio_go(best[1] as Node3D)
+	else:
+		_dark_pending.erase(String((best[1] as Node).name))
+		_relight_go(best[1] as Node3D)
+
+
+func _relight_go(sw: Node3D) -> void:
+	_dark_room_skip[String(sw.name)] = Time.get_ticks_msec() + int(DARK_ROOM_RETRY_SEC * 1000.0)
+	print("[DARK] Tash walks to relight %s" % sw.name)
+	_lost_search = false
+	_inv_quiet = true
+	_inv_switch = sw
+	_inv_target_world = _switch_stand_point(sw)
+	_relight_pending = true
+	_relight_retry = 0
+	_inv_pending = true
+
+
+## Walking distance to `goal` (world).
+func _task_cost(goal: Vector3) -> float:
+	var dy := absf(goal.y - global_position.y)
+	if dy < 1.5 and _nav_ready:
+		var path := NavigationServer3D.map_get_path(get_world_3d().navigation_map, global_position, goal, true)
+		if path.size() >= 2 and Vector2(path[path.size() - 1].x - goal.x, path[path.size() - 1].z - goal.z).length() < 0.8:
+			var l := 0.0
+			for i in range(1, path.size()):
+				l += path[i - 1].distance_to(path[i])
+			return l
+	var sp := _path_space()
+	if sp == null or _path_follow == null:
+		return global_position.distance_to(goal) + dy * TASK_STAIR_COST
+	var here_l: Vector3 = _path_follow.position
+	var goal_l := sp.to_local(goal)
+	var a := _nearest_node(here_l)
+	var b := _nearest_node(goal_l)
+	var ids := _shortest(a, b)
+	if ids.is_empty():
+		return global_position.distance_to(goal) + dy * TASK_STAIR_COST + 100.0
+	var tot := here_l.distance_to(_pt[a] as Vector3) + (_pt[b] as Vector3).distance_to(goal_l)
+	for i in range(1, ids.size()):
+		tot += (_pt[String(ids[i - 1])] as Vector3).distance_to(_pt[String(ids[i])] as Vector3)
+	return tot + dy * TASK_STAIR_COST
+
+func _dark_room_switch() -> Node3D:
+	var root := _house_root()
+	if root == null:
+		return null
+	if _switch_cache.is_empty():
+		_switch_cache = root.find_children("*", "LightSwitch", true, false)
+	var chest := global_position + Vector3(0, 1.3, 0)
+	var space := get_world_3d().direct_space_state
+	var now := Time.get_ticks_msec()
+	for sw_any in _switch_cache:
+		var sw := sw_any as Node3D
+		if sw == null or not is_instance_valid(sw) or DARK_ROOM_IGNORE.has(String(sw.name)):
+			continue
+		if int(_dark_room_skip.get(String(sw.name), 0)) > now:
+			continue
+		if not sw.has_method("is_on") or bool(sw.call("is_on")):
+			continue
+		var lights: Array = sw.get("_lights") if sw.get("_lights") != null else []
+		for l_any in lights:
+			var l := l_any as OmniLight3D
+			if l == null or not is_instance_valid(l):
+				continue
+			var lp := l.global_position
+			if lp.y - chest.y < -0.5 or lp.y - chest.y > 2.6 or lp.distance_to(chest) > l.omni_range:
+				continue
+			var q := PhysicsRayQueryParameters3D.create(lp, chest)
+			q.collision_mask = 1
+			q.exclude = [get_rid()]
+			if space.intersect_ray(q).is_empty():
+				return sw
+	return null
+
+
+# --- DARK VISION (radio_dark 2026-10-14) -----------------------------------------------------
+## Dark = her chest is not lit by any visible Omni / Spot above residual energy in range with a
+## clear line (_is_lit: room lights off at 0.03 = dark; TV flicker / lamps still light her).
+func _is_dark_between(p: Node3D) -> bool:
+	if p == null:
+		return false
+	var cam := p.get("_camera") as Camera3D
+	var chest := (cam.global_position if cam != null else p.global_position + Vector3(0, 1.5, 0)) - Vector3(0, 0.55, 0)
+	return not _is_lit(chest)
+
+
+var _dark_chase_dark: bool = false
+var _dark_chase_t: float = 0.0
+var _dark_chase_blind_t: float = 0.0
+var _dark_probe_t: float = 0.0
+
+
+func _dark_lose_reset() -> void:
+	_dark_chase_dark = false
+	_dark_chase_t = 0.0
+	_dark_chase_blind_t = 0.0
+	_dark_probe_t = 0.0
+
+
+## In a chase: true when he lost her in the dark (already handed to _chase_lost).
+func _tick_dark_lose(delta: float) -> bool:
+	var p := _player()
+	if p == null:
+		return false
+	_dark_probe_t -= delta
+	if _dark_probe_t <= 0.0:
+		_dark_probe_t = VIS_INTERVAL
+		var dk := _is_dark_between(p)
+		if dk != _dark_chase_dark:
+			_dark_chase_dark = dk
+			print("[DARK] chase: she is %s" % ("in the dark" if dk else "lit"))
+	var d := p.global_position - global_position
+	if not _dark_chase_dark or Vector2(d.x, d.z).length() <= DARK_LOSE_DIST:
+		_dark_chase_t = 0.0
+		_dark_chase_blind_t = 0.0
+		return false
+	_dark_chase_t += delta
+	_dark_chase_blind_t = 0.0 if (_seen or _los) else _dark_chase_blind_t + delta
+	if _dark_chase_blind_t > DARK_LOSE_TIME or _dark_chase_t > DARK_LOSE_CLEAR_TIME:
+		print("[DARK] lost her in the dark (%.1f m, blind %.1f s, dark %.1f s): search last known spot" % [Vector2(d.x, d.z).length(), _dark_chase_blind_t, _dark_chase_t])
+		_dark_lose_reset()
+		_chase_lost()
+		return true
+	return false
+
+
 func _begin_relight() -> void:
-	if not _in_switch_room(_inv_switch):
-		if _relight_retry < 2 and _path_via_navmesh(_switch_stand_point(_inv_switch)):
+	# Arrival check: he must actually stand at the plate (stand point ~0.5 m in front of it),
+	# not just be somewhere in the room with a line of sight (that let him reach from metres away).
+	var stand := _switch_stand_point(_inv_switch)
+	var off := stand - global_position
+	var flat := Vector2(off.x, off.z).length()
+	# Stand point off the navmesh (agent radius): the closest reachable point counts too.
+	var snap_ok := false
+	if _nav_ready:
+		var sn := NavigationServer3D.map_get_closest_point(get_world_3d().navigation_map, stand)
+		var so := sn - global_position
+		snap_ok = Vector2(so.x, so.z).length() <= 0.25 and Vector2(sn.x - stand.x, sn.z - stand.z).length() <= 0.6
+	var at_plate := (flat <= RELIGHT_REACH_M or snap_ok) and absf(off.y) < 1.0
+	if not at_plate or not _in_switch_room(_inv_switch):
+		if _relight_retry < 3 and _path_via_navmesh(stand):
 			_relight_retry += 1
-			print("[NOISE] Tash is on the wrong side of %s, re-pathing (navmesh)" % _inv_switch.name)
+			print("[NOISE] Tash walks to %s stand point (%.2f m away, room side %s, navmesh try %d)" % [_inv_switch.name, flat, _in_switch_room(_inv_switch), _relight_retry])
 			return
-		print("[NOISE] Tash can't reach the room side of %s; skipping relight" % _inv_switch.name)
+		print("[NOISE] Tash can't reach the stand point of %s (%.2f m); skipping relight" % [_inv_switch.name, flat])
 		_relight_pending = false
 		_inv_switch = null
 		_begin_inv_look()
@@ -3669,6 +4284,15 @@ func _relight_now() -> void:
 	if _relight_done:
 		return
 	_relight_done = true
+	if _inv_switch != null and is_instance_valid(_inv_switch) and _inv_switch.has_method("tash_turn_off"):
+		_inv_switch.call("tash_turn_off")
+		var pool: Array = GameState.STORY_LINES["radio_off"] if GameState != null else ["Damn thing."]
+		var line := String(pool[randi() % pool.size()])
+		print("[RADIO] Tash turned the radio off: ", line)
+		_say(line, 2.6, true)
+		_radio = null
+		_inv_switch = null
+		return
 	if _inv_switch != null and is_instance_valid(_inv_switch) and _inv_switch.has_method("set_lights_on_silent"):
 		_inv_switch.call("set_lights_on_silent", true)
 		print("[NOISE] Tash turned %s back on (silent)" % _inv_switch.name)
@@ -3676,18 +4300,9 @@ func _relight_now() -> void:
 
 
 # --- SWITCH FILTER / RELIGHT ROOM SIDE / CHASE LOS ----------------------------------------
-func _rays_clear(eye: Vector3, top: Vector3, chest: Vector3, p: Node3D) -> bool:
-	var space := get_world_3d().direct_space_state
-	var excl: Array[RID] = [get_rid()]
-	if p is CollisionObject3D:
-		excl.append((p as CollisionObject3D).get_rid())
-	for target in [top, chest]:
-		var q := PhysicsRayQueryParameters3D.create(eye, target)
-		q.collision_mask = 1
-		q.exclude = excl
-		if space.intersect_ray(q).is_empty():
-			return true
-	return false
+func _rays_clear(eye: Vector3, _top: Vector3, _chest: Vector3, p: Node3D) -> bool:
+	# Same occlusion test as first sight (vision_window): see _sight_rays_clear.
+	return _sight_rays_clear(eye, p)
 
 
 func _switch_name_of(source: String) -> String:
@@ -3726,6 +4341,8 @@ func _switch_by_source(source: String, pos: Vector3) -> Node3D:
 ## Stand point 0.5 m in front of the plate on the side facing the room it lights (plate's thin
 ## axis = wall normal; sign toward the switch's first light), at that floor's height.
 func _switch_stand_point(sw: Node3D) -> Vector3:
+	if sw.has_method("stand_point"):
+		return sw.call("stand_point") as Vector3
 	var n := Vector3.FORWARD
 	var plate := sw.get_node_or_null("Plate") as CSGBox3D
 	if plate != null:
@@ -3754,6 +4371,8 @@ func _switch_stand_point(sw: Node3D) -> Vector3:
 func _in_switch_room(sw: Node3D) -> bool:
 	if sw == null:
 		return false
+	if sw.has_method("stand_point"):
+		return true
 	var stand := _switch_stand_point(sw)
 	var n := stand - sw.global_position
 	n.y = 0.0
@@ -3851,6 +4470,9 @@ func _start_shelf_idles() -> bool:
 	var names: Array = []
 	var pool := loops.duplicate()
 	pool.shuffle()
+	pool.erase(SHELF_BOOKS_CLIP)
+	if loops.has(SHELF_BOOKS_CLIP) and randf() < 0.5:
+		pool.insert(randi() % mini(count, pool.size() + 1), SHELF_BOOKS_CLIP)
 	for i in mini(count, pool.size()):
 		names.append(pool[i])
 	var nod_len := 0.0
@@ -3876,6 +4498,23 @@ func _play_shelf_slice() -> void:
 
 
 ## Random TASH chase caption, never the same one twice in a row.
+const KNIFE_SPOT_LINES := ["Why are you wandering around with a knife?!", "Put that knife down! Now!", "A knife? In my house? Come here!"]
+
+
+func _knife_out() -> bool:
+	return GameState != null and bool(GameState.has_knife)
+
+
+## Spot/chase-start line while she holds the knife (after HUH).
+func _show_knife_line() -> void:
+	if _huh_left() > 0.0:
+		get_tree().create_timer(_huh_left()).timeout.connect(_show_knife_line)
+		return
+	var line := String(KNIFE_SPOT_LINES[randi() % KNIFE_SPOT_LINES.size()])
+	print("[KNIFE] spot line: ", line)
+	_say(line, 2.8, true)
+
+
 func _show_yell_line() -> void:
 	if _huh_left() > 0.0:
 		get_tree().create_timer(_huh_left()).timeout.connect(_show_yell_line)
@@ -3884,7 +4523,58 @@ func _show_yell_line() -> void:
 	if i == _last_yell_i:
 		i = (i + 1 + randi() % (_CHASE_YELL_LINES.size() - 1)) % _CHASE_YELL_LINES.size()
 	_last_yell_i = i
-	get_tree().call_group("subtitle", "show_line", "TASH", String(_CHASE_YELL_LINES[i]), 2.6)
+	_say(String(_CHASE_YELL_LINES[i]), 2.6, true)
+
+
+# --- Speech gating + first-sight face lock (props_subs 2026-10-14) ------------------------
+## Every Tash caption (and so its voice blips, VoiceBlips follows caption_changed) goes through
+## _say(). Never while Sabira is in the lower room. Loud lines (chase start / roar / first sight /
+## knife + dose spot / door threat) show anywhere else in the house, any floor. Normal lines only
+## within SPEECH_HEAR_M on the same floor (_HEAR_OTHER_FLOOR_DY) or with a clear sight line.
+const SPEECH_HEAR_M := _HEAR_RANGE_M
+## First-sight speech: her camera snaps onto his face for FACE_LOCK_SEC (Player.begin_face_lock).
+const FACE_LOCK_SEC := 2.0
+
+
+func _player_in_lower_room() -> bool:
+	var p := _player()
+	if p == null:
+		return false
+	for lr in get_tree().get_nodes_in_group("lower_room"):
+		if lr.has_method("inner_aabb") and (lr.call("inner_aabb") as AABB).grow(0.3).has_point(p.global_position):
+			return true
+	return false
+
+
+func _can_player_hear_line(loud: bool) -> bool:
+	var p := _player()
+	if p == null:
+		return true
+	if _player_in_lower_room():
+		return false
+	if loud:
+		return true
+	var d := p.global_position - global_position
+	if absf(d.y) <= _HEAR_OTHER_FLOOR_DY and d.length() <= SPEECH_HEAR_M:
+		return true
+	return _prox_line_clear(p)
+
+
+func _say(line: String, sec: float, loud: bool) -> void:
+	if not _can_player_hear_line(loud):
+		print("[SPEECH] suppressed (%s%s): %s" % ["loud" if loud else "normal", ", lower room" if _player_in_lower_room() else "", line.left(48)])
+		return
+	get_tree().call_group("subtitle", "show_line", "TASH", line, sec)
+
+
+func face_point() -> Vector3:
+	return _eye_pos()
+
+
+func _start_face_lock() -> void:
+	var p := _player()
+	if p != null and p.has_method("begin_face_lock"):
+		p.call("begin_face_lock", self, FACE_LOCK_SEC)
 
 
 func _show_roar_chunk() -> void:
@@ -3892,7 +4582,37 @@ func _show_roar_chunk() -> void:
 		return
 	var line := String(_roar_chunks.pop_front())
 	_roar_chunk_t = FIRST_SIGHT_CHUNK_SEC
-	get_tree().call_group("subtitle", "show_line", "TASH", line, FIRST_SIGHT_CHUNK_SEC - 0.1)
+	_say(line, FIRST_SIGHT_CHUNK_SEC - 0.1, true)
+
+
+## First-sight lines (knife / dosing override them).
+func _first_sight_chunks(set_lines: Array) -> Array:
+	if _knife_out():
+		print("[KNIFE] first-sight uses knife line")
+		return [String(KNIFE_SPOT_LINES[randi() % KNIFE_SPOT_LINES.size()])]
+	if _spot_line != "":
+		var l := _spot_line
+		_spot_line = ""
+		return [l]
+	return set_lines.duplicate()
+
+
+const CAT_FALL_LINES := ["Argh - this leg!", "That cursed cat... get back here!"]
+var _cat_fall_said: bool = false
+
+
+## Prologue cat_scratch: a curse on every chase fall; Sabira remarks on the first one.
+func _cat_fall_lines() -> void:
+	if GameState == null or not GameState.flag("cat_scratch"):
+		return
+	var line := String(CAT_FALL_LINES[randi() % CAT_FALL_LINES.size()])
+	_say(line, 2.2, false)
+	print("[PROLOGUE] cat fall line: ", line)
+	if not _cat_fall_said:
+		_cat_fall_said = true
+		get_tree().create_timer(2.4).timeout.connect(func() -> void:
+			get_tree().call_group("subtitle", "show_line", "SABIRA", "His leg. It never healed right.", 3.0)
+			print("[PROLOGUE] Sabira: His leg. It never healed right."))
 
 
 func _show_fail_line() -> void:
@@ -3906,7 +4626,7 @@ func _show_fail_line() -> void:
 	if pick == _last_fail_line and pool.size() > 1:
 		pick = String(pool[(pool.find(pick) + 1 + randi() % (pool.size() - 1)) % pool.size()])
 	_last_fail_line = pick
-	get_tree().call_group("subtitle", "show_line", "TASH", pick, 4.0)
+	_say(pick, 4.0, false)
 
 
 # --- FIRST-SIGHT WARNING -------------------------------------------------------------------
@@ -3915,20 +4635,23 @@ func _show_fail_line() -> void:
 ## Let go (ambient, routine resumes) if she is occluded WARN_OCCLUDED_SEC, enters Sabira's
 ## room, or becomes safe. Still visible when the time is up -> normal chase (no second yell).
 func _begin_warn() -> void:
+	_bc_cancel("warn")
 	_first_sight_done = true
 	_chase_pending = false
 	_chase_roar = false
 	_chase_roar_set = false
 	_inv_pending = false
 	_warn = true
+	_speech_guard_until_ms = Time.get_ticks_msec() + int(SPEECH_GUARD_SEC * 1000.0)
 	_warn_occl_t = 0.0
+	_yield_reset()
 	_route_idle = false
 	_chase_hold = true
 	_hold_kind = "warn"
 	_act = _Act.IDLE
 	rotation = Vector3.ZERO
 	var set_lines: Array = FIRST_SIGHT_LINES[randi() % FIRST_SIGHT_LINES.size()]
-	_roar_chunks = set_lines.duplicate()
+	_roar_chunks = _first_sight_chunks(set_lines)
 	_warn_t = FIRST_SIGHT_CHUNK_SEC * _roar_chunks.size() + WARN_SEC
 	_look_left = 999.0
 	if _anim != null:
@@ -3946,6 +4669,7 @@ func _begin_warn() -> void:
 	if GameState != null and GameState.has_signal("tash_alert_changed"):
 		GameState.tash_alert_changed.emit("search")
 	print("[WARN] first sight: warning %.1f s (lines + %.0f s watch)" % [_warn_t, WARN_SEC])
+	_start_face_lock()
 
 
 func _tick_warn(delta: float) -> void:
@@ -3961,12 +4685,13 @@ func _tick_warn(delta: float) -> void:
 		var cur := _path_follow.rotation.y
 		_path_follow.rotation.y = rotate_toward(cur, cur + angle_difference(cur, want), WARN_FACE_RAD_S * delta)
 		_apply_model_yaw_offset()
+	_tick_warn_yield(delta, p)
 	if _roar_chunks.size() > 0:
 		_roar_chunk_t -= delta
 		if _roar_chunk_t <= 0.0:
 			_show_roar_chunk()
 	if _anim != null and not _anim.is_playing():
-		var idle := _real_clip("idle_aggressive")
+		var idle := _speech_idle_clip()
 		if idle != "":
 			_force_loop(idle, Animation.LOOP_LINEAR)
 			_anim.play(idle, 0.25)
@@ -3988,12 +4713,13 @@ func _tick_warn(delta: float) -> void:
 			_end_warn(false, "out of sight %.1f s" % _warn_occl_t)
 			return
 	_warn_t -= delta
-	if _warn_t <= 0.0:
+	if _warn_t <= 0.0 and not _speech_guard_on():
 		_end_warn(true, "still visible")
 
 
 func _end_warn(chase: bool, why: String) -> void:
 	_warn = false
+	_yield_finish("warn end")
 	_chase_hold = false
 	_hold_kind = ""
 	_roar_chunks = []
@@ -4003,7 +4729,7 @@ func _end_warn(chase: bool, why: String) -> void:
 	if chase:
 		var p := _player()
 		if p != null:
-			_last_seen_world = p.global_position
+			_last_seen_world = _chase_target_of(p)
 		_start_chase()
 		return
 	if GameState != null and GameState.has_signal("tash_alert_changed"):
@@ -4127,3 +4853,1050 @@ func _tick_vis_corr(delta: float) -> void:
 		_vis_hold_sit = false
 		if _anim != null and _act == _Act.SIT_DOWN:
 			_anim.play()
+
+
+# --- BOOKCASE DISCOVERY ---------------------------------------------------------------------
+## Secret bookcase (Structure/BookcaseMover) open and in his cone while on routine: run to f1stand,
+## look_around, slide it shut (BookcaseMover.toggle_or_stop: scrape loop + CLOSED state + solid
+## collision), walk to Sabira's door, threaten, patrol. Seeing her = normal chase (cancels this).
+## Once per opening (re-armed on the next OPENING). Skipped dead / drunk-locked / sedated.
+## The secret room has no inside button, so with the player inside he only looks and leaves.
+const _BC_NONE := 0
+const _BC_RUN := 1
+const _BC_LOOK := 2
+const _BC_CLOSING := 3
+const _BC_TO_ROOM := 4
+const _BC_SPEAK := 5
+const BC_LOOK_SEC := 4.0
+const BC_CLOSE_TIMEOUT := 6.0
+const BC_CHECK_SEC := 0.2
+const BC_THREAT := "Did you touch something near the bookshelf? If I find out you've been putting your nose where it doesn't belong, I'll break your legs so you won't be wandering around so much."
+const BC_THREAT_SEC := 8.0
+## Hall side of Door_Sabira (door at x 2.5, room centre x 4.75).
+const BC_SABIRA_DOOR_OFFSET := Vector3(-0.6, 0.0, 0.0)
+var _bc_phase: int = _BC_NONE
+var _bc_armed: bool = true
+var _bc_mover: Node3D = null
+var _bc_check_t: float = 0.0
+var _bc_close_t: float = 0.0
+
+
+func _bc_get_mover() -> Node3D:
+	if _bc_mover != null and is_instance_valid(_bc_mover):
+		return _bc_mover
+	var root := _house_root()
+	if root == null:
+		return null
+	_bc_mover = root.get_node_or_null("Structure/BookcaseMover") as Node3D
+	if _bc_mover != null and _bc_mover.has_signal("state_changed") and not _bc_mover.state_changed.is_connected(_bc_on_state):
+		_bc_mover.state_changed.connect(_bc_on_state)
+	return _bc_mover
+
+
+func _bc_on_state(state: int) -> void:
+	if state == 1:  # BookcaseMover.State.OPENING
+		_bc_armed = true
+
+
+func _bc_is_open(m: Node3D) -> bool:
+	return m != null and m.has_method("get_state") and int(m.call("get_state")) == 2  # OPEN
+
+
+## Gap in the wall where the closed bookcase stands (living side, eye-ish height).
+func _bc_gap_point() -> Vector3:
+	var root := _house_root()
+	var area := root.get_node_or_null("Structure/BookcaseArea") as Node3D if root != null else null
+	var base := area.global_position if area != null else Vector3(-4.7, 0.05, -2.6)
+	return base + Vector3(0.25, 1.2, 0.0)
+
+
+func _bc_player_inside() -> bool:
+	var p := _player()
+	if p == null:
+		return false
+	var root := _house_root()
+	var vol := root.get_node_or_null("Structure/HiddenRoom/HiddenRoomVolume") as CSGBox3D if root != null else null
+	var c := vol.global_position if vol != null else Vector3(-6.4, 1.25, -2.8)
+	var half := (vol.size * 0.5) if vol != null else Vector3(1.3, 1.2, 2.1)
+	var d := p.global_position - c
+	# Extra 0.9 m on +X covers the doorway the bookcase slides across.
+	return d.x > -half.x - 0.2 and d.x < half.x + 0.9 and absf(d.z) < half.z + 0.2 and absf(d.y) < half.y + 0.5
+
+
+func _bc_blocked() -> bool:
+	return _tash_dead or is_drunk_locked() or (GameState != null and GameState.tash_sedated) or _intro_frozen
+
+
+func _bc_sees_gap() -> bool:
+	var eye := _eye_pos()
+	var tgt := _bc_gap_point()
+	if eye.distance_to(tgt) > VIS_RANGE_M * _sight_mul():
+		return false
+	var to := tgt - eye
+	to.y = 0.0
+	if to.length_squared() > 0.0001 and rad_to_deg(_forward_flat().angle_to(to.normalized())) > VIS_FOV_DEG * 0.5:
+		return false
+	var q := PhysicsRayQueryParameters3D.create(eye, tgt)
+	q.collision_mask = 1
+	q.exclude = [get_rid()]
+	return get_world_3d().direct_space_state.intersect_ray(q).is_empty()
+
+
+func _bc_tick_watch(delta: float) -> void:
+	if _bc_phase != _BC_NONE or not _bc_armed:
+		return
+	_bc_check_t -= delta
+	if _bc_check_t > 0.0:
+		return
+	_bc_check_t = BC_CHECK_SEC
+	if _bc_blocked() or not _patrol_started or _path_follow == null:
+		return
+	if _chasing or _chase_pending or _warn or _fail_walk or _chase_hold or _investigating or _inv_pending:
+		return
+	if not (_act == _Act.WALK or _act == _Act.IDLE or _act == _Act.PAUSE or _act == _Act.LOOK):
+		return
+	var m := _bc_get_mover()
+	if not _bc_is_open(m) or not _bc_sees_gap():
+		return
+	_bc_armed = false
+	_bc_phase = _BC_RUN
+	_lost_search = false
+	_relight_pending = false
+	_inv_switch = null
+	var space := _path_space()
+	_inv_target_world = space.to_global(_pt["f1stand"] as Vector3) if (space != null and _pt.has("f1stand")) else _bc_gap_point()
+	_inv_pending = true
+	print("[BOOKCASE] Tash sees the open bookcase -> runs to it")
+	if GameState != null and GameState.has_signal("tash_alert_changed"):
+		GameState.tash_alert_changed.emit("search")
+
+
+func _bc_arrived() -> void:
+	_act = _Act.IDLE
+	_route_idle = false
+	_inv_look = true
+	rotation = Vector3.ZERO
+	_apply_model_yaw_offset()
+	if _bc_phase == _BC_RUN:
+		_bc_phase = _BC_LOOK
+		_look_left = BC_LOOK_SEC
+		_face_world_point(_bc_gap_point())
+		if _look_clip != "" and _anim != null:
+			_force_loop(_look_clip, Animation.LOOP_LINEAR)
+			_anim.play(_look_clip)
+		print("[BOOKCASE] look_around %.1f s" % BC_LOOK_SEC)
+		return
+	# _BC_TO_ROOM -> threaten at Sabira's door.
+	_bc_phase = _BC_SPEAK
+	_look_left = BC_THREAT_SEC
+	var root := _house_root()
+	var room := root.get_node_or_null("Structure/SabiraRoom") as Node3D if root != null else null
+	if room != null:
+		_face_world_point(room.global_position)
+	var c := _real_clip("idle_aggressive")
+	if c == "" and _idle_stand_clips.size() > 0:
+		c = String(_idle_stand_clips[0])
+	if c != "" and _anim != null:
+		_force_loop(c, Animation.LOOP_LINEAR)
+		_anim.play(c, 0.25)
+	_say(BC_THREAT, BC_THREAT_SEC - 0.2, true)
+	print("[BOOKCASE] threat at Sabira's door")
+
+
+func _bc_close() -> void:
+	var m := _bc_get_mover()
+	if _bc_player_inside():
+		print("[BOOKCASE] player inside the secret room -> not closing, just leaving")
+		_bc_go_room()
+		return
+	if _bc_is_open(m) and m.has_method("toggle_or_stop"):
+		m.call("toggle_or_stop")
+		print("[BOOKCASE] Tash slides it closed")
+	_bc_phase = _BC_CLOSING
+	_bc_close_t = 0.0
+	_look_left = 999.0
+	if _look_clip != "" and _anim != null:
+		_force_loop(_look_clip, Animation.LOOP_NONE)
+	if _anim != null and _idle_stand_clips.size() > 0:
+		_anim.play(String(_idle_stand_clips[0]), 0.25)
+
+
+func _bc_tick_closing(delta: float) -> void:
+	_bc_close_t += delta
+	var m := _bc_get_mover()
+	if m == null:
+		_bc_go_room()
+		return
+	if bool(m.call("is_moving")) and _bc_player_inside():
+		# She slipped in while it was closing: stop and slide it back open so she is never trapped.
+		m.call("toggle_or_stop")  # stop -> CLOSED (partial)
+		m.call("toggle_or_stop")  # CLOSED -> OPENING
+		print("[BOOKCASE] player got inside during close -> reopened, leaving")
+		_bc_go_room()
+		return
+	if not bool(m.call("is_moving")) or _bc_close_t >= BC_CLOSE_TIMEOUT:
+		_bc_go_room()
+
+
+func _bc_go_room() -> void:
+	_bc_phase = _BC_TO_ROOM
+	_inv_look = false
+	var root := _house_root()
+	var door := root.get_node_or_null("Doors/Door_Sabira") as Node3D if root != null else null
+	_inv_target_world = (door.global_position + BC_SABIRA_DOOR_OFFSET) if door != null else Vector3(1.9, 3.01, 0.4)
+	print("[BOOKCASE] walking to Sabira's room")
+	_start_investigation()
+
+
+func _bc_cancel(why: String) -> void:
+	if _bc_phase == _BC_NONE:
+		return
+	print("[BOOKCASE] cancelled (%s)" % why)
+	_bc_phase = _BC_NONE
+
+
+# --- DOSING / KNIFE SPOT LINE -------------------------------------------------------------
+## Seen (or near / on the F1 couch) while she doses his beer: HUH, dose yell, chase now.
+const DOSE_NOTICE_M := 4.0
+var _spot_line: String = ""
+
+
+func _show_spot_line() -> void:
+	if _spot_line == "":
+		return
+	if _huh_left() > 0.0:
+		get_tree().create_timer(_huh_left()).timeout.connect(_show_spot_line)
+		return
+	var line := _spot_line
+	_spot_line = ""
+	print("[DOSE] spot line: ", line)
+	_say(line, 2.8, true)
+
+
+## DoseBottle asks before dosing. True = he noticed (no dose; chase starts, no first-sight grace).
+func dose_spotted(bottle_pos: Vector3) -> bool:
+	if _tash_dead or is_drunk_locked() or _intro_frozen or (GameState != null and GameState.tash_sedated):
+		return false
+	if _chasing or _chase_pending:
+		return false
+	var near := global_position.distance_to(bottle_pos) < DOSE_NOTICE_M and absf(global_position.y - bottle_pos.y) < 1.5
+	var on_couch := _sit_kind == _SIT_COUCH and (_act == _Act.SIT_HOLD or _act == _Act.SIT_DOWN or _act == _Act.STAND_UP)
+	var sees := _can_see_player()
+	print("[DOSE] check: near=%s couch=%s sees=%s" % [near, on_couch, sees])
+	if not (near or on_couch or sees):
+		return false
+	var pool: Array = GameState.STORY_LINES["dose_caught"] if GameState != null else ["What are you putting in my beer?!"]
+	_spot_line = String(pool[randi() % pool.size()])
+	_first_sight_done = true
+	_bc_cancel("dose")
+	_chase_roar = true
+	_chase_roar_set = true
+	_chase_pending = true
+	_spot_huh()
+	return true
+
+
+# --- SABIRA DOOR BANG (chase) -------------------------------------------------------------
+## Chasing, she is in her room and Door_Sabira is shut in front of him: 3 bangs + shake, then open.
+const BANG_COUNT := 3
+const BANG_GAP_SEC := 0.7
+const BANG_SFX := "res://audio/sfx/door_bang.wav"
+## Heard across the floor (bedroom + bath bangs).
+const BANG_VOLUME_DB := 15.0
+## AudioStreamPlayer3D.max_db (default +3 dB) caps the gain after attenuation, so near the door
+## volume_db above +3 did nothing. Raise the cap with the volume.
+const BANG_MAX_DB := 18.0
+const BANG_UNIT_SIZE := 14.0
+const BANG_MAX_DIST := 45.0
+var _banged_sabira: bool = false
+var _bang_door: Doorway = null
+var _bang_n: int = 0
+var _bang_t: float = 0.0
+var _bang_player: AudioStreamPlayer3D = null
+
+
+## Room volume relative to the door (x 2.5) and SabiraRoom centre (z 0.65): x door+0.05..door+4.8,
+## z centre +-2.6, upstairs.
+func _player_in_sabira_room() -> bool:
+	var p := _player()
+	if p == null:
+		return false
+	var dw := _sabira_door()
+	var dx := dw.global_position.x if dw != null else 2.5
+	var g := p.global_position
+	return g.y > 2.5 and g.x > dx + 0.05 and g.x < dx + 4.8 and absf(g.z - 0.65) < 2.6
+
+
+var _sabira_door_node: Doorway = null
+var _bang_dbg_t: float = 0.0
+
+
+func _sabira_door() -> Doorway:
+	if _sabira_door_node != null and is_instance_valid(_sabira_door_node):
+		return _sabira_door_node
+	for dw_any in _doorways_cache:
+		if dw_any is Doorway and String((dw_any as Node).name) == "Door_Sabira":
+			_sabira_door_node = dw_any
+			return _sabira_door_node
+	var root := get_tree().current_scene
+	_sabira_door_node = root.get_node_or_null("Doors/Door_Sabira") as Doorway if root != null else null
+	return _sabira_door_node
+
+
+## Chase (active or lost-sight search of the last seen spot), door shut, she is behind it
+## (in her room, or his line to her crosses the doorway), he is at the door on the hall side.
+func _sabira_bang_wanted(dw: Doorway) -> bool:
+	if dw == null or _banged_sabira or dw.locked or dw.is_passage_open():
+		return false
+	if not (_chasing or _lost_search):
+		return false
+	if _chase_hold or _warn or _intro_frozen or _tash_dead or _fail_walk:
+		return false
+	# Safe (peas corner in her room): fail catch already let her go; no bang, no walking in.
+	if GameState != null and GameState.is_player_safe():
+		return false
+	var c := dw.global_position + dw.global_transform.basis.z * 0.475
+	if absf(c.y - global_position.y) > 1.5 or global_position.x > dw.global_position.x + 0.05:
+		return false
+	if Vector2(c.x - global_position.x, c.z - global_position.z).length() > 1.6:
+		return false
+	var p := _player()
+	if p == null:
+		return false
+	if _player_in_sabira_room():
+		return true
+	# Line Tash -> her crosses the door plane inside the doorway.
+	var a := global_position
+	var b := p.global_position
+	var px := dw.global_position.x
+	if (a.x - px) * (b.x - px) < 0.0 and b.y > 2.5:
+		var t := (px - a.x) / (b.x - a.x)
+		var z := a.z + (b.z - a.z) * t
+		return absf(z - c.z) < 0.6
+	return false
+
+
+## Every tick: re-arm once she is out of her room; trigger the bang outside the nav step too
+## (lost-sight search walks the graph route, which never ran _open_doors_near).
+func _tick_sabira_door_check() -> void:
+	var dw := _sabira_door()
+	if dw == null:
+		return
+	if _banged_sabira and _hold_kind != "bang" and not _player_in_sabira_room():
+		_banged_sabira = false
+		print("[BANG] re-armed (she left her room)")
+	_bang_dbg_t -= get_physics_process_delta_time()
+	if (_chasing or _lost_search) and _bang_dbg_t <= 0.0 and _player_in_sabira_room():
+		_bang_dbg_t = 1.0
+		print("[BANG] check: chasing=%s lost=%s hold=%s door_open=%s banged=%s dist=%.2f tash_x=%.2f" % [_chasing, _lost_search, _hold_kind, dw.is_passage_open(), _banged_sabira, global_position.distance_to(dw.global_position + dw.global_transform.basis.z * 0.475), global_position.x])
+	if _act != _Act.WALK and not (_act == _Act.IDLE and _inv_look):
+		return
+	if _sabira_bang_wanted(dw):
+		print("[BANG] trigger (chasing=%s lost=%s)" % [_chasing, _lost_search])
+		_inv_look = false
+		_begin_bang(dw)
+
+
+func _begin_bang(dw: Doorway) -> void:
+	if not _bang_giveup:
+		_banged_sabira = true
+	_bang_door = dw
+	_bang_n = 0
+	_bang_t = 0.25
+	_chase_hold = true
+	_hold_kind = "bang"
+	_act = _Act.IDLE
+	_look_left = 999.0
+	rotation = Vector3.ZERO
+	_apply_model_yaw_offset()
+	_face_world_point(dw.global_position + dw.global_transform.basis.z * 0.475)
+	var c := _real_clip("idle_aggressive")
+	if c != "" and _anim != null:
+		_force_loop(c, Animation.LOOP_LINEAR)
+		_anim.play(c, 0.2)
+	print("[CHASE] Door_Sabira shut: banging")
+
+
+func _tick_bang(delta: float) -> void:
+	_bang_t -= delta
+	if _bang_t > 0.0:
+		return
+	if _bang_door == null or not is_instance_valid(_bang_door):
+		_end_bang()
+		return
+	if _bang_n < BANG_COUNT:
+		_bang_n += 1
+		_bang_t = BANG_GAP_SEC
+		_play_bang(_bang_door)
+		return
+	if _bang_giveup:
+		print("[CHASE] %s: banged, giving up" % _bang_door.name)
+		_end_bang()
+		return
+	_bang_door.set_passage_open(true)
+	print("[CHASE] Door_Sabira opened after bangs")
+	_end_bang()
+
+
+func _play_bang(dw: Doorway) -> void:
+	if _bang_player == null:
+		_bang_player = AudioStreamPlayer3D.new()
+		_bang_player.name = "BangSfx"
+		_bang_player.stream = load(BANG_SFX) as AudioStream
+		_bang_player.unit_size = BANG_UNIT_SIZE
+		_bang_player.max_distance = BANG_MAX_DIST
+		_bang_player.volume_db = BANG_VOLUME_DB
+		_bang_player.max_db = BANG_MAX_DB
+		get_tree().current_scene.add_child(_bang_player)
+	_bang_player.global_position = dw.global_position + dw.global_transform.basis.z * 0.475 + Vector3(0, 1.2, 0)
+	_bang_player.pitch_scale = randf_range(0.92, 1.06)
+	_bang_player.play()
+	var leaf := dw.get_node_or_null("Door") as Node3D
+	if leaf != null:
+		var base := leaf.position
+		var push := dw.global_transform.basis.x.normalized() * 0.025
+		var local_push := leaf.get_parent_node_3d().global_transform.basis.inverse() * push if leaf.get_parent_node_3d() != null else push
+		var tw := create_tween()
+		tw.tween_property(leaf, "position", base + local_push, 0.05)
+		tw.tween_property(leaf, "position", base - local_push * 0.5, 0.06)
+		tw.tween_property(leaf, "position", base, 0.08)
+	if GameState != null:
+		GameState.report_noise(1.0, dw.global_position, "door_bang")
+
+
+func _end_bang() -> void:
+	if _bang_giveup:
+		_bang_giveup = false
+		_bath_giveup = false
+		_chase_hold = false
+		_hold_kind = ""
+		_bang_door = null
+		_end_chase_to_patrol("she locked herself in the bathroom")
+		return
+	_chase_hold = false
+	_hold_kind = ""
+	_bang_door = null
+	_act = _Act.WALK
+	rotation = Vector3.ZERO
+	_apply_model_yaw_offset()
+	_repath_t = 0.0
+	if _chasing:
+		_chase_repath()
+	elif _lost_search or _investigating:
+		var p := _player()
+		if p != null:
+			_inv_target_world = _chase_target_of(p)
+			_last_seen_world = _inv_target_world
+		_start_investigation()
+
+
+# --- CATCH SEQUENCE HOOKS (ui/CatchSequence.gd) --------------------------------------------
+var _catch_grace_t: float = 0.0
+const CATCH_GRACE_SEC := 8.0
+const SCOLD_CLIP := "angry_point"
+
+
+## Screen is black: stop everything and hold still.
+func catch_freeze() -> void:
+	_chasing = false
+	_chase_pending = false
+	_chase_hold = false
+	_hold_kind = ""
+	_warn = false
+	_fail_walk = false
+	_investigating = false
+	_inv_pending = false
+	_inv_look = false
+	_route_idle = false
+	_spot_line = ""
+	_bc_cancel("catch")
+	_intro_frozen = true
+	if GameState != null and GameState.has_signal("tash_alert_changed"):
+		GameState.tash_alert_changed.emit("ambient")
+
+
+## Stand in Sabira's doorway (hall side) facing the room, angry idle.
+func catch_place_at(world_pos: Vector3, face_world: Vector3) -> void:
+	var space := _path_space()
+	if _path_follow == null or space == null:
+		return
+	var local := space.to_local(world_pos)
+	_path_follow.position = local
+	position = Vector3.ZERO
+	rotation = Vector3.ZERO
+	_apply_model_yaw_offset()
+	_act = _Act.IDLE
+	_face_world_point(face_world)
+	var c := _real_clip(SCOLD_CLIP)
+	if c == "":
+		c = _real_clip("idle_aggressive")
+	if c == "" and _idle_stand_clips.size() > 0:
+		c = String(_idle_stand_clips[0])
+	if c != "" and _anim != null:
+		_force_loop(c, Animation.LOOP_LINEAR)
+		_anim.play(c, 0.2)
+	print("[CATCH] doorway scold clip: ", c)
+
+
+## World position of mixamorig:Head (CatchSequence camera look-at).
+func head_world_pos() -> Vector3:
+	return _eye_pos()
+
+
+## Scold done: walk away on the normal routine; no vision for CATCH_GRACE_SEC.
+func catch_release() -> void:
+	_intro_frozen = false
+	_catch_grace_t = CATCH_GRACE_SEC
+	_clear_inv_links()
+	var here_local: Vector3 = _path_follow.position if _path_follow != null else Vector3.ZERO
+	var near := _nearest_node(here_local)
+	_pt["nz_here"] = here_local
+	_link("nz_here", near)
+	_here = "nz_here"
+	_last_stop = ""
+	_active_stop = ""
+	_act = _Act.WALK
+	rotation = Vector3.ZERO
+	_apply_model_yaw_offset()
+	_pick_depth = 0
+	print("[CATCH] Tash leaves the doorway (via %s)" % near)
+	_choose_next()
+
+
+# --- REALISTIC HUNT (2026-10-13) ----------------------------------------------------------
+## Realistic: breaking LOS never ends a chase. He walks to the last known spot, then repaths to
+## her live position every HUNT_REPATH_SEC (HUNT_SPEED_MUL slower) until a catch or an end:
+## peas / kitchen chair (fail catch via is_player_safe) or F1 bathroom with the door shut
+## (bang 3x at the door, give up, patrol). Easy keeps the LOS rules (_chase_lost).
+const HUNT_REPATH_SEC := 1.0
+const HUNT_SPEED_MUL := 0.85
+const HUNT_LAST_KNOWN_MAX_SEC := 5.0
+const BATH_DOOR_NAME := "Door_DownstairsBath"
+## F1 bathroom interior (door at x 3.5, room centre (5.25, 0.05, 3.7), 3.3 x 3.3).
+const BATH_MIN := Vector3(3.55, -0.5, 2.0)
+const BATH_MAX := Vector3(6.95, 1.5, 5.4)
+var _hunting: bool = false
+var _hunt_live: bool = false
+var _hunt_t: float = 0.0
+var _hunt_since: float = 0.0
+var _bath_giveup: bool = false
+var _bang_giveup: bool = false
+var _bath_door_node: Doorway = null
+
+
+func _hunt_mode() -> bool:
+	return _chasing and not _is_easy() and not _tash_dead
+
+
+func _tick_hunt(delta: float) -> void:
+	var p := _player()
+	if p == null:
+		return
+	if not _hunting:
+		_hunting = true
+		_hunt_live = false
+		_hunt_since = 0.0
+		_hunt_t = 0.0
+		print("[HUNT] lost sight: going to last known %s" % _last_seen_world)
+	_hunt_since += delta
+	if not _hunt_live:
+		var to := _last_seen_world - global_position
+		if Vector2(to.x, to.z).length() < 1.2 or _hunt_since > HUNT_LAST_KNOWN_MAX_SEC:
+			_hunt_live = true
+			print("[HUNT] at last known: pursuing her live position")
+		return
+	_hunt_t -= delta
+	if _hunt_t <= 0.0:
+		_hunt_t = HUNT_REPATH_SEC
+		_last_seen_world = _chase_target_of(p)
+		_repath_t = 0.0
+
+
+func _bath_door() -> Doorway:
+	if _bath_door_node != null and is_instance_valid(_bath_door_node):
+		return _bath_door_node
+	for dw_any in _doorways_cache:
+		if dw_any is Doorway and String((dw_any as Node).name) == BATH_DOOR_NAME:
+			_bath_door_node = dw_any
+			return _bath_door_node
+	var root := get_tree().current_scene
+	_bath_door_node = root.get_node_or_null("Doors/" + BATH_DOOR_NAME) as Doorway if root != null else null
+	return _bath_door_node
+
+
+func _player_in_bath() -> bool:
+	var p := _player()
+	if p == null:
+		return false
+	var g := p.global_position
+	return g.x > BATH_MIN.x and g.x < BATH_MAX.x and g.y > BATH_MIN.y and g.y < BATH_MAX.y and g.z > BATH_MIN.z and g.z < BATH_MAX.z
+
+
+## Realistic chase end (c): she is in the F1 bathroom and its door is shut. The player cannot
+## lock it (Door.locked is key-only), so closed is enough; key-locked counts too.
+func _bath_end_wanted() -> bool:
+	if not _hunt_mode():
+		return false
+	if GameState != null and GameState.has_knife:
+		return false
+	var dw := _bath_door()
+	return dw != null and _player_in_bath() and (dw.locked or not dw.is_passage_open())
+
+
+func _bath_bang_spot(dw: Doorway) -> Vector3:
+	var c := dw.global_position + dw.global_transform.basis.z * 0.475
+	return Vector3(c.x - 0.55, c.y + 0.02, c.z)
+
+
+## Returns true while the bathroom give-up walk owns the chase target.
+func _tick_bath_giveup() -> bool:
+	if GameState != null and GameState.has_knife and _player_in_bath():
+		var bd := _bath_door()
+		if bd != null and not bd.is_passage_open():
+			GameState.knife_safe_line()
+	if not _bath_end_wanted():
+		if _bath_giveup:
+			_bath_giveup = false
+			print("[HUNT] bathroom give-up cancelled (door opened / she left)")
+		return false
+	var dw := _bath_door()
+	var spot := _bath_bang_spot(dw)
+	if not _bath_giveup:
+		_bath_giveup = true
+		print("[HUNT] she shut herself in the bathroom: going to the door")
+	if _last_seen_world.distance_to(spot) > 0.05:
+		_last_seen_world = spot
+		_repath_t = 0.0
+	var to := spot - global_position
+	if Vector2(to.x, to.z).length() < 0.6 and not _chase_hold:
+		_bang_giveup = true
+		_begin_bang(dw)
+	return true
+
+
+func _end_chase_to_patrol(why: String) -> void:
+	print("[CHASE] ends: %s -> patrol" % why)
+	_chasing = false
+	_chase_pending = false
+	_hunting = false
+	_hunt_live = false
+	_investigating = false
+	_lost_search = false
+	_inv_look = false
+	_run_clip = ""
+	_unseen_t = 0.0
+	if _anim != null:
+		_anim.speed_scale = 1.0
+	if GameState != null and GameState.has_signal("tash_alert_changed"):
+		GameState.tash_alert_changed.emit("ambient")
+	_clear_inv_links()
+	var here_local: Vector3 = _path_follow.position if _path_follow != null else Vector3.ZERO
+	var near := _nearest_node(here_local)
+	_pt["nz_here"] = here_local
+	_link("nz_here", near)
+	_here = "nz_here"
+	_last_stop = ""
+	_active_stop = ""
+	_act = _Act.WALK
+	rotation = Vector3.ZERO
+	_apply_model_yaw_offset()
+	_plan_floor_switch()
+	_choose_next()
+
+
+# --- PROXIMITY HEARING (2026-10-13) -------------------------------------------------------
+## She is within prox_hear_m of him (any direction, even crouched) for prox_hear_sec: he turns,
+## HUH, and it counts as a normal spot (first-sight warn / chase by the usual rules).
+## Off while drunk / dead / intro / catch grace / ending / she is safe (_vision_blocked_reason),
+## and while already chasing / warning / fail-walking / in a hold.
+@export var prox_hear_m: float = 1.3
+@export var prox_hear_sec: float = 0.5
+var _prox_t: float = 0.0
+
+
+func _tick_proximity(delta: float) -> void:
+	var p := _player()
+	if p == null or _vision_blocked_reason() != "" or _chasing or _chase_pending or _warn or _fail_walk or _chase_hold:
+		_prox_t = 0.0
+		return
+	if _act == _Act.SIT_DOWN or _act == _Act.STAND_UP or _act == _Act.DOOR:
+		_prox_t = 0.0
+		return
+	var d := p.global_position - global_position
+	if absf(d.y) > 1.2 or Vector2(d.x, d.z).length() > prox_hear_m:
+		_prox_t = 0.0
+		return
+	# Not through a closed door / wall / couch: needs a clear line body-to-body.
+	if not _prox_line_clear(p):
+		_prox_t = 0.0
+		return
+	_prox_t += delta
+	if _prox_t < prox_hear_sec:
+		return
+	_prox_t = 0.0
+	print("[VISION] proximity: she is %.2f m away -> spotted" % Vector2(d.x, d.z).length())
+	_last_seen_world = _chase_target_of(p)
+	_sight_t = 0.0
+	if _act != _Act.SIT_HOLD:
+		rotation = Vector3.ZERO
+		_face_world_point(p.global_position)
+		_spot_huh()
+	_chase_pending = true
+
+
+# --- FLOOR SWITCH AFTER A SAFE-ZONE END (2026-10-13, both modes) ----------------------------
+## Fail catch at a safe zone (or the Realistic bath give-up): break the loop by changing floor.
+## She is on F1 (kitchen chair / F1 bath) -> an F2 stop. On F2 (peas) -> F1 couch sit or a
+## fridge look (walk to the fridge, open it, idle FRIDGE_LOOK_SEC, close). Then normal patrol.
+const F2_SWITCH_STOPS := ["idle_f2", "office", "redcouch"]
+const FRIDGE_STAND := Vector3(5.85, 0.0, 0.3)   # in front of Kitchen_Fridge (6.57, 0.05, 0.3)
+const FRIDGE_FACE := Vector3(6.57, 1.0, 0.3)
+const FRIDGE_LOOK_SEC := 3.2
+const FRIDGE_BODY_PATH := "Structure/KitchenDining/Kitchen_FridgeBody"
+var _forced_next: String = ""
+
+
+func _plan_floor_switch() -> void:
+	var p := _player()
+	if p == null:
+		return
+	if p.global_position.y < 1.5:
+		var opts: Array = []
+		for id in F2_SWITCH_STOPS:
+			if _weight_of(String(id)) > 0:
+				opts.append(id)
+		_forced_next = String(opts[randi() % opts.size()]) if not opts.is_empty() else "idle_f2"
+	else:
+		# She is on F2 (peas / her room): F1 couch, F1 fridge look or the office chair, 1/3 each.
+		var f2_opts: Array = ["fridge"]
+		for id in ["couch", "office"]:
+			if _weight_of(String(id)) > 0:
+				f2_opts.append(id)
+		_forced_next = String(f2_opts[randi() % f2_opts.size()])
+	print("[CHASE] floor switch: she is on F%d -> %s" % [1 if p.global_position.y < 1.5 else 2, _forced_next])
+
+
+func _start_forced_next() -> bool:
+	var id := _forced_next
+	_forced_next = ""
+	var route: Array = []
+	if id == "fridge":
+		var space := _path_space()
+		if space == null:
+			return false
+		route = _route_to(space.to_global(space.to_local(FRIDGE_STAND)))
+	elif _stop_node.has(id):
+		route = _shortest(_here, String(_stop_node[id]))
+	if route.is_empty():
+		print("[CHASE] floor switch: no route to %s, normal pick" % id)
+		return false
+	_active_stop = id
+	if id != "fridge":
+		_note_pick(id)
+	print("TashWalker: next stop %s (floor switch)" % id)
+	_start_route(route)
+	return true
+
+
+func _begin_fridge_look() -> void:
+	_act = _Act.PAUSE
+	_pause_left = FRIDGE_LOOK_SEC
+	rotation = Vector3.ZERO
+	_face_world_point(FRIDGE_FACE)
+	var c := String(_idle_stand_clips[randi() % _idle_stand_clips.size()]) if _idle_stand_clips.size() > 0 else _real_clip("idle_2")
+	if c != "" and _anim != null:
+		_force_loop(c, Animation.LOOP_LINEAR)
+		_anim.play(c, 0.3)
+	var root := get_tree().current_scene
+	var fb := root.get_node_or_null(FRIDGE_BODY_PATH) if root != null else null
+	if fb != null and fb.has_method("npc_set_open"):
+		fb.call("npc_set_open", true)
+		get_tree().create_timer(FRIDGE_LOOK_SEC - 0.6).timeout.connect(func() -> void:
+			if is_instance_valid(fb):
+				fb.call("npc_set_open", false))
+	print("[TASH] fridge look")
+
+
+# --- WARN STEP-ASIDE v2 (yield_concussion) -------------------------------------------------
+## First-sight warning (_warn) and the long first-sight "roar" hold: whenever she is within
+## warn_yield_m, he backs/steps away to warn_yield_dist from her. No "approaching" test (she
+## pressed against him has ~0 speed). Target: navmesh point (away from her line to Door_Sabira);
+## if none, straight back away from her. Moves with move_and_slide (walls stop him) and then
+## hands the offset to the PathFollow. Body<->player collision is off while yielding and comes
+## back once they are 0.8 m apart. Grab/catch only exist in _tick_chase (not in these holds),
+## and proximity hearing is skipped while _warn / _chase_hold.
+@export var warn_yield_m: float = 1.2
+@export var warn_yield_dist: float = 1.5
+const WARN_YIELD_SPEED := 0.7
+const YIELD_RESTORE_M := 0.8
+var _yield_on: bool = false
+var _yield_moved: bool = false
+var _yield_mode: String = ""
+var _yield_target: Vector3 = Vector3.ZERO
+var _yield_cool: float = 0.0
+var _yield_retarget_t: float = 0.0
+var _yield_stuck_t: float = 0.0
+var _yield_dbg_t: float = 0.0
+var _yield_nc: PhysicsBody3D = null
+var _hold_first_sight: bool = false
+
+
+func _yield_reset() -> void:
+	_yield_on = false
+	_yield_moved = false
+	_yield_mode = ""
+	_yield_cool = 0.0
+	_yield_dbg_t = 0.0
+
+
+func _tick_warn_yield(delta: float, p: Node3D) -> void:
+	_yield_cool -= delta
+	_yield_retarget_t -= delta
+	_yield_dbg_t -= delta
+	var off := p.global_position - global_position
+	var d := Vector2(off.x, off.z).length()
+	if _yield_dbg_t <= 0.0 and d < warn_yield_dist + 0.5:
+		_yield_dbg_t = 0.5
+		print("[YIELD] d=%.2f dy=%.2f on=%s mode=%s cool=%.2f hold=%s" % [d, off.y, _yield_on, _yield_mode, maxf(_yield_cool, 0.0), _hold_kind])
+	if absf(off.y) > 1.2:
+		return
+	if not _yield_on:
+		if d < warn_yield_m and _yield_cool <= 0.0:
+			_yield_on = true
+			_yield_set_no_collide(p)
+			_yield_pick(p)
+			print("[YIELD] start: she is %.2f m away -> %s %s" % [d, _yield_mode, _yield_target])
+		return
+	if d < warn_yield_m - 0.1 and _yield_retarget_t <= 0.0:
+		_yield_pick(p)
+	var dir: Vector3
+	if _yield_mode == "nav":
+		dir = _yield_target - global_position
+		dir.y = 0.0
+		if dir.length() < 0.06:
+			_yield_stop("reached nav point (d=%.2f)" % d)
+			return
+	else:
+		dir = -off
+		dir.y = 0.0
+		if d >= warn_yield_dist:
+			_yield_stop("direct: %.2f m clear" % d)
+			return
+	if dir.length_squared() < 0.0001:
+		dir = -_forward_flat()
+	var step := dir.normalized() * WARN_YIELD_SPEED
+	var before := global_position
+	var keep_v := velocity
+	velocity = Vector3(step.x, 0.0, step.z)
+	move_and_slide()
+	var moved := global_position - before
+	moved.y = 0.0
+	velocity = keep_v
+	position = Vector3.ZERO
+	if _path_follow != null:
+		_path_follow.global_position += moved
+	if moved.length() > 0.0005:
+		_yield_moved = true
+		_yield_stuck_t = 0.0
+	else:
+		_yield_stuck_t += delta
+		if _yield_stuck_t > 0.3:
+			if _yield_mode == "nav":
+				print("[YIELD] nav step blocked -> direct back")
+				_yield_mode = "direct"
+				_yield_stuck_t = 0.0
+			else:
+				_yield_stop("stuck (wall behind him), d=%.2f" % d)
+
+
+func _yield_stop(why: String) -> void:
+	_yield_on = false
+	_yield_cool = 0.4
+	print("[YIELD] stop: %s" % why)
+	var idle := _speech_idle_clip()
+	if idle != "" and _anim != null:
+		_force_loop(idle, Animation.LOOP_LINEAR)
+		_anim.play(idle, 0.25)
+
+
+func _yield_pick(p: Node3D) -> void:
+	_yield_retarget_t = 0.4
+	var t := _pick_yield_point(p.global_position)
+	if t.is_finite():
+		_yield_mode = "nav"
+		_yield_target = t
+	else:
+		_yield_mode = "direct"
+		_yield_target = global_position - (p.global_position - global_position)
+	_play_yield_clip(_yield_target - global_position)
+
+
+func _pick_yield_point(her: Vector3) -> Vector3:
+	var away := global_position - her
+	away.y = 0.0
+	if away.length_squared() < 0.0001:
+		away = -_forward_flat()
+	away = away.normalized()
+	var door := _sabira_door()
+	var dpt := (door.global_position + door.global_transform.basis.z * 0.475) if door != null else her
+	var map := _nav_region.get_navigation_map() if _nav_region != null and _nav_ready else RID()
+	var best := Vector3(INF, INF, INF)
+	var best_score := -INF
+	var why := []
+	for deg in [0.0, 35.0, -35.0, 70.0, -70.0, 100.0, -100.0]:
+		var dir := away.rotated(Vector3.UP, deg_to_rad(deg))
+		var cand := her + dir * warn_yield_dist
+		cand.y = global_position.y
+		if map.is_valid():
+			var snap := NavigationServer3D.map_get_closest_point(map, cand)
+			# Narrow hall: the eroded navmesh is thin, so allow a bigger lateral snap.
+			if snap.distance_to(Vector3(cand.x, snap.y, cand.z)) > 0.6 or absf(snap.y - cand.y) > 0.6:
+				why.append("%d:offmesh" % int(deg))
+				continue
+			cand = Vector3(snap.x, global_position.y, snap.z)
+		if Vector2(cand.x - her.x, cand.z - her.z).length() < warn_yield_m:
+			why.append("%d:near" % int(deg))
+			continue
+		var q := PhysicsRayQueryParameters3D.create(global_position + Vector3(0, 0.6, 0), cand + Vector3(0, 0.6, 0))
+		q.collision_mask = 1
+		var ex: Array[RID] = [get_rid()]
+		var pb := _player() as CollisionObject3D
+		if pb != null:
+			ex.append(pb.get_rid())
+		q.exclude = ex
+		if not get_world_3d().direct_space_state.intersect_ray(q).is_empty():
+			why.append("%d:wall" % int(deg))
+			continue
+		var seg := Geometry3D.get_closest_point_to_segment(cand, her, dpt)
+		var score := cand.distance_to(seg) - 0.3 * global_position.distance_to(cand)
+		if score > best_score:
+			best_score = score
+			best = cand
+	if not best.is_finite():
+		print("[YIELD] no nav point (%s) map=%s" % [", ".join(why), map.is_valid()])
+	return best
+
+
+func _play_yield_clip(move: Vector3) -> void:
+	if _anim == null:
+		return
+	var f := _forward_flat()
+	var right := Vector3(-f.z, 0.0, f.x)
+	var key := "strafe_walk_right" if move.dot(right) >= 0.0 else "strafe_walk_left"
+	var c := _real_clip(key)
+	if c != "":
+		_force_loop(c, Animation.LOOP_LINEAR)
+		_anim.play(c, 0.2)
+
+
+func _yield_set_no_collide(p: Node3D) -> void:
+	var pb := p as PhysicsBody3D
+	if pb == null or _yield_nc == pb:
+		return
+	add_collision_exception_with(pb)
+	pb.add_collision_exception_with(self)
+	_yield_nc = pb
+	print("[YIELD] body<->player collision off")
+
+
+func _yield_try_restore_collision(force: bool = false) -> void:
+	if _yield_nc == null:
+		return
+	if not is_instance_valid(_yield_nc):
+		_yield_nc = null
+		return
+	if (_warn or _hold_first_sight) and not force:
+		return
+	var off := _yield_nc.global_position - global_position
+	if not force and Vector2(off.x, off.z).length() < YIELD_RESTORE_M:
+		return
+	remove_collision_exception_with(_yield_nc)
+	_yield_nc.remove_collision_exception_with(self)
+	_yield_nc = null
+	print("[YIELD] body<->player collision restored")
+
+
+## Warn / first-sight hold ended: stop yielding; if he moved, route on from where he stands.
+func _yield_finish(why: String) -> void:
+	_yield_on = false
+	if _yield_moved and _path_follow != null:
+		_clear_inv_links()
+		_pt["nz_here"] = _path_follow.position
+		_link("nz_here", _nearest_node(_path_follow.position))
+		_here = "nz_here"
+		print("[YIELD] %s: moved, routing from nz_here" % why)
+	_yield_moved = false
+
+
+# --- First-sight speech guard (tile_props) ---------------------------------------------------
+## From the first-sight speech start (warn or long roar hold) he cannot grab / catch her or
+## turn the warning into a chase for SPEECH_GUARD_SEC (both modes). Yield keeps running.
+const SPEECH_GUARD_SEC := 7.0
+var _speech_guard_until_ms: int = 0
+
+
+func _speech_guard_on() -> bool:
+	return Time.get_ticks_msec() < _speech_guard_until_ms
+
+
+## Speech idle: Realistic points at her (angry_point) instead of the idle_aggressive flex.
+func _speech_idle_clip() -> String:
+	if not _is_easy() and _real_clip("angry_point") != "":
+		return _real_clip("angry_point")
+	return _real_clip("idle_aggressive")
+
+
+## Relight arrival: max flat distance from the switch stand point before the reach plays.
+const RELIGHT_REACH_M := 0.45
+
+
+# --- SIGHT OCCLUSION (vision_window, both modes) --------------------------------------------
+## Rays from his eye (head height, but at his body's centre so a head poking through a door
+## leaf or wall cannot see past it) to several points on her: head (camera), a crouch-aware
+## chest and a mid point. Visible if any ray is unobstructed. Mask = world (1) + blocker (8,
+## the couch "Solid" bodies), and hit_from_inside so a ray starting inside a leaf/wall is
+## blocked. Tash and her own body are excluded.
+const SIGHT_MASK := 1 | 8
+
+
+func _sight_points(p: Node3D) -> Array:
+	var cam := p.get("_camera") as Camera3D
+	var head: Vector3 = cam.global_position if cam != null else p.global_position + Vector3(0, 1.5, 0)
+	var crouched := GameState != null and GameState.is_crouching
+	var body_h := head.y - p.global_position.y
+	var chest := head - Vector3(0, body_h * (0.45 if crouched else 0.4), 0)
+	var mid := head - Vector3(0, body_h * 0.2, 0)
+	return [head, mid, chest]
+
+
+func _sight_rays_clear(eye: Vector3, p: Node3D) -> bool:
+	var from := Vector3(global_position.x, eye.y, global_position.z)
+	var space := get_world_3d().direct_space_state
+	var excl: Array[RID] = [get_rid()]
+	if p is CollisionObject3D:
+		excl.append((p as CollisionObject3D).get_rid())
+	for target in _sight_points(p):
+		var q := PhysicsRayQueryParameters3D.create(from, target)
+		q.collision_mask = SIGHT_MASK
+		q.hit_from_inside = true
+		q.exclude = excl
+		if space.intersect_ray(q).is_empty():
+			return true
+	return false
+
+
+## Proximity hearing line: his chest to her head / chest; any clear ray counts.
+func _prox_line_clear(p: Node3D) -> bool:
+	var from := global_position + Vector3(0, 1.1, 0)
+	var space := get_world_3d().direct_space_state
+	var excl: Array[RID] = [get_rid()]
+	if p is CollisionObject3D:
+		excl.append((p as CollisionObject3D).get_rid())
+	for target in _sight_points(p):
+		var q := PhysicsRayQueryParameters3D.create(from, target)
+		q.collision_mask = SIGHT_MASK
+		q.hit_from_inside = true
+		q.exclude = excl
+		if space.intersect_ray(q).is_empty():
+			return true
+	return false

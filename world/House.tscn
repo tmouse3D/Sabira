@@ -35,7 +35,7 @@
 [ext_resource type="PackedScene" uid="uid://bgnpew28l5c2k" path="res://props/OfficeChair.glb" id="32_ochair"]
 [ext_resource type="PackedScene" uid="uid://ckbbd8nx0ekrx" path="res://props/WindowBlinds.glb" id="33_blinds"]
 [ext_resource type="Texture2D" uid="uid://d3ko8qt16pgy" path="res://textures/window_sill_dark_64.png" id="34_sill"]
-[ext_resource type="PackedScene" uid="uid://cp6g5ftim0bb0" path="res://props/PlantPot.glb" id="38_plant"]
+[ext_resource type="PackedScene" path="res://props/plants_psx/PlantPot_PSX.tscn" id="38_plant"]
 [ext_resource type="PackedScene" path="res://props/cardboard/CardboardStack.tscn" id="39_boxstack"]
 [ext_resource type="PackedScene" uid="uid://bccns7ovnc0p4" path="res://props/HallChair.glb" id="40_hchair"]
 [ext_resource type="PackedScene" uid="uid://cphtouwhe8ror" path="res://props/CoatRack.glb" id="41_coatrack"]
@@ -115,8 +115,9 @@
 [ext_resource type="PackedScene" uid="uid://pf4m6k1ojk5f" path="res://props/living_table/tableSmall3.glb" id="210_ctable"]
 [ext_resource type="PackedScene" uid="uid://2rvdknbsprug" path="res://props/living_table/cup.glb" id="211_ccup"]
 [ext_resource type="PackedScene" path="res://props/shed_tools/ToolBoard.tscn" id="214_toolboard"]
-[ext_resource type="PackedScene" path="res://props/laundry/LaundryCorner.tscn" id="215_lcorner"]
 [ext_resource type="PackedScene" uid="uid://dkpry4b1xssm3" path="res://props/bath/Bathtub.glb" id="215_bathtub"]
+[ext_resource type="PackedScene" path="res://props/laundry/LaundryCorner.tscn" id="215_lcorner"]
+[ext_resource type="PackedScene" path="res://props/kitchen/BirthdayCake.tscn" id="216_cake"]
 [ext_resource type="PackedScene" path="res://props/bath/WasteBin.tscn" id="216_wastebin"]
 [ext_resource type="Texture2D" uid="uid://g13xyqik24fx" path="res://textures/rugs/rug_living_3.png" id="rug_tex_0"]
 [ext_resource type="Texture2D" uid="uid://dre50tpmto2w1" path="res://textures/rugs/rug_kitchen_5.png" id="rug_tex_1"]
@@ -333,7 +334,7 @@ uv1_scale = Vector3(4, 4, 4)
 texture_filter = 0
 
 [sub_resource type="BoxShape3D" id="BoxShape_boxstack"]
-size = Vector3(0.57, 0.88, 0.67)
+size = Vector3(0.57, 0.55, 0.67)
 
 [sub_resource type="BoxShape3D" id="BoxShape_hchair"]
 size = Vector3(0.42, 0.9, 0.4)
@@ -1136,6 +1137,9 @@ transform = Transform3D(-6.9938224e-08, 0, -1.6, 0, 1.6, 0, 1.6, 0, -6.9938224e-
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/KitchenDining/KnifePickup" unique_id=970100004]
 shape = SubResource("BoxShape_knifepick")
 
+[node name="Kitchen_BirthdayCake" parent="Structure/KitchenDining" unique_id=360861269 instance=ExtResource("216_cake")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.66, 0.82, -1.6)
+
 [node name="Kitchen_Clutter_PlateClean" parent="Structure/KitchenDining" unique_id=970100010 instance=ExtResource("62_cplate")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.55, 0.82, -1.95)
 
@@ -1297,7 +1301,7 @@ shape = SubResource("BoxShape_hit_6")
 [node name="RevealPoint" type="Marker3D" parent="Structure/Laundry/Laundry_ClothesPile_3Body" unique_id=164233884]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
 
-[node name="Laundry_Corner" parent="Structure/Laundry" instance=ExtResource("215_lcorner")]
+[node name="Laundry_Corner" parent="Structure/Laundry" unique_id=1925922214 instance=ExtResource("215_lcorner")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.62, 0, -2.25)
 
 [node name="HiddenRoom" type="Node3D" parent="Structure" unique_id=2130837819]
@@ -1783,7 +1787,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 3.05, 2.5)
 transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -2.518499, 0, 1.0541883)
 
 [node name="Landing_BoxStackBody" type="StaticBody3D" parent="Structure/Landing" unique_id=960000605]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.518499, 0.44000006, 1.0541883)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.518499, 0.275, 1.0541883)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/Landing/Landing_BoxStackBody" unique_id=960000606]
 shape = SubResource("BoxShape_boxstack")
@@ -1810,7 +1814,7 @@ shape = SubResource("BoxShape_plant")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0, 1.4631903)
 
 [node name="Landing_BoxStack_2Body" type="StaticBody3D" parent="Structure/Landing" unique_id=960000614]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0.44000006, 1.4631903)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0.275, 1.4631903)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Structure/Landing/Landing_BoxStack_2Body" unique_id=960000615]
 shape = SubResource("BoxShape_boxstack")
@@ -3177,7 +3181,7 @@ cast_shadow = 0
 mesh = SubResource("rug_mesh_6")
 
 [node name="WallRug_Living" type="MeshInstance3D" parent="Rugs" unique_id=1518305794]
-transform = Transform3D(-1, 0, 0, 0, 0, -1, 0, -1, 0, 0, 1.5, 5.388)
+transform = Transform3D(-1.1842433, -2.1175824e-22, 0, 1.8390589e-22, 1.1842433, 5.1764925e-08, 0, 5.1764925e-08, -1.1842433, 2.0936656, 0.0054196715, 4.4620647)
 cast_shadow = 0
 mesh = SubResource("rug_mesh_7")
 

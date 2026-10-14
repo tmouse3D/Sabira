@@ -1,0 +1,11 @@
+Fonts in this folder
+====================
+
+MetalMania-Regular.ttf
+  Metal Mania by Open Window (Dathan Boardman), SIL Open Font License 1.1 (Google Fonts).
+
+JosefinSans-Italic-VF.ttf  (used for the WallScratch digits, wght axis default 100 = Thin Italic)
+  Josefin Sans Italic, Copyright 2010 The Josefin Sans Project Authors
+  (https://github.com/ThomasJockin/JosefinSansFont-master), Reserved Font Name "Josefin Sans".
+  SIL Open Font License 1.1, full text in JosefinSans-OFL.txt.
+  Source: https://github.com/google/fonts/tree/main/ofl/josefinsans (JosefinSans-Italic[wght].ttf, unmodified, file renamed).

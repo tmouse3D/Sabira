@@ -903,3 +903,35 @@ OLD UNCHANGED: ['walk', 'idle', 'idle_foot', 'idle_looking_down', 'idle_head_nod
 METHOD: bake_tash_dying bone aim+twist, -Y forward, hip XY stripped, hip Z at walk height 0.9736 + source bob. Turn yaw KEPT.
 Backup: props/backups/Tash.glb.bak_pre_shelf_idle_20261011_0210 (+ Tash.blend)
 GLB 8255392 bytes 2026-10-11 02:11:45
+
+
+CHAR02 GETTING UP 20261012_211306
+ADDED: ['getting_up']
+OLD UNCHANGED: ['walk', 'idle', 'idle_foot', 'idle_looking_down', 'idle_head_nod', 'stand_to_sit', 'sitting_idle', 'sitting_drinking', 'sitting_drunk', 'walk_up_stairs', 'walk_down_stairs', 'look_around', 'open_close_door', 'dying', 'run_chase', 'turn_left', 'turn_right', 'turn_180', 'yell', 'grab_swing', 'fail_catch', 'idle_2', 'idle_aggressive', 'taunt_flex', 'turn_in_place_left_90', 'turn_in_place_right_90', 'turn_in_place_left_180', 'turn_in_place_right_180', 'walk_2', 'jog', 'strafe_walk_left', 'strafe_walk_right', 'strafe_run_left', 'strafe_run_right', 'idle_3', 'jump', 'drunk_walk', 'drunk_idle', 'drunk_idle_2', 'drunk_stumble', 'drunk_turn', 'drunk_walk_backwards', 'drunk_run', 'fall_flat', 'light_switch', 'shelf_idle_look_away', 'shelf_idle_weight_shift', 'shelf_idle_thoughtful', 'shelf_idle_sigh', 'shelf_idle_head_shake', 'shelf_idle_nod', 'shelf_idle_acknowledge']
+METHOD: bake_tash_dying bone aim+twist, -Y forward, hip XY stripped, hip Z at walk height 0.9736 + source bob. Turn yaw KEPT.
+Backup: props/backups/backups/tash_bookcase_*/props/Tash.glb (+ Tash.blend)
+GLB 8581240 bytes 2026-10-12 21:13:29
+
+
+CHAR02 CHECKING BOOKS 20261013_022309
+ADDED: ['shelf_idle_checking_books']
+OLD UNCHANGED: ['walk', 'idle', 'idle_foot', 'idle_looking_down', 'idle_head_nod', 'stand_to_sit', 'sitting_idle', 'sitting_drinking', 'sitting_drunk', 'walk_up_stairs', 'walk_down_stairs', 'look_around', 'open_close_door', 'dying', 'run_chase', 'turn_left', 'turn_right', 'turn_180', 'yell', 'grab_swing', 'fail_catch', 'idle_2', 'idle_aggressive', 'taunt_flex', 'turn_in_place_left_90', 'turn_in_place_right_90', 'turn_in_place_left_180', 'turn_in_place_right_180', 'walk_2', 'jog', 'strafe_walk_left', 'strafe_walk_right', 'strafe_run_left', 'strafe_run_right', 'idle_3', 'jump', 'drunk_walk', 'drunk_idle', 'drunk_idle_2', 'drunk_stumble', 'drunk_turn', 'drunk_walk_backwards', 'drunk_run', 'fall_flat', 'light_switch', 'shelf_idle_look_away', 'shelf_idle_weight_shift', 'shelf_idle_thoughtful', 'shelf_idle_sigh', 'shelf_idle_head_shake', 'shelf_idle_nod', 'shelf_idle_acknowledge', 'getting_up']
+METHOD: bake_tash_dying bone aim+twist, -Y forward, hip XY stripped, hip Z at walk height 0.9736 + source bob. Turn yaw KEPT.
+Backup: props/backups/backups/catch_system_*/props/Tash.glb (+ Tash.blend)
+GLB 9166612 bytes 2026-10-13 02:23:42
+
+
+CHAR02 ANGRY POINT 20261013_030822
+ADDED: ['angry_point']
+OLD UNCHANGED: ['walk', 'idle', 'idle_foot', 'idle_looking_down', 'idle_head_nod', 'stand_to_sit', 'sitting_idle', 'sitting_drinking', 'sitting_drunk', 'walk_up_stairs', 'walk_down_stairs', 'look_around', 'open_close_door', 'dying', 'run_chase', 'turn_left', 'turn_right', 'turn_180', 'yell', 'grab_swing', 'fail_catch', 'idle_2', 'idle_aggressive', 'taunt_flex', 'turn_in_place_left_90', 'turn_in_place_right_90', 'turn_in_place_left_180', 'turn_in_place_right_180', 'walk_2', 'jog', 'strafe_walk_left', 'strafe_walk_right', 'strafe_run_left', 'strafe_run_right', 'idle_3', 'jump', 'drunk_walk', 'drunk_idle', 'drunk_idle_2', 'drunk_stumble', 'drunk_turn', 'drunk_walk_backwards', 'drunk_run', 'fall_flat', 'light_switch', 'shelf_idle_look_away', 'shelf_idle_weight_shift', 'shelf_idle_thoughtful', 'shelf_idle_sigh', 'shelf_idle_head_shake', 'shelf_idle_nod', 'shelf_idle_acknowledge', 'getting_up', 'shelf_idle_checking_books']
+METHOD: bake_tash_dying bone aim+twist, -Y forward, hip XY stripped, hip Z at walk height 0.9736 + source bob. Turn yaw KEPT.
+Backup: props/backups/backups/catch_fixes_*/props/Tash.glb (+ Tash.blend)
+GLB 9293652 bytes 2026-10-13 03:08:43
+
+
+CHAR02 LAYING BREATHLESS 20261013_110616
+ADDED: ['laying_breathless']
+OLD UNCHANGED: ['walk', 'idle', 'idle_foot', 'idle_looking_down', 'idle_head_nod', 'stand_to_sit', 'sitting_idle', 'sitting_drinking', 'sitting_drunk', 'walk_up_stairs', 'walk_down_stairs', 'look_around', 'open_close_door', 'dying', 'run_chase', 'turn_left', 'turn_right', 'turn_180', 'yell', 'grab_swing', 'fail_catch', 'idle_2', 'idle_aggressive', 'taunt_flex', 'turn_in_place_left_90', 'turn_in_place_right_90', 'turn_in_place_left_180', 'turn_in_place_right_180', 'walk_2', 'jog', 'strafe_walk_left', 'strafe_walk_right', 'strafe_run_left', 'strafe_run_right', 'idle_3', 'jump', 'drunk_walk', 'drunk_idle', 'drunk_idle_2', 'drunk_stumble', 'drunk_turn', 'drunk_walk_backwards', 'drunk_run', 'fall_flat', 'light_switch', 'shelf_idle_look_away', 'shelf_idle_weight_shift', 'shelf_idle_thoughtful', 'shelf_idle_sigh', 'shelf_idle_head_shake', 'shelf_idle_nod', 'shelf_idle_acknowledge', 'getting_up', 'shelf_idle_checking_books', 'angry_point']
+METHOD: bake_tash_dying bone aim+twist, -Y forward, hip XY stripped, hip Z at walk height 0.9736 + source bob. Turn yaw KEPT.
+Backup: backups/lower_secret_20261013_1103/props/Tash.glb (+ Tash.blend)
+GLB 9348944 bytes 2026-10-13 11:06:37

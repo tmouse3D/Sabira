@@ -247,7 +247,9 @@ func _build_audio() -> void:
 	add_child(_wind)
 	_wind.play()
 	_dog = AudioStreamPlayer3D.new()
-	_dog.stream = load(SFX + "dog_bark_far.wav") as AudioStream
+	# Removed (polish_batch): dog_bark_far.wav read as a crying / whimpering dog at the ending.
+	# The player stays with no stream, so the timed play below never fires.
+	_dog.stream = null
 	_dog.position = Vector3(-14.0, 1.0, -18.0)
 	_dog.unit_size = 14.0
 	_dog.volume_db = -6.0

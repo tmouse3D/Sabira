@@ -4,7 +4,7 @@ extends CanvasLayer
 ## Esc pause menu. Spawned by Player._ready. Opens only when GameState.can_open_pause() (free play:
 ## no KeypadUI / ClockSetUI / WatchZoomUI / BookPage / photos / stab card / ending card, since all
 ## of those lock the player's input; those UIs also consume Esc themselves in _input).
-## Pauses the tree, frees the mouse. Resume / Settings / Restart / Main Menu / Exit.
+## Pauses the tree, frees the mouse. Resume / Settings / Main Menu / Exit.
 
 const TEXT_COLOR := Color(0.93, 0.91, 0.86)
 
@@ -43,7 +43,7 @@ func _ready() -> void:
 	title.add_theme_font_size_override("font_size", 48)
 	title.add_theme_color_override("font_color", TEXT_COLOR)
 	col.add_child(title)
-	for spec in [["Resume", resume], ["Settings", _on_settings], ["Restart", _on_restart], ["Main Menu", _on_menu], ["Exit", _on_exit]]:
+	for spec in [["Resume", resume], ["Settings", _on_settings], ["Main Menu", _on_menu], ["Exit", _on_exit]]:
 		var b := ScratchButton.new()
 		b.text = spec[0]
 		b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -112,10 +112,6 @@ func _unhandled_input(event: InputEvent) -> void:
 func _on_settings() -> void:
 	_col.hide()
 	_settings.open()
-
-
-func _on_restart() -> void:
-	GameState.restart_game()
 
 
 func _on_menu() -> void:

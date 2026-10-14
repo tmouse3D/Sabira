@@ -29,6 +29,11 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_apply_hold_transform()
+	# Hidden while she carries Amina (both arms); back when Mum is put down.
+	if _mesh != null and is_instance_valid(_mesh):
+		var want_vis := not (GameState != null and GameState.carrying_amina)
+		if _mesh.visible != want_vis:
+			_mesh.visible = want_vis
 
 
 func _on_inventory_changed() -> void:

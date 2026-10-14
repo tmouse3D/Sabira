@@ -96,6 +96,8 @@ func _ready() -> void:
 	_setup_footsteps()
 	_last_pos = global_position
 	_ensure_carry_bumper()
+	if GameState != null and GameState.has_signal("tash_alert_changed"):
+		GameState.tash_alert_changed.connect(_on_conc_alert)
 	# Capsule radius stays at scene default (0.35); never widen while carrying.
 	var cap := _collision.shape as CapsuleShape3D
 	if cap and absf(cap.radius - 0.35) > 0.001:
@@ -113,6 +115,61 @@ func set_input_locked(locked: bool) -> void:
 		_current_target = null
 		if _prompt and _prompt.has_method("set_prompt"):
 			_prompt.set_prompt("")
+
+
+# --- First-sight face lock (props_subs 2026-10-14) -----------------------------------------
+## TashWalker calls begin_face_lock(self, 2.0) when his first-sight speech starts: look + move
+## input off, body yaw + pivot pitch ease-out onto target.face_point() over FACE_LOCK_TURN_SEC,
+## then keep tracking it until total_sec, then input back. Skipped while a UI holds
+## _input_locked, the mouse is free, she sits or carries Mum. Crouch stance is left as it is.
+const FACE_LOCK_TURN_SEC := 0.35
+const FACE_LOCK_PITCH_MAX_DEG := 85.0
+var _face_lock_t: float = -1.0
+var _face_lock_total: float = 0.0
+var _face_lock_target: Node3D = null
+var _face_lock_from_yaw: float = 0.0
+var _face_lock_from_pitch: float = 0.0
+
+
+func begin_face_lock(target: Node3D, total_sec: float = 2.0) -> void:
+	if target == null or _input_locked or _sitting or (GameState != null and GameState.carrying_amina) or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		print("[FACELOCK] skipped (ui / mouse free / sitting / carrying)")
+		return
+	_face_lock_target = target
+	_face_lock_total = total_sec
+	_face_lock_t = 0.0
+	_face_lock_from_yaw = rotation.y
+	_face_lock_from_pitch = _pivot.rotation.x
+	velocity.x = 0.0
+	velocity.z = 0.0
+	print("[FACELOCK] start %.2f s" % total_sec)
+
+
+func is_face_locked() -> bool:
+	return _face_lock_t >= 0.0
+
+
+func _face_lock_tick(delta: float) -> void:
+	if _face_lock_t < 0.0:
+		return
+	if _input_locked or _face_lock_target == null or not is_instance_valid(_face_lock_target):
+		_face_lock_t = -1.0
+		print("[FACELOCK] cancelled")
+		return
+	_face_lock_t += delta
+	var tgt: Vector3 = _face_lock_target.call("face_point") if _face_lock_target.has_method("face_point") else _face_lock_target.global_position + Vector3(0, 1.6, 0)
+	var eye := _camera.global_position if _camera != null else global_position + Vector3(0, 1.5, 0)
+	var d := tgt - eye
+	var want_yaw := atan2(-d.x, -d.z)
+	var lim := deg_to_rad(FACE_LOCK_PITCH_MAX_DEG)
+	var want_pitch := clampf(atan2(d.y, Vector2(d.x, d.z).length()), -lim, lim)
+	var k := clampf(_face_lock_t / FACE_LOCK_TURN_SEC, 0.0, 1.0)
+	var e := 1.0 - pow(1.0 - k, 3.0)
+	rotation.y = lerp_angle(_face_lock_from_yaw, want_yaw, e)
+	_pivot.rotation.x = lerpf(_face_lock_from_pitch, want_pitch, e)
+	if _face_lock_t >= _face_lock_total:
+		_face_lock_t = -1.0
+		print("[FACELOCK] released")
 
 
 func _setup_footsteps() -> void:
@@ -141,7 +198,7 @@ func _setup_footsteps() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _input_locked:
+	if _input_locked or _face_lock_t >= 0.0:
 		return
 	if event is InputEventMouseButton and event.pressed:
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
@@ -156,7 +213,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if _input_locked:
+	_face_lock_tick(delta)
+	if _input_locked or _face_lock_t >= 0.0:
 		velocity.x = 0.0
 		velocity.z = 0.0
 		if not is_on_floor():
@@ -214,6 +272,7 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_update_footsteps(sprinting)
 	_update_interact_target()
+	_conc_tick_walk(delta, direction != Vector3.ZERO and not carrying)
 
 
 func _update_footsteps(sprinting: bool) -> void:
@@ -520,3 +579,184 @@ func _try_interact() -> void:
 		return
 	if _current_target and _current_target.can_interact(self):
 		_current_target.interact(self)
+
+
+# --- Concussion spells (Realistic + cat_scratch + met_dana + market_warned) ----------------
+## Easy: never. _conc_enabled() gates the walk/chase roll and the forced first spell, and
+## _conc_start() re-checks, so no spell, camera tilt, blur or CONC_LINES subtitle on Easy.
+## While she walks: every CONC_ROLL_SEC of walking roll CONC_CHANCE (min CONC_GAP_SEC apart,
+## max CONC_MAX per run). In a chase: at most once, and a successful roll still only fires 40%.
+## Effect: slight dim + camera tilts down and shakes for ~3.5 s, then recovers. Uses only the
+## Camera3D's own local rotation.x and h/v_offset (pivot look, crouch/sit stance untouched);
+## never starts while sitting, locked or carrying Mum, and aborts at once if one begins.
+## State lives on the Player, so every run (new House scene) starts fresh.
+const CONC_ROLL_SEC := 20.0
+const CONC_CHANCE := 0.12
+const CONC_CHASE_CHANCE := 0.4
+const CONC_GAP_SEC := 60.0
+const CONC_MAX := 3
+const CONC_DUR := 3.5
+const CONC_TILT_DEG := 28.0
+const CONC_DIM := 0.35
+const CONC_LINES := [
+	"Not again... it's the old hits.",
+	"Too many times to my head... it never really stops.",
+	"Every time he hit me, something stayed broken.",
+]
+var _conc_walk_t: float = 0.0
+var _conc_count: int = 0
+var _conc_chase_used: bool = false
+var _conc_last_ms: int = -1000000
+var _conc_t: float = -1.0
+var _conc_chasing: bool = false
+var _conc_dim: ColorRect = null
+var _conc_blur: ColorRect = null
+var _conc_blur_mat: ShaderMaterial = null
+const CONC_BLUR_SHADER := """
+shader_type canvas_item;
+uniform sampler2D screen_tex : hint_screen_texture, filter_linear_mipmap;
+uniform float amount = 0.0;
+void fragment() {
+	float lod = amount * 3.0;
+	vec2 o = SCREEN_PIXEL_SIZE * (2.0 + 6.0 * amount);
+	vec3 c = textureLod(screen_tex, SCREEN_UV, lod).rgb * 0.36;
+	c += textureLod(screen_tex, SCREEN_UV + vec2(o.x, 0.0), lod).rgb * 0.16;
+	c += textureLod(screen_tex, SCREEN_UV - vec2(o.x, 0.0), lod).rgb * 0.16;
+	c += textureLod(screen_tex, SCREEN_UV + vec2(0.0, o.y), lod).rgb * 0.16;
+	c += textureLod(screen_tex, SCREEN_UV - vec2(0.0, o.y), lod).rgb * 0.16;
+	COLOR = vec4(c, amount);
+}
+"""
+var _conc_cam_rx: float = 0.0
+
+
+func _on_conc_alert(st: String) -> void:
+	_conc_chasing = st == "chase"
+
+
+func _conc_enabled() -> bool:
+	if GameState == null or GameState.difficulty != "realistic":
+		return false
+	var f: Dictionary = GameState.prologue_flags
+	return bool(f.get("cat_scratch", false)) and bool(f.get("met_dana", false)) and bool(f.get("market_warned", false))
+
+
+func _conc_tick_walk(delta: float, walking: bool) -> void:
+	if not walking or _conc_t >= 0.0 or _conc_count >= CONC_MAX:
+		return
+	_conc_walk_t += delta
+	if _conc_walk_t < CONC_ROLL_SEC:
+		return
+	_conc_walk_t = 0.0
+	if not _conc_enabled():
+		return
+	if Time.get_ticks_msec() - _conc_last_ms < int(CONC_GAP_SEC * 1000.0):
+		return
+	if randf() >= CONC_CHANCE:
+		return
+	if _conc_chasing:
+		if _conc_chase_used or randf() >= CONC_CHASE_CHANCE:
+			return
+		_conc_chase_used = true
+	_conc_start()
+
+
+## First spell is forced 20-30 s of unlocked play after she first gets control (intro seated
+## start); it counts toward CONC_MAX. Waits until she is standing, unlocked, not carrying.
+var _conc_first_t: float = -1.0
+var _conc_first_done: bool = false
+
+
+func _conc_tick_first(delta: float) -> void:
+	if _conc_first_done:
+		return
+	if _conc_first_t < 0.0:
+		if not _conc_enabled():
+			return
+		_conc_first_t = randf_range(20.0, 30.0)
+		print("[CONC] first spell forced in %.1f s of play" % _conc_first_t)
+		return
+	if _input_locked:
+		return
+	_conc_first_t = maxf(0.0, _conc_first_t - delta)
+	if _conc_first_t > 0.0 or _conc_t >= 0.0:
+		return
+	if _sitting or (GameState != null and GameState.carrying_amina):
+		return
+	_conc_first_done = true
+	if _conc_count >= CONC_MAX:
+		return
+	if _conc_chasing:
+		_conc_chase_used = true
+	_conc_start()
+
+
+func _conc_start() -> void:
+	# Concussion is Realistic-only: hard stop for every caller (walk roll, chase roll, forced first).
+	if GameState == null or GameState.is_easy() or not _conc_enabled():
+		print("[CONC] spell blocked (not Realistic)")
+		return
+	_conc_count += 1
+	_conc_last_ms = Time.get_ticks_msec()
+	_conc_t = 0.0
+	_conc_cam_rx = _camera.rotation.x if _camera != null else 0.0
+	if _conc_dim == null:
+		var layer := CanvasLayer.new()
+		layer.layer = 4
+		add_child(layer)
+		# Blur under the dim: screen texture with mip LOD + a small tap ring.
+		_conc_blur = ColorRect.new()
+		_conc_blur.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_conc_blur.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var sh := Shader.new()
+		sh.code = CONC_BLUR_SHADER
+		_conc_blur_mat = ShaderMaterial.new()
+		_conc_blur_mat.shader = sh
+		_conc_blur.material = _conc_blur_mat
+		_conc_blur.visible = false
+		layer.add_child(_conc_blur)
+		_conc_dim = ColorRect.new()
+		_conc_dim.color = Color.BLACK
+		_conc_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_conc_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_conc_dim.modulate.a = 0.0
+		layer.add_child(_conc_dim)
+	get_tree().call_group("subtitle", "show_line", "SABIRA", String(CONC_LINES[randi() % CONC_LINES.size()]), 3.5)
+	print("[CONC] spell %d/%d%s" % [_conc_count, CONC_MAX, " (chase)" if _conc_chasing else ""])
+
+
+func _conc_end() -> void:
+	_conc_t = -1.0
+	if _camera != null:
+		_camera.rotation.x = _conc_cam_rx
+		_camera.h_offset = 0.0
+		_camera.v_offset = 0.0
+	if _conc_dim != null:
+		_conc_dim.modulate.a = 0.0
+	if _conc_blur != null:
+		_conc_blur.visible = false
+
+
+func _process(delta: float) -> void:
+	_conc_tick_first(delta)
+	if _conc_t < 0.0:
+		return
+	if _sitting or _input_locked or (GameState != null and GameState.carrying_amina) or _camera == null:
+		print("[CONC] aborted (sit/lock/carry)")
+		_conc_end()
+		return
+	_conc_t += delta
+	if _conc_t >= CONC_DUR:
+		_conc_end()
+		return
+	var e := minf(smoothstep(0.0, 0.7, _conc_t), 1.0 - smoothstep(CONC_DUR - 1.2, CONC_DUR, _conc_t))
+	var tm := Time.get_ticks_msec() * 0.001
+	_camera.rotation.x = _conc_cam_rx - deg_to_rad(CONC_TILT_DEG) * e + sin(tm * 2.3) * 0.04 * e
+	_camera.h_offset = (sin(tm * 17.0) + sin(tm * 29.0) * 0.5) * 0.024 * e
+	_camera.v_offset = (sin(tm * 21.0 + 1.3)) * 0.02 * e
+	_conc_dim.modulate.a = CONC_DIM * e
+	# ~1 s blur near the start of each spell (fade in 0.3 s, hold, fade out 0.3 s).
+	var b := smoothstep(0.15, 0.45, _conc_t) * (1.0 - smoothstep(0.95, 1.25, _conc_t))
+	if _conc_blur != null:
+		_conc_blur.visible = b > 0.001
+		_conc_blur_mat.set_shader_parameter("amount", b)

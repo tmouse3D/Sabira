@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://props/BirthdayCake.glb" id="1_cake"]
+
+[node name="BirthdayCake" type="Node3D"]
+
+[node name="Cake" parent="." instance=ExtResource("1_cake")]

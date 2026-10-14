@@ -5,6 +5,7 @@ extends Control
 ## node in ui/MainMenu.tscn (any Texture2D).
 
 const HOUSE_SCENE := "res://world/House.tscn"
+const CARDS_SCENE := "res://ui/ChoiceCards.tscn"
 const TEXT_COLOR := Color(0.93, 0.91, 0.86)
 
 @export var illustration: Texture2D
@@ -13,6 +14,9 @@ const TEXT_COLOR := Color(0.93, 0.91, 0.86)
 var _buttons: Array[ScratchButton] = []
 var _settings: SettingsPanel
 var _main_box: Control
+var _diff_root: Control
+var _diff_buttons: Array[ScratchButton] = []
+var _endings_label: Label
 
 
 func _ready() -> void:
@@ -80,12 +84,91 @@ func _ready() -> void:
 		col.add_child(b)
 		_buttons.append(b)
 	_link_focus(_buttons)
+	# "Endings found: N / 19" under the buttons (global theme font, small, muted).
+	_endings_label = Label.new()
+	_endings_label.name = "EndingsFound"
+	_endings_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_endings_label.add_theme_font_size_override("font_size", 18)
+	_endings_label.add_theme_color_override("font_color", Color(TEXT_COLOR.r, TEXT_COLOR.g, TEXT_COLOR.b, 0.45))
+	_endings_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(_endings_label)
+	_refresh_endings_label()
+	_main_box.visibility_changed.connect(_refresh_endings_label)
 	_settings = (load("res://ui/SettingsPanel.tscn") as PackedScene).instantiate() as SettingsPanel
 	add_child(_settings)
 	_settings.closed.connect(func() -> void:
 		_main_box.show()
 		_buttons[1].grab_focus())
+	_build_difficulty()
 	_buttons[0].grab_focus.call_deferred()
+
+
+## Unlocked endings from user://endings.cfg (GameState.unlocked_endings; 0 if missing).
+func _refresh_endings_label() -> void:
+	if _endings_label == null:
+		return
+	var found := 0
+	var total := 19
+	if GameState != null:
+		found = GameState.unlocked_endings().size()
+		total = GameState.ENDINGS_TOTAL
+	_endings_label.text = "Endings found: %d / %d" % [mini(found, total), total]
+
+
+## Difficulty selector shown after Play. Saved in Settings (settings.cfg) and GameState.
+func _build_difficulty() -> void:
+	_diff_root = CenterContainer.new()
+	_diff_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_diff_root.hide()
+	add_child(_diff_root)
+	var panel := PanelContainer.new()
+	var sb := ScratchButton.frame_style(1.0)
+	for side in ["left", "right", "top", "bottom"]:
+		sb.set("content_margin_" + side, 36)
+	panel.add_theme_stylebox_override("panel", sb)
+	_diff_root.add_child(panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 16)
+	panel.add_child(box)
+	var title := Label.new()
+	title.text = "DIFFICULTY"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_color_override("font_color", TEXT_COLOR)
+	box.add_child(title)
+	for spec in [["Realistic", "realistic", "He's sober, sharp-eyed and he never stops pacing."], ["Easy", "easy", "He's been drinking all day. Slower, half-blind, mostly in his office."]]:
+		var b := ScratchButton.new()
+		b.text = spec[0]
+		b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		var mode: String = spec[1]
+		b.pressed.connect(func() -> void: _start_game(mode))
+		box.add_child(b)
+		_diff_buttons.append(b)
+		var d := Label.new()
+		d.text = spec[2]
+		d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		d.add_theme_font_size_override("font_size", 19)
+		d.add_theme_color_override("font_color", Color(0.7, 0.68, 0.63))
+		box.add_child(d)
+	var back := ScratchButton.new()
+	back.text = "Back"
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back.pressed.connect(func() -> void:
+		_diff_root.hide()
+		_main_box.show()
+		_buttons[0].grab_focus())
+	box.add_child(back)
+	_diff_buttons.append(back)
+	_link_focus(_diff_buttons)
+
+
+func _start_game(mode: String) -> void:
+	Settings.set_difficulty(mode)
+	GameState.reset_for_new_game()
+	GameState.difficulty = Settings.difficulty
+	print("[MENU] new game, difficulty=", GameState.difficulty)
+	MusicManager.start_game()
+	get_tree().change_scene_to_file(CARDS_SCENE if ResourceLoader.exists(CARDS_SCENE) else HOUSE_SCENE)
 
 
 static func _link_focus(list: Array) -> void:
@@ -100,9 +183,9 @@ static func _link_focus(list: Array) -> void:
 
 
 func _on_play() -> void:
-	GameState.reset_for_new_game()
-	MusicManager.start_game()
-	get_tree().change_scene_to_file(HOUSE_SCENE)
+	_main_box.hide()
+	_diff_root.show()
+	_diff_buttons[1 if Settings.difficulty == "easy" else 0].grab_focus()
 
 
 func _on_settings() -> void:

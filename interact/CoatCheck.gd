@@ -51,6 +51,7 @@ const KEY_FIND_LINES: PackedStringArray = [
 var _looted: bool = false
 var _site_armed: bool = true
 var _search_sfx: AudioStreamPlayer3D
+var _prologue_said: bool = false
 
 
 func _ready() -> void:
@@ -169,8 +170,22 @@ func _can_give_loot() -> bool:
 	return _site_armed
 
 
+## Office cage coat: prologue market line once, after the normal search caption.
+func _prologue_coat_line() -> void:
+	if _prologue_said or not is_cage_key_always or GameState == null:
+		return
+	var alt: Array = GameState.prologue_line("office_coat_look")
+	if alt.is_empty():
+		return
+	_prologue_said = true
+	get_tree().create_timer(line_duration + 0.2).timeout.connect(func() -> void:
+		get_tree().call_group("subtitle", "show_line", String(alt[0]), String(alt[1]), 4.0)
+		print("[PROLOGUE] coat line: ", alt[1]))
+
+
 func _on_interact(_player: Node) -> void:
 	_play_search_sfx()
+	_prologue_coat_line()
 	if GameState != null and GameState.search_site_for_minute_hand(self, is_bedroom_key_site and _site_armed):
 		return
 	# Bedroom site now hides Dad's pocket watch (clock puzzle), not tash_room_key.

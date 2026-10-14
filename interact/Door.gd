@@ -199,7 +199,26 @@ func _consume_key_if_needed() -> void:
 	if required_key in CONSUME_ON_UNLOCK:
 		GameState.remove_inventory_flag(required_key)
 
+var _prologue_said: bool = false
+
+
+## Front door, first interaction: market_silent line once, after the door's own caption.
+func _prologue_door_line() -> void:
+	if _prologue_said or required_key != "front_key" or GameState == null:
+		return
+	_prologue_said = true
+	var alt: Array = GameState.prologue_line("front_door_look")
+	if alt.is_empty():
+		return
+	get_tree().create_timer(LINE_DURATION + 0.2).timeout.connect(func() -> void:
+		if GameState.ending_reached != "":
+			return
+		get_tree().call_group("subtitle", "show_line", String(alt[0]), String(alt[1]), 4.0)
+		print("[PROLOGUE] front door line: ", alt[1]))
+
+
 func _on_interact(_player: Node) -> void:
+	_prologue_door_line()
 	# Ending: opening an unlocked front/back exit (with or without Mum) -> GameState ending card.
 	# Locked exit falls through to the lock check below (needs front_key / back_key).
 	if _can_escape_here():

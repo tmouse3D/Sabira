@@ -291,3 +291,55 @@ func _do_photo_box_swap() -> void:
 		_photos_floor.arm_photos_pickup(true)
 	if _photos_shelf:
 		_photos_shelf.arm_photos_pickup(true)
+
+
+# --- PUSH FROM BEHIND (interact/BookcasePush.gd, secret-room side) ---------------------------
+## Hold [E] on the back face: slides toward OPEN at PUSH_SLOW x the normal open speed. Same
+## states / flags / noise / scrape as the button open: OPENING while pushed (Tash's
+## _bc_on_state arms like a normal open), OPEN + bookcase_unlocked at the end, release ->
+## _stop_in_place (partial = CLOSED, exactly like pressing Stop on the button).
+const PUSH_SLOW := 3.0
+var _pushing: bool = false
+
+
+func can_push() -> bool:
+	return _state != State.OPEN and position.distance_to(_open_pos) > 0.04
+
+
+func push_begin() -> void:
+	if not can_push():
+		return
+	set_physics_process(false)   # also cancels a CLOSING slide (Tash shutting it)
+	_pushing = true
+	if GameState:
+		GameState.report_noise(1.0, global_position, "bookcase")
+	_state = State.OPENING
+	_play_scrape(true)
+	_apply_collision_for_state()
+	state_changed.emit(_state)
+	if not _photo_spill_done:
+		_do_photo_box_swap()
+
+
+func push_tick(delta: float) -> void:
+	if not _pushing:
+		return
+	var full := _home_pos.distance_to(_open_pos)
+	var speed := full / maxf(open_duration * PUSH_SLOW, 0.05)
+	position = position.move_toward(_open_pos, speed * delta)
+	if GameState:
+		GameState.report_noise(noise_amount)
+	if position.distance_to(_open_pos) < 0.04:
+		position = _open_pos
+		push_end()
+
+
+func push_end() -> void:
+	if not _pushing:
+		return
+	_pushing = false
+	_stop_in_place()
+
+
+func is_pushing() -> bool:
+	return _pushing

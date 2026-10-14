@@ -65,12 +65,22 @@ func _apply_armed_visual() -> void:
 	if _mesh:
 		_mesh.visible = show
 	interact_enabled = _site_armed
-	# Unarmed / parked site must not steal the interact ray.
-	collision_layer = 5 if _site_armed else 0
+	# Unarmed / parked site (or still inside the locked box) must not steal the interact ray.
+	collision_layer = 5 if (_site_armed and not box_locked) else 0
+
+
+## Realistic medicine box (interact/MedBox.gd) holds this jar shut until the code is entered.
+var box_locked: bool = false
+
+
+func set_box_locked(on: bool) -> void:
+	box_locked = on
+	_apply_armed_visual()
+	_refresh_prompt()
 
 
 func can_interact(_player: Node) -> bool:
-	return interact_enabled and _site_armed and GameState != null
+	return interact_enabled and _site_armed and GameState != null and not box_locked
 
 
 func get_prompt() -> String:
@@ -113,6 +123,9 @@ func _on_interact(_player: Node) -> void:
 	# Same-site put-back while carrying.
 	if GameState.has_pills and _looted:
 		_return_pills()
+		return
+	if GameState.dose_disabled and not _looted:
+		get_tree().call_group("subtitle", "show_line", "SABIRA", String(GameState.STORY_LINES["dose_disabled"]), 3.5)
 		return
 	_play_take_sfx()
 	var dur := line_duration

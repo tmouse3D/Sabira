@@ -33,6 +33,7 @@ const _SEDATED_KNIFE_LINES: PackedStringArray = [
 
 
 func _ready() -> void:
+	add_to_group("knife_pickup")
 	collision_layer = 5
 	collision_mask = 0
 	interact_enabled = true
@@ -137,6 +138,14 @@ func _restore_visual() -> void:
 
 func _refresh_prompt() -> void:
 	prompt_text = get_prompt()
+
+
+## First catch (GameState.apply_catch1_consequences): Tash took it back. Knife is on its
+## kitchen spot again; knife_bloody untouched so the blood state carries over.
+func catch_return() -> void:
+	_restore_visual()
+	_sync_world_blood()
+	_refresh_prompt()
 
 func _say_take_line() -> void:
 	# After the stab: aftermath lines instead of the sedated ones (never Took the knife).

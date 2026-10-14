@@ -139,7 +139,7 @@ func _has_back_key() -> bool:
 ## Search is offered after the first Look while the player does not hold back_key.
 ## Only one back_key exists; it is re-searchable only if a catch strip took it away.
 func _search_ready() -> bool:
-	return _looked and GameState != null and not _has_back_key()
+	return _looked and GameState != null and not _has_back_key() and not GameState.key_hidden_elsewhere("back_key")
 
 
 func get_prompt() -> String:

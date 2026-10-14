@@ -37,9 +37,14 @@ func _on_body_exited(body: Node) -> void:
 func _physics_process(_delta: float) -> void:
 	if GameState == null:
 		return
-	var crouched := GameState.is_crouching or not require_crouch
+	# Easy: the peas corner counts standing too (Realistic keeps the crouch). Knife still voids it
+	# (GameState.is_player_safe).
+	var easy_standing := source_id.begins_with("peas") and GameState.is_easy()
+	var crouched := GameState.is_crouching or not require_crouch or easy_standing
 	var safe := _player_inside and crouched
 	if safe != GameState.has_safe_source(source_id):
 		GameState.set_safe_source(source_id, safe)
+		if safe and GameState.has_knife:
+			GameState.knife_safe_line()
 		if safe and GameState.mark_safe_line_said(source_id) and first_line != "":
 			get_tree().call_group("subtitle", "show_line", "SABIRA", first_line, line_duration)

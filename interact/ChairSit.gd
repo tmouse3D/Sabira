@@ -134,6 +134,8 @@ func _sync_safe() -> void:
 	if seated == GameState.has_safe_source(src):
 		return
 	GameState.set_safe_source(src, seated)
+	if seated and GameState.has_knife:
+		GameState.knife_safe_line()
 	if seated and GameState.mark_safe_line_said(SAFE_SOURCE) and safe_first_line != "":
 		get_tree().call_group("subtitle", "show_line", "SABIRA", safe_first_line, 3.5)
 

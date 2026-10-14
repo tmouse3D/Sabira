@@ -112,7 +112,7 @@ func _build() -> void:
 	col.add_child(_lines_box)
 	_hint = Label.new()
 	_hint.text = "Hold E / Space to skip   (Esc)"
-	_hint.add_theme_font_size_override("font_size", 14)
+	_hint.add_theme_font_size_override("font_size", 17)
 	_hint.add_theme_color_override("font_color", Color(0.93, 0.91, 0.86, 0.45))
 	_hint.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	_hint.position = Vector2(-300, -40)
@@ -130,6 +130,12 @@ func _start() -> void:
 	var t := _tash()
 	if t != null and t.has_method("set_intro_frozen"):
 		t.set_intro_frozen(true)
+	if GameState != null and GameState.skip_intro_once:
+		# Ending retry: no slides, straight to the seated-at-table start.
+		GameState.skip_intro_once = false
+		print("[INTRO] retry: skipping slides -> seated start")
+		_finish()
+		return
 	MusicManager.fade_out_all(1.5)
 	print("[INTRO] start")
 	for entry in SLIDES:
@@ -158,6 +164,10 @@ func _play_slide(tex: Texture2D, lines: Array, hold: float = 0.0) -> void:
 			return
 		var lbl := _make_line(String(entry[0]), String(entry[1]))
 		_lines_box.add_child(lbl)
+		if String(entry[0]) != "":
+			var v := _voices()
+			if v != null:
+				v.call("speak", String(entry[0]), String(entry[1]), String(entry[0]).to_upper() + "_INTRO")
 		await _fade(lbl, 1.0, LINE_IN_SEC)
 		# Read time by length: notes short, spoken lines ~1.5 s + 0.045 s/char (2.6-5.5 s).
 		var read := 1.2 if String(entry[0]) == "" else clampf(1.5 + String(entry[1]).length() * 0.045, LINE_SEC, 5.5)
@@ -180,7 +190,7 @@ func _make_line(speaker: String, text: String) -> Label:
 	l.modulate.a = 0.0
 	if speaker == "":
 		l.text = text
-		l.add_theme_font_size_override("font_size", 16)
+		l.add_theme_font_size_override("font_size", 19)
 		l.add_theme_color_override("font_color", Color(0.62, 0.6, 0.56, 0.7))
 	else:
 		l.text = "%s: %s" % [speaker, text]
@@ -235,12 +245,14 @@ func _request_skip() -> void:
 	if _skip:
 		return
 	_skip = true
+	_voices_stop()
 	print("[INTRO] skipped")
 
 
 func _finish() -> void:
 	if _done:
 		return
+	_voices_stop()
 	_done = true
 	_skip = false
 	_root.visible = false
@@ -280,3 +292,15 @@ func _finish() -> void:
 	if is_instance_valid(player) and player.has_method("is_sitting") and player.is_sitting():
 		get_tree().call_group("subtitle", "show_line", "SABIRA", "Eat. Sit still. He doesn't touch a girl at the table.", 3.5)
 	queue_free()
+
+
+## Autoload lookup each time (never a cached ref): survives any freed / replaced node.
+func _voices() -> Node:
+	var v := get_node_or_null("/root/Voices")
+	return v if v != null and is_instance_valid(v) else null
+
+
+func _voices_stop() -> void:
+	var v := _voices()
+	if v != null and v.has_method("stop"):
+		v.call("stop")

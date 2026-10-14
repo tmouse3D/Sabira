@@ -1,0 +1,13 @@
+audio/sfx licences
+==================
+
+door_bang.wav
+  Source: Kenney "Impact Sounds" (1.0), https://kenney.nl/assets/impact-sounds
+  (user copy: Documents\Assets for games\kenney_impact-sounds.zip)
+  File: Audio/impactPlank_medium_001.ogg (single clip, no layering)
+  Licence: Creative Commons Zero (CC0 1.0), http://creativecommons.org/publicdomain/zero/1.0/
+  Credit (optional): Kenney (www.kenney.nl)
+  Processing: OGG -> WAV, mono 44.1 kHz 16-bit, peak-normalised to -0.3 dBFS, 2026-10-13.
+
+punch_hit.wav
+  Procedurally generated in-house (no third-party source), 2026-10-13.

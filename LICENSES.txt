@@ -1,0 +1,10 @@
+
+fonts/MetalMania-Regular.ttf - Metal Mania by Open Window (Dale Harris), SIL Open Font License 1.1 (fonts/MetalMania_OFL.txt), via Google Fonts.
+
+props/plants_psx/plant*.glb - 'PSX modular house interior pack' by DissonantVoid (itch.io): free for commercial/non-commercial use, modification allowed, no credit required; no redistribution/resale of the raw assets.
+
+audio/sfx/tash_pain_scream.wav - procedural male pain scream (glottal pulse train + vowel formants + noise, soft-clipped), generated for this project 2026-10-13 (scripts/gen_lower_secret_assets.py). Original, CC0 / public domain.
+ui/icons/handcuffs.png - procedural handcuffs + wire icon, generated for this project 2026-10-13 (scripts/gen_lower_secret_assets.py). Original, CC0 / public domain.
+props/radiator/radiator.glb - the user's own Blender model (Assets for games/radiator.blend), radiator object only, Array applied, decimated to 6000 tris by scripts/_export_radiator.py.
+props/horror/{Ashtray,Radio,BottleWine01,PillBottle01,PillBottle02}.glb - 'Low Poly 3D PSX Horror Game Asset Pack' (Room Assets v01_03) by Devil's Work.shop, https://devilsworkshop.itch.io/low-poly-3d-psx-horror-game-asset-pack - commercial licence (props/horror/license_devilsworkshop.txt); untextured in the pack, tinted in props/horror/HorrorProps.gd. props/horror/horror_grunge.png - procedural noise, generated for this project 2026-10-14, CC0.
+audio/sfx/radio_static.wav - procedural radio static loop (filtered white noise + crackle, 4 s, crossfaded loop), generated for this project 2026-10-14. Original, CC0 / public domain.

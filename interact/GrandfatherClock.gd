@@ -119,6 +119,9 @@ func _ui_open() -> bool:
 
 
 func can_interact(_player: Node) -> bool:
+	# First catch took tash_room_key: clock quest (hand slot + setting) is off for the run.
+	if GameState != null and GameState.catch_took_clock_items:
+		return false
 	return interact_enabled and not _ui_open()
 
 

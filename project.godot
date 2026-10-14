@@ -22,6 +22,7 @@ GameState="*res://autoload/GameState.gd"
 Settings="*res://autoload/Settings.gd"
 MusicManager="*res://autoload/MusicManager.gd"
 VHS="*res://ui/vhs/VHS.gd"
+Voices="*res://autoload/VoiceBlips.gd"
 
 [display]
 
@@ -36,6 +37,10 @@ enabled=PackedStringArray("res://addons/mixamo_animation_retargeter/plugin.cfg")
 [filesystem]
 
 import/blender/enabled=false
+
+[gui]
+
+theme/custom="res://ui/default_theme.tres"
 
 [input]
 

@@ -91,14 +91,14 @@ func _build() -> void:
 		b.text = d
 		b.custom_minimum_size = Vector2(60.0, 54.0)
 		b.focus_mode = Control.FOCUS_NONE
-		b.add_theme_font_size_override("font_size", 24)
+		b.add_theme_font_size_override("font_size", 28)
 		b.pressed.connect(_on_digit_pressed.bind(d))
 		grid.add_child(b)
 
 	var hint := Label.new()
 	hint.text = "[Backspace] clear    [Esc] close"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.add_theme_font_size_override("font_size", 14)
+	hint.add_theme_font_size_override("font_size", 17)
 	hint.add_theme_color_override("font_color", Color(0.65, 0.62, 0.56, 1.0))
 	vb.add_child(hint)
 	_refresh_display(COL_NORMAL)

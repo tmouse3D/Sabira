@@ -18,6 +18,7 @@ func _ready() -> void:
 	collision_layer = 5
 	collision_mask = 0
 	interact_enabled = true
+	add_to_group("dose_bottle")
 	_ensure_sfx()
 	_refresh_prompt()
 	if GameState != null and not GameState.inventory_changed.is_connected(_on_inv):
@@ -56,7 +57,7 @@ func _refresh_prompt() -> void:
 		prompt_text = ""
 		interact_enabled = false
 		return
-	if GameState.bottle_dosed:
+	if GameState.bottle_dosed or GameState.dose_disabled:
 		prompt_text = "[E] Look"
 		interact_enabled = true
 		return
@@ -72,7 +73,7 @@ func _refresh_prompt() -> void:
 func can_interact(_player: Node) -> bool:
 	if GameState == null:
 		return false
-	if GameState.bottle_dosed:
+	if GameState.bottle_dosed or GameState.dose_disabled:
 		return interact_enabled
 	return interact_enabled and GameState.has_pills
 
@@ -80,7 +81,7 @@ func can_interact(_player: Node) -> bool:
 func get_prompt() -> String:
 	if not can_interact(null):
 		return ""
-	if GameState != null and GameState.bottle_dosed:
+	if GameState != null and (GameState.bottle_dosed or GameState.dose_disabled):
 		return "[E] Look"
 	return dose_prompt
 
@@ -88,12 +89,20 @@ func get_prompt() -> String:
 func _on_interact(_player: Node) -> void:
 	if GameState == null:
 		return
+	if GameState.dose_disabled:
+		get_tree().call_group("subtitle", "show_line", "SABIRA", String(GameState.STORY_LINES["dose_disabled"]), 3.5)
+		return
 	if GameState.bottle_dosed:
 		get_tree().call_group("subtitle", "show_line", "SABIRA", already_line, line_duration)
 		return
 	if not GameState.has_pills:
 		_refresh_prompt()
 		return
+	# Tash sees her (or is close / on the F1 couch): no dose, he yells and chases (TashWalker.dose_spotted).
+	for t in get_tree().get_nodes_in_group("tash"):
+		if t.has_method("dose_spotted") and bool(t.call("dose_spotted", global_position)):
+			_play_sfx()
+			return
 	if not GameState.remove_inventory_flag("pills"):
 		return
 	GameState.bottle_dosed = true

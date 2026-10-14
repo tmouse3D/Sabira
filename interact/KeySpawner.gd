@@ -21,6 +21,10 @@ func _ready() -> void:
 	call_deferred("_pick_bedroom_key_site")
 	call_deferred("_pick_minute_hand_site")
 	call_deferred("_pick_pills_site")
+	call_deferred("_spawn_sabira_window")
+	call_deferred("_spawn_lower_room")
+	call_deferred("_spawn_bookcase_push")
+	call_deferred("_spawn_horror_props")
 
 
 ## Catch-1: re-roll bedroom (watch) / pills. Cage coat stays always-on.
@@ -75,7 +79,91 @@ func _pick_pills_site() -> void:
 	if sites.is_empty():
 		return
 	var pick: int = randi() % sites.size()
+	# Realistic: always the F2 bath jar, locked in the medicine box (runtime spawn).
+	if GameState != null and not GameState.is_easy():
+		for i in range(sites.size()):
+			if String((sites[i] as Node).name) == MEDBOX_SITE:
+				pick = i
+				_spawn_medbox(sites[i] as Node3D)
+				break
 	for i in range(sites.size()):
 		var site = sites[i]
 		if site and site.has_method("arm_pills_site"):
 			site.arm_pills_site(i == pick)
+
+const MEDBOX_SITE := "PillsJar_BathBody"
+const MedBoxScript := preload("res://interact/MedBox.gd")
+const WallScratchScript := preload("res://interact/WallScratch.gd")
+
+
+func _spawn_medbox(jar: Node3D) -> void:
+	if not get_tree().get_nodes_in_group("medbox").is_empty():
+		return
+	var host := get_tree().current_scene
+	if host == null or jar == null:
+		return
+	GameState.ensure_med_code()
+	var box: Node3D = MedBoxScript.new()
+	box.name = "MedBox_UpperBath"
+	host.add_child(box)
+	box.call("setup", jar)
+	var scr: Node3D = WallScratchScript.new()
+	scr.name = "WallScratch_Laundry"
+	host.add_child(scr)
+	scr.call("setup")
+
+
+const SabiraWindowScript := preload("res://interact/SabiraWindow.gd")
+
+
+## Runtime prop: the "Sabira Window" child drawing taped to her room wall (interact/SabiraWindow.gd).
+func _spawn_sabira_window() -> void:
+	if not get_tree().get_nodes_in_group("sabira_window").is_empty():
+		return
+	var host := get_tree().current_scene
+	if host == null:
+		return
+	var w: Node3D = SabiraWindowScript.new()
+	w.name = "SabiraWindow"
+	host.add_child(w)
+	w.call("setup")
+
+
+const LowerRoomScript := preload("res://world/LowerRoom.gd")
+
+
+## Room under the secret room + floor / ceiling hatches (world/LowerRoom.gd). Always present.
+## Horror-pack clutter (props/horror/HorrorProps.gd): F2 coffee-table ashtray, F1 living radio.
+func _spawn_horror_props() -> void:
+	var scene := get_tree().current_scene
+	if scene == null or scene.get_node_or_null("HorrorProps") != null:
+		return
+	var holder := Node3D.new()
+	holder.name = "HorrorProps"
+	scene.add_child(holder)
+	HorrorProps.spawn_house(holder, scene)
+
+
+func _spawn_lower_room() -> void:
+	if not get_tree().get_nodes_in_group("lower_room").is_empty():
+		return
+	var scene := get_tree().current_scene
+	if scene == null:
+		return
+	var room := LowerRoomScript.new() as Node3D
+	scene.add_child(room)
+	room.call("setup")
+
+
+const BookcasePushScript := preload("res://interact/BookcasePush.gd")
+
+
+## Back-face "Hold E Push" on the secret bookcase (rides with Structure/BookcaseMover).
+func _spawn_bookcase_push() -> void:
+	var scene := get_tree().current_scene
+	var mover := scene.get_node_or_null("Structure/BookcaseMover") as Node3D if scene != null else null
+	if mover == null or not mover.has_method("push_begin") or mover.get_node_or_null("BookcasePush") != null:
+		return
+	var p := BookcasePushScript.new() as Node3D
+	mover.add_child(p)
+	p.call("setup", mover)

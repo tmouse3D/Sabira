@@ -249,3 +249,15 @@ func _play_creak() -> void:
 
 func _update_prompt() -> void:
 	prompt_text = close_prompt if _is_open else open_prompt
+
+
+## NPC use (TashWalker fridge look): open / close without Sabira's peek line.
+func npc_set_open(want_open: bool) -> void:
+	if _door == null or _is_open == want_open:
+		return
+	_is_open = want_open
+	_target_yaw = _closed_yaw + deg_to_rad(open_angle_deg) if _is_open else _closed_yaw
+	_play_creak()
+	_set_interior_light(_is_open)
+	_apply_open_collision()
+	_update_prompt()

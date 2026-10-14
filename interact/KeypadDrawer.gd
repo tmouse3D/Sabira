@@ -97,6 +97,9 @@ func _key_available() -> bool:
 		return false
 	if GameState.has_inventory_flag("front_key"):
 		return false
+	# Catch 1 re-hid the key in a search site: the drawer stays empty.
+	if GameState.key_hidden_elsewhere("front_key"):
+		return false
 	return _front_door_locked()
 
 
@@ -179,7 +182,7 @@ func _slide_open() -> void:
 
 
 func _give_key() -> void:
-	if GameState == null or GameState.has_inventory_flag("front_key"):
+	if GameState == null or GameState.has_inventory_flag("front_key") or GameState.key_hidden_elsewhere("front_key"):
 		return
 	# Carry full: GameState shows "Can't carry more." and the prompt stays [E] Take key.
 	if not GameState.add_inventory_flag("front_key"):

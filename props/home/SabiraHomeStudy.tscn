@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" uid="uid://6mveu2fbun7d" path="res://interact/LookExamine.gd" id="99_callook"]
+[ext_resource type="Script" path="res://interact/DiaryRead.gd" id="99_diaryread"]
 [ext_resource type="PackedScene" uid="uid://5ica8j8ipbgs" path="res://props/school/book3.glb" id="99_sc_book3"]
 [ext_resource type="PackedScene" uid="uid://cfp4fro0f1a3l" path="res://props/school/pencilCup.glb" id="99_sc_cup"]
 [ext_resource type="PackedScene" path="res://props/school/book.glb" id="99_hs_book"]
@@ -82,6 +83,8 @@ script = ExtResource("99_callook")
 prompt_text = "[E] Look"
 look_lines = PackedStringArray("I draw what I can't say. Nobody ever looks at these.")
 line_duration = 4.5
+flag_name = "met_dana"
+flag_lines = PackedStringArray("Dana. I never got to see her hedgehog. I hope she's okay.")
 
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Sketchbook" unique_id=997300003]
@@ -111,10 +114,8 @@ mesh = SubResource("mesh_hs_page")
 transform = Transform3D(0.9848, 0, 0.1736, 0, 1, 0, -0.1736, 0, 0.9848, 0.4, 0.7813, 1.4)
 collision_layer = 5
 collision_mask = 0
-script = ExtResource("99_callook")
+script = ExtResource("99_diaryread")
 prompt_text = "[E] Look"
-look_lines = PackedStringArray("My diary. If he finds it, he'll burn it.")
-line_duration = 4.5
 
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Diary" unique_id=997300008]

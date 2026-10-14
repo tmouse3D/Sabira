@@ -10,6 +10,7 @@ const TEXT_COLOR := Color(0.93, 0.91, 0.86)
 
 var _vol: HSlider
 var _music: HSlider
+var _voice: HSlider
 var _vhs: CheckButton
 var _vhs_k: HSlider
 var _sens: HSlider
@@ -50,6 +51,9 @@ func _ready() -> void:
 	box.add_child(_label("Music volume", 22))
 	_music = _slider(0.0, 1.0, 0.01)
 	box.add_child(_music)
+	box.add_child(_label("Voice volume", 22))
+	_voice = _slider(0.0, 1.0, 0.01)
+	box.add_child(_voice)
 	box.add_child(_label("Mouse sensitivity", 22))
 	_sens = _slider(Settings.SENS_MIN, Settings.SENS_MAX, 0.0001)
 	box.add_child(_sens)
@@ -83,6 +87,9 @@ func _ready() -> void:
 	_music.value_changed.connect(func(v: float) -> void:
 		if not _syncing:
 			Settings.set_music_volume(v))
+	_voice.value_changed.connect(func(v: float) -> void:
+		if not _syncing:
+			Settings.set_voice_volume(v))
 	_sens.value_changed.connect(func(v: float) -> void:
 		if not _syncing:
 			Settings.set_mouse_sensitivity(v))
@@ -97,7 +104,7 @@ func _ready() -> void:
 			Settings.set_vhs_intensity(v))
 	_back.pressed.connect(close)
 	# Focus chain: volume -> music -> sensitivity -> fullscreen -> vhs -> vhs intensity -> back.
-	var chain: Array[Control] = [_vol, _music, _sens, _full, _vhs, _vhs_k, _back]
+	var chain: Array[Control] = [_vol, _music, _voice, _sens, _full, _vhs, _vhs_k, _back]
 	for i in chain.size():
 		var c := chain[i]
 		var prev := chain[(i - 1 + chain.size()) % chain.size()]
@@ -144,6 +151,7 @@ func open() -> void:
 	_syncing = true
 	_vol.value = Settings.master_volume
 	_music.value = Settings.music_volume
+	_voice.value = Settings.voice_volume
 	_sens.value = Settings.mouse_sensitivity
 	_full.button_pressed = Settings.fullscreen
 	_vhs.button_pressed = Settings.vhs_enabled

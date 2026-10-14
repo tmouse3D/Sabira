@@ -54,7 +54,7 @@ func _build() -> void:
 	var hint := Label.new()
 	hint.text = "[E] / [Esc] close"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.add_theme_font_size_override("font_size", 14)
+	hint.add_theme_font_size_override("font_size", 17)
 	hint.add_theme_color_override("font_color", Color(0.65, 0.62, 0.56, 1.0))
 	vb.add_child(hint)
 

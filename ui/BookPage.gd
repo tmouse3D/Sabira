@@ -3,6 +3,7 @@ class_name BookPage
 extends CanvasLayer
 ## On-screen book page caption panel (text-only). Mirrors PhotosLookthrough input lock.
 ## Open via open_page(text); emits finished() when closed with [E]/click.
+## Multi-page: open_pages(pages, hint) - [A/D] (or Left/Right) turns pages, [E] closes.
 
 signal finished
 
@@ -13,6 +14,9 @@ signal finished
 
 var _busy: bool = false
 var _click: AudioStreamPlayer
+var _pages: PackedStringArray = []
+var _page_i: int = 0
+var _nav_hint: String = ""
 
 @onready var _dim: ColorRect = $Dim
 @onready var _caption: Label = $Caption
@@ -63,8 +67,36 @@ func open_page(text: String) -> void:
 		_caption.text = text
 	if _hint:
 		_hint.text = "[E] close"
+	_pages = PackedStringArray()
 	get_tree().call_group("player", "set_input_locked", true)
 	get_tree().call_group("interact_prompt", "suppress_for", 999.0)
+
+
+## Page-turner mode (e.g. Sabira's diary). nav_hint is shown with a page counter.
+func open_pages(pages: PackedStringArray, nav_hint: String = "[A/D] Turn page   [E] Close") -> void:
+	if _busy or pages.is_empty():
+		return
+	open_page(pages[0])
+	_pages = pages
+	_page_i = 0
+	_nav_hint = nav_hint
+	_show_current()
+
+
+func _show_current() -> void:
+	if _caption:
+		_caption.text = _pages[_page_i]
+	if _hint:
+		_hint.text = "%s      %d / %d" % [_nav_hint, _page_i + 1, _pages.size()]
+
+
+func _turn(dir: int) -> void:
+	var ni := clampi(_page_i + dir, 0, _pages.size() - 1)
+	if ni == _page_i:
+		return
+	_page_i = ni
+	_play_click()
+	_show_current()
 
 
 func close_page() -> void:
@@ -75,6 +107,7 @@ func close_page() -> void:
 	visible = false
 	if _caption:
 		_caption.text = ""
+	_pages = PackedStringArray()
 	get_tree().call_group("player", "set_input_locked", false)
 	get_tree().call_group("interact_prompt", "suppress_for", 0.05)
 	finished.emit()
@@ -83,6 +116,16 @@ func close_page() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not _busy:
 		return
+	if _pages.size() > 1 and event is InputEventKey and event.pressed and not event.echo:
+		var kc := (event as InputEventKey).keycode
+		if kc == KEY_A or kc == KEY_LEFT:
+			_turn(-1)
+			get_viewport().set_input_as_handled()
+			return
+		if kc == KEY_D or kc == KEY_RIGHT:
+			_turn(1)
+			get_viewport().set_input_as_handled()
+			return
 	var close_it := false
 	if event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
 		close_it = true

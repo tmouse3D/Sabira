@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://props/plants_psx/plant.glb" id="1_plant"]
+
+[node name="PlantPot" type="Node3D"]
+
+[node name="Plant" parent="." instance=ExtResource("1_plant")]
+transform = Transform3D(0.94, 0, 0, 0, 0.94, 0, 0, 0, 0.94, 0, 0, 0)

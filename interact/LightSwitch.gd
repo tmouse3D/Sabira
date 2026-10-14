@@ -9,7 +9,7 @@ extends Interactable
 @export var makes_noise: bool = true
 
 ## Residual energy when "off" ?- enough to see walls, rooms still feel black.
-const OFF_ENERGY := 0.03
+const OFF_ENERGY := 0.04  # was 0.03 (+33%, tile_props batch)
 ## Energies at or below this count as off when syncing from scene.
 const ON_THRESHOLD := 0.055
 
